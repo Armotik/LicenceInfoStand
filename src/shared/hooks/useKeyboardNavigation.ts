@@ -35,6 +35,7 @@ export function useKeyboardNavigation() {
     toggleFullscreen,
     toggleHelp,
     toggleDebug,
+    toggleIdleTitle,
     recordInteraction,
   } = useAppStore();
 
@@ -104,6 +105,13 @@ export function useKeyboardNavigation() {
     // ========================================
     
     if (mode === 'idle') {
+      // I : afficher/masquer le titre
+      if (key.toLowerCase() === 'i') {
+        event.preventDefault();
+        toggleIdleTitle();
+        return;
+      }
+
       // Flèches gauche/droite : changer effet
       if (key === 'ArrowRight') {
         event.preventDefault();
@@ -178,6 +186,7 @@ export function useKeyboardNavigation() {
     toggleFullscreen,
     toggleHelp,
     toggleDebug,
+    toggleIdleTitle,
     recordInteraction,
   ]);
 

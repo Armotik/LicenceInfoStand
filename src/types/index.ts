@@ -54,7 +54,8 @@ export interface AppState {
   isFullscreen: boolean;
   showHelp: boolean;
   showDebug: boolean;
-  
+  showIdleTitle: boolean;
+
   // Idle timeout
   lastInteraction: number;
   idleTimeoutMs: number;
@@ -91,7 +92,8 @@ export interface AppActions {
   toggleFullscreen: () => void;
   toggleHelp: () => void;
   toggleDebug: () => void;
-  
+  toggleIdleTitle: () => void;
+
   // Interaction tracking
   recordInteraction: () => void;
 }

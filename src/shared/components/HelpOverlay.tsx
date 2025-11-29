@@ -24,6 +24,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     title: 'Mode Veille',
     shortcuts: [
       { key: '← →', description: 'Changer d\'effet visuel' },
+      { key: 'I', description: 'Afficher/masquer titre & hints' },
     ],
   },
   {

@@ -3,6 +3,20 @@ import { useAppStore, UNIVERSES } from '../../stores/appStore';
 import type { ThemeUniverse } from '../../types';
 import clsx from 'clsx';
 
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    faGraduationCap,
+    faHome,
+    faWater,
+    faBook,
+    faRocket,
+    faUsers,
+    faCheckCircle,
+    faMoneyBill,
+    faChartLine
+} from '@fortawesome/free-solid-svg-icons';
+
 // ============================================
 // Configuration des univers
 // ============================================
@@ -11,7 +25,7 @@ interface UniverseConfig {
   id: ThemeUniverse;
   title: string;
   subtitle: string;
-  icon: string;
+  icon: IconDefinition;
   color: string;
   gradient: string;
 }
@@ -21,7 +35,7 @@ const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
     id: 'formation',
     title: 'Formation',
     subtitle: 'Programme L1-L2-L3, CMI, compétences',
-    icon: '🎓',
+    icon: faGraduationCap,
     color: 'text-blue-400',
     gradient: 'from-blue-600/20 to-blue-900/20',
   },
@@ -29,7 +43,7 @@ const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
     id: 'vie-etudiante',
     title: 'Vie Étudiante',
     subtitle: 'CROUS, logement, santé, associations',
-    icon: '🏠',
+    icon: faHome,
     color: 'text-green-400',
     gradient: 'from-green-600/20 to-green-900/20',
   },
@@ -37,7 +51,7 @@ const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
     id: 'la-rochelle',
     title: 'La Rochelle',
     subtitle: 'Cadre de vie, climat, transports',
-    icon: '🌊',
+    icon: faWater,
     color: 'text-cyan-400',
     gradient: 'from-cyan-600/20 to-cyan-900/20',
   },
@@ -45,7 +59,7 @@ const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
     id: 'systeme-universitaire',
     title: 'Système Universitaire',
     subtitle: 'ECTS, CM/TD/TP, évaluation',
-    icon: '📚',
+    icon: faBook,
     color: 'text-purple-400',
     gradient: 'from-purple-600/20 to-purple-900/20',
   },
@@ -53,7 +67,7 @@ const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
     id: 'demos',
     title: 'Démonstrations',
     subtitle: 'Voir l\'informatique en action',
-    icon: '🚀',
+    icon: faRocket,
     color: 'text-orange-400',
     gradient: 'from-orange-600/20 to-orange-900/20',
   },
@@ -90,7 +104,7 @@ export function PresenterMode() {
                   : 'bg-surface-light/50 text-text-muted hover:bg-surface-light hover:text-text'
               )}
             >
-              <span>{uConfig.icon}</span>
+                <FontAwesomeIcon icon={uConfig.icon} />
               <span className="hidden md:inline">{uConfig.title}</span>
             </button>
           );
@@ -131,7 +145,7 @@ function UniverseContent({ config }: { config: UniverseConfig }) {
           transition={{ type: 'spring', stiffness: 200 }}
           className="text-6xl mb-4"
         >
-          {config.icon}
+            <FontAwesomeIcon icon={config.icon} className={config.color} />
         </motion.div>
         <h1 className={clsx('text-5xl font-display font-bold mb-2', config.color)}>
           {config.title}
@@ -176,10 +190,10 @@ function UniverseSpecificContent({ universe }: { universe: ThemeUniverse }) {
 
 function FormationContent() {
   const stats = [
-    { label: 'Places', value: '125', icon: '👥' },
-    { label: 'Taux d\'accès', value: '100%', icon: '✅' },
-    { label: 'Frais/an', value: '178€', icon: '💰' },
-    { label: 'Poursuite études', value: '77%', icon: '📈' },
+    { label: 'Places', value: '125', icon: faUsers },
+    { label: 'Taux d\'accès', value: '100%', icon: faCheckCircle },
+    { label: 'Frais/an', value: '178€', icon: faMoneyBill },
+    { label: 'Poursuite études', value: '77%', icon: faChartLine },
   ];
 
   return (
@@ -193,7 +207,9 @@ function FormationContent() {
             animate={{ opacity: 1, y: 0 }}
             className="card text-center"
           >
-            <div className="text-3xl mb-2">{stat.icon}</div>
+            <div className="text-4xl mb-2 text-primary-light">
+              <FontAwesomeIcon icon={stat.icon} />
+            </div>
             <div className="text-3xl font-bold text-primary-light">{stat.value}</div>
             <div className="text-sm text-text-muted">{stat.label}</div>
           </motion.div>

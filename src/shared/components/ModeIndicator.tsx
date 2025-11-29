@@ -135,7 +135,10 @@ export function ModeIndicator() {
 // ============================================
 
 export function NavigationHint() {
-  const { mode } = useAppStore();
+  const { mode, showIdleTitle } = useAppStore();
+
+  // En mode idle, ne pas afficher si showIdleTitle est false
+  const shouldShow = mode !== 'idle' || showIdleTitle;
 
   const hints = {
     idle: [
@@ -155,26 +158,32 @@ export function NavigationHint() {
   const currentHints = hints[mode] || [];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="fixed bottom-6 left-6 z-40"
-    >
-      <div className="flex gap-4">
-        {currentHints.map((hint) => (
-          <div
-            key={hint.key}
-            className="flex items-center gap-2 bg-glass rounded-lg px-3 py-2 border border-primary-light/20"
-          >
-            <kbd className="kbd">{hint.key}</kbd>
-            <span className="text-xs text-text-muted">{hint.label}</span>
+    <AnimatePresence>
+      {shouldShow && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3 }}
+          className="fixed bottom-6 left-6 z-40"
+        >
+          <div className="flex gap-4">
+            {currentHints.map((hint) => (
+              <div
+                key={hint.key}
+                className="flex items-center gap-2 bg-glass rounded-lg px-3 py-2 border border-primary-light/20"
+              >
+                <kbd className="kbd">{hint.key}</kbd>
+                <span className="text-xs text-text-muted">{hint.label}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-2 bg-glass rounded-lg px-3 py-2 border border-primary-light/20">
+              <kbd className="kbd">H</kbd>
+              <span className="text-xs text-text-muted">Aide</span>
+            </div>
           </div>
-        ))}
-        <div className="flex items-center gap-2 bg-glass rounded-lg px-3 py-2 border border-primary-light/20">
-          <kbd className="kbd">H</kbd>
-          <span className="text-xs text-text-muted">Aide</span>
-        </div>
-      </div>
-    </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

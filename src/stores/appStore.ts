@@ -49,7 +49,8 @@ const initialState: AppState = {
   isFullscreen: false,
   showHelp: false,
   showDebug: false,
-  
+  showIdleTitle: true,
+
   // Interaction
   lastInteraction: Date.now(),
   idleTimeoutMs: IDLE_TIMEOUT_MS,
@@ -237,6 +238,13 @@ export const useAppStore = create<AppState & AppActions>()(
     toggleDebug: () => {
       set((state) => ({ 
         showDebug: !state.showDebug,
+        lastInteraction: Date.now(),
+      }));
+    },
+
+    toggleIdleTitle: () => {
+      set((state) => ({
+        showIdleTitle: !state.showIdleTitle,
         lastInteraction: Date.now(),
       }));
     },

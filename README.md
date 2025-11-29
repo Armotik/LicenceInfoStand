@@ -65,6 +65,7 @@ npm run preview
 | Touche | Action |
 |--------|--------|
 | `← →` | Changer d'effet visuel |
+| `I` | Afficher/masquer titre & hints |
 
 ### Mode Présentation
 | Touche | Action |
