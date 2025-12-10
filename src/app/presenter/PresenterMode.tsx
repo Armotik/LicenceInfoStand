@@ -1,21 +1,12 @@
+// ============================================
+// PresenterMode - Mode Présentation avec les 5 univers
+// ============================================
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore, UNIVERSES } from '../../stores/appStore';
+import { FormationUniverse } from './universes/FormationUniverse';
 import type { ThemeUniverse } from '../../types';
 import clsx from 'clsx';
-
-import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-    faGraduationCap,
-    faHome,
-    faWater,
-    faBook,
-    faRocket,
-    faUsers,
-    faCheckCircle,
-    faMoneyBill,
-    faChartLine
-} from '@fortawesome/free-solid-svg-icons';
 
 // ============================================
 // Configuration des univers
@@ -25,9 +16,8 @@ interface UniverseConfig {
   id: ThemeUniverse;
   title: string;
   subtitle: string;
-  icon: IconDefinition;
+  icon: string;
   color: string;
-  gradient: string;
 }
 
 const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
@@ -35,46 +25,41 @@ const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
     id: 'formation',
     title: 'Formation',
     subtitle: 'Programme L1-L2-L3, CMI, compétences',
-    icon: faGraduationCap,
-    color: 'text-blue-400',
-    gradient: 'from-blue-600/20 to-blue-900/20',
+    icon: '🎓',
+    color: '#3498DB',
   },
   'vie-etudiante': {
     id: 'vie-etudiante',
     title: 'Vie Étudiante',
     subtitle: 'CROUS, logement, santé, associations',
-    icon: faHome,
-    color: 'text-green-400',
-    gradient: 'from-green-600/20 to-green-900/20',
+    icon: '🏠',
+    color: '#27AE60',
   },
   'la-rochelle': {
     id: 'la-rochelle',
     title: 'La Rochelle',
     subtitle: 'Cadre de vie, climat, transports',
-    icon: faWater,
-    color: 'text-cyan-400',
-    gradient: 'from-cyan-600/20 to-cyan-900/20',
+    icon: '🌊',
+    color: '#00BCD4',
   },
   'systeme-universitaire': {
     id: 'systeme-universitaire',
     title: 'Système Universitaire',
     subtitle: 'ECTS, CM/TD/TP, évaluation',
-    icon: faBook,
-    color: 'text-purple-400',
-    gradient: 'from-purple-600/20 to-purple-900/20',
+    icon: '📚',
+    color: '#9B59B6',
   },
   demos: {
     id: 'demos',
     title: 'Démonstrations',
     subtitle: 'Voir l\'informatique en action',
-    icon: faRocket,
-    color: 'text-orange-400',
-    gradient: 'from-orange-600/20 to-orange-900/20',
+    icon: '🚀',
+    color: '#E74C3C',
   },
 };
 
 // ============================================
-// Composant principal
+// Composant Principal
 // ============================================
 
 export function PresenterMode() {
@@ -82,31 +67,31 @@ export function PresenterMode() {
   const config = UNIVERSE_CONFIG[currentUniverse];
 
   return (
-    <div className={clsx(
-      'w-full h-full flex flex-col',
-      `bg-gradient-to-br ${config.gradient}`
-    )}>
+    <div className="w-full h-full flex flex-col bg-surface">
       {/* Navigation par onglets en haut */}
-      <nav className="flex justify-center gap-2 p-4 bg-surface/50 backdrop-blur-sm">
+      <nav className="flex justify-center gap-2 p-4 bg-surface-light/50 backdrop-blur-sm border-b border-primary-light/10">
         {UNIVERSES.map((universe) => {
           const uConfig = UNIVERSE_CONFIG[universe];
           const isActive = universe === currentUniverse;
-          
+
           return (
-            <button
+            <motion.button
               key={universe}
               onClick={() => setUniverse(universe)}
               className={clsx(
                 'px-4 py-2 rounded-lg font-medium transition-all duration-300',
                 'flex items-center gap-2',
-                isActive 
-                  ? 'bg-primary-light text-white shadow-lg scale-105' 
+                isActive
+                  ? 'text-white shadow-lg scale-105'
                   : 'bg-surface-light/50 text-text-muted hover:bg-surface-light hover:text-text'
               )}
+              style={isActive ? { backgroundColor: uConfig.color } : {}}
+              whileHover={{ scale: isActive ? 1.05 : 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-                <FontAwesomeIcon icon={uConfig.icon} />
+              <span className="text-xl">{uConfig.icon}</span>
               <span className="hidden md:inline">{uConfig.title}</span>
-            </button>
+            </motion.button>
           );
         })}
       </nav>
@@ -120,9 +105,9 @@ export function PresenterMode() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.3 }}
-            className="w-full h-full p-8"
+            className="w-full h-full"
           >
-            <UniverseContent config={config} />
+            <UniverseRenderer universe={currentUniverse} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -131,234 +116,79 @@ export function PresenterMode() {
 }
 
 // ============================================
-// Contenu d'un univers
+// Renderer d'univers
 // ============================================
 
-function UniverseContent({ config }: { config: UniverseConfig }) {
-  return (
-    <div className="max-w-6xl mx-auto h-full flex flex-col">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200 }}
-          className="text-6xl mb-4"
-        >
-            <FontAwesomeIcon icon={config.icon} className={config.color} />
-        </motion.div>
-        <h1 className={clsx('text-5xl font-display font-bold mb-2', config.color)}>
-          {config.title}
-        </h1>
-        <p className="text-xl text-text-muted">
-          {config.subtitle}
-        </p>
-      </div>
-
-      {/* Contenu spécifique à l'univers */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <UniverseSpecificContent universe={config.id} />
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Contenu spécifique par univers (placeholders)
-// ============================================
-
-function UniverseSpecificContent({ universe }: { universe: ThemeUniverse }) {
+function UniverseRenderer({ universe }: { universe: ThemeUniverse }) {
   switch (universe) {
     case 'formation':
-      return <FormationContent />;
+      return <FormationUniverse />;
     case 'vie-etudiante':
-      return <VieEtudianteContent />;
+      return <VieEtudiantePlaceholder />;
     case 'la-rochelle':
-      return <LaRochelleContent />;
+      return <LaRochellePlaceholder />;
     case 'systeme-universitaire':
-      return <SystemeUniversitaireContent />;
+      return <SystemeUniversitairePlaceholder />;
     case 'demos':
-      return <DemosContent />;
+      return <DemosUniverse />;
     default:
-      return null;
+      return <FormationUniverse />;
   }
 }
 
 // ============================================
-// Placeholder Formation
+// Placeholders pour les autres univers
 // ============================================
 
-function FormationContent() {
-  const stats = [
-    { label: 'Places', value: '125', icon: faUsers },
-    { label: 'Taux d\'accès', value: '100%', icon: faCheckCircle },
-    { label: 'Frais/an', value: '178€', icon: faMoneyBill },
-    { label: 'Poursuite études', value: '77%', icon: faChartLine },
-  ];
-
+function VieEtudiantePlaceholder() {
   return (
-    <div className="space-y-8">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((stat) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="card text-center"
-          >
-            <div className="text-4xl mb-2 text-primary-light">
-              <FontAwesomeIcon icon={stat.icon} />
-            </div>
-            <div className="text-3xl font-bold text-primary-light">{stat.value}</div>
-            <div className="text-sm text-text-muted">{stat.label}</div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Programme */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {['L1', 'L2', 'L3'].map((year, index) => (
-          <motion.div
-            key={year}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="card-hover"
-          >
-            <h3 className="text-2xl font-bold text-primary-light mb-4">{year}</h3>
-            <p className="text-text-muted">
-              {year === 'L1' && 'Fondamentaux, programmation, algorithmique de base'}
-              {year === 'L2' && 'BDD, réseaux, POO avancée, structures de données'}
-              {year === 'L3' && 'IA, sécurité, IoT, développement mobile, stage'}
-            </p>
-          </motion.div>
-        ))}
-      </div>
-
-      <p className="text-center text-text-muted mt-8">
-        Contenu détaillé à implémenter en Phase 3
-      </p>
-    </div>
+    <PlaceholderUniverse
+      icon="🏠"
+      title="Vie Étudiante"
+      color="#27AE60"
+      items={[
+        { icon: '🍽️', title: 'Restauration CROUS', desc: 'Repas à 3,30€ (1€ boursiers)' },
+        { icon: '🏠', title: 'Logement', desc: 'Résidences 150-350€/mois' },
+        { icon: '🏥', title: 'Santé', desc: 'Consultations gratuites' },
+        { icon: '🎉', title: 'Associations', desc: 'BDE, clubs, événements' },
+      ]}
+    />
   );
 }
 
-// ============================================
-// Placeholder Vie Étudiante
-// ============================================
-
-function VieEtudianteContent() {
+function LaRochellePlaceholder() {
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      {[
-        { title: 'Logement', icon: '🏠', desc: 'Résidences CROUS : 150-350€/mois' },
-        { title: 'Restauration', icon: '🍽️', desc: 'Repas CROUS : 3,30€ (1€ boursiers)' },
-        { title: 'Santé', icon: '🏥', desc: 'Consultations gratuites, psychologues' },
-        { title: 'Associations', icon: '🎉', desc: 'BDE, AGIR, clubs techniques' },
-      ].map((item, index) => (
-        <motion.div
-          key={item.title}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: index * 0.1 }}
-          className="card-hover flex items-start gap-4"
-        >
-          <div className="text-4xl">{item.icon}</div>
-          <div>
-            <h3 className="text-xl font-bold text-green-400">{item.title}</h3>
-            <p className="text-text-muted">{item.desc}</p>
-          </div>
-        </motion.div>
-      ))}
-    </div>
+    <PlaceholderUniverse
+      icon="🌊"
+      title="La Rochelle"
+      color="#00BCD4"
+      items={[
+        { icon: '☀️', title: '2100h de soleil/an', desc: '1ère ville non-méditerranéenne' },
+        { icon: '🚌', title: 'Transports 100€/an', desc: 'Les moins chers de France' },
+        { icon: '🏠', title: 'Loyer ~570€', desc: 'vs 905€ à Paris' },
+        { icon: '🎭', title: 'Culture', desc: 'Francofolies, Pass Culture gratuit' },
+      ]}
+    />
   );
 }
 
-// ============================================
-// Placeholder La Rochelle
-// ============================================
-
-function LaRochelleContent() {
+function SystemeUniversitairePlaceholder() {
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <p className="text-6xl mb-4">🌊☀️🚲</p>
-        <h3 className="text-3xl font-bold text-cyan-400 mb-2">
-          2ème ville étudiante moyenne de France
-        </h3>
-        <p className="text-xl text-text-muted">
-          2100+ heures de soleil/an • 95% de recommandation
-        </p>
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-4">
-        {[
-          { label: 'Transport/an', value: '100€', compare: 'vs 350€ Paris' },
-          { label: 'Loyer studio', value: '~570€', compare: 'vs 905€ Paris' },
-          { label: 'Pistes cyclables', value: '100km+', compare: 'Ville plate' },
-        ].map((item) => (
-          <div key={item.label} className="card text-center">
-            <div className="text-3xl font-bold text-cyan-400">{item.value}</div>
-            <div className="text-text">{item.label}</div>
-            <div className="text-sm text-text-muted">{item.compare}</div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <PlaceholderUniverse
+      icon="📚"
+      title="Système Universitaire"
+      color="#9B59B6"
+      items={[
+        { icon: '📊', title: 'ECTS', desc: '30 crédits/semestre, 180 pour la Licence' },
+        { icon: '👨‍🏫', title: 'CM', desc: 'Cours Magistral en amphi' },
+        { icon: '👥', title: 'TD', desc: 'Travaux Dirigés (20-30 étudiants)' },
+        { icon: '💻', title: 'TP', desc: 'Travaux Pratiques (10-15 étudiants)' },
+      ]}
+    />
   );
 }
 
-// ============================================
-// Placeholder Système Universitaire
-// ============================================
-
-function SystemeUniversitaireContent() {
-  return (
-    <div className="space-y-6">
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="card">
-          <h3 className="text-xl font-bold text-purple-400 mb-2">CM</h3>
-          <p className="text-sm text-text-muted">Cours Magistral</p>
-          <p className="text-text mt-2">Amphi, 100-200 étudiants, prise de notes</p>
-        </div>
-        <div className="card">
-          <h3 className="text-xl font-bold text-purple-400 mb-2">TD</h3>
-          <p className="text-sm text-text-muted">Travaux Dirigés</p>
-          <p className="text-text mt-2">20-30 étudiants, exercices, obligatoire</p>
-        </div>
-        <div className="card">
-          <h3 className="text-xl font-bold text-purple-400 mb-2">TP</h3>
-          <p className="text-sm text-text-muted">Travaux Pratiques</p>
-          <p className="text-text mt-2">10-15 étudiants, pratique machine, obligatoire</p>
-        </div>
-      </div>
-
-      <div className="card">
-        <h3 className="text-xl font-bold text-purple-400 mb-4">ECTS - Crédits Européens</h3>
-        <div className="flex justify-around text-center">
-          <div>
-            <div className="text-4xl font-bold text-primary-light">30</div>
-            <div className="text-text-muted">par semestre</div>
-          </div>
-          <div>
-            <div className="text-4xl font-bold text-primary-light">60</div>
-            <div className="text-text-muted">par année</div>
-          </div>
-          <div>
-            <div className="text-4xl font-bold text-primary-light">180</div>
-            <div className="text-text-muted">pour la Licence</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Placeholder Démos
-// ============================================
-
-function DemosContent() {
+function DemosUniverse() {
   const { startDemo } = useAppStore();
 
   const demos = [
@@ -371,26 +201,107 @@ function DemosContent() {
   ];
 
   return (
-    <div className="grid md:grid-cols-3 gap-6">
-      {demos.map((demo, index) => (
-        <motion.button
-          key={demo.id}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: index * 0.05 }}
-          onClick={() => startDemo(demo.id as any)}
-          className="card-hover text-left group"
-        >
-          <div className="flex items-start justify-between">
-            <div className="text-5xl mb-4">{demo.icon}</div>
-            <kbd className="kbd">{demo.key}</kbd>
-          </div>
-          <h3 className="text-xl font-bold text-orange-400 group-hover:text-orange-300">
-            {demo.title}
-          </h3>
-          <p className="text-text-muted">{demo.desc}</p>
-        </motion.button>
-      ))}
+    <div className="w-full h-full p-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-8">
+          <span className="text-6xl block mb-4">🚀</span>
+          <h2 className="text-4xl font-display font-bold text-orange-400 mb-2">
+            Démonstrations
+          </h2>
+          <p className="text-xl text-text-muted">
+            Voir l'informatique en action
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {demos.map((demo, index) => (
+            <motion.button
+              key={demo.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => startDemo(demo.id as any)}
+              className="bg-surface-light rounded-xl p-6 border border-primary-light/20 text-left group hover:border-orange-400/50 transition-all"
+              whileHover={{ y: -5, scale: 1.02 }}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <span className="text-5xl">{demo.icon}</span>
+                <kbd className="px-2 py-1 bg-surface rounded text-xs font-mono text-text-muted border border-primary-light/20">
+                  {demo.key}
+                </kbd>
+              </div>
+              <h3 className="text-xl font-bold text-orange-400 group-hover:text-orange-300 mb-1">
+                {demo.title}
+              </h3>
+              <p className="text-text-muted text-sm">{demo.desc}</p>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// Placeholder générique
+// ============================================
+
+interface PlaceholderItem {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+function PlaceholderUniverse({
+  icon,
+  title,
+  color,
+  items,
+}: {
+  icon: string;
+  title: string;
+  color: string;
+  items: PlaceholderItem[];
+}) {
+  return (
+    <div className="w-full h-full p-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-8">
+          <motion.span
+            className="text-6xl block mb-4"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            {icon}
+          </motion.span>
+          <h2 className="text-4xl font-display font-bold mb-2" style={{ color }}>
+            {title}
+          </h2>
+          <p className="text-text-muted">
+            Contenu détaillé à venir (Phase 3)
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          {items.map((item, index) => (
+            <motion.div
+              key={item.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-surface-light rounded-xl p-6 border border-primary-light/20 flex items-start gap-4"
+            >
+              <span className="text-4xl">{item.icon}</span>
+              <div>
+                <h3 className="text-xl font-bold mb-1" style={{ color }}>
+                  {item.title}
+                </h3>
+                <p className="text-text-muted">{item.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
