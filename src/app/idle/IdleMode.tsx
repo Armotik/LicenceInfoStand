@@ -390,7 +390,7 @@ function BoidsEffect() {
   const phaseTimerRef = { current: 0 };
   const centerPointRef = { current: { x: 0, y: 0 } };
 
-  const BOID_COUNT = 300;
+  const BOID_COUNT = 150;
   const MAX_SPEED = 2.5;
   const MAX_FORCE = 0.05;
   const PERCEPTION_RADIUS = 50;

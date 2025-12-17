@@ -10,7 +10,8 @@ import clsx from 'clsx';
 // Animations variants
 // ============================================
 
-export const fadeInUp = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const fadeInUp: any = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number = 0) => ({
     opacity: 1,
@@ -23,7 +24,8 @@ export const fadeInUp = {
   }),
 };
 
-export const scaleIn = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const scaleIn: any = {
   hidden: { opacity: 0, scale: 0.8 },
   visible: (i: number = 0) => ({
     opacity: 1,
@@ -36,7 +38,8 @@ export const scaleIn = {
   }),
 };
 
-export const slideInLeft = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const slideInLeft: any = {
   hidden: { opacity: 0, x: -50 },
   visible: (i: number = 0) => ({
     opacity: 1,

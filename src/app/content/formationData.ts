@@ -31,25 +31,63 @@ export interface SemesterProgram {
 }
 
 export interface YearProgram {
-    year: number;
+    year: number | 'L1' | 'L2' | 'L3';
     title: string;
+    subtitle?: string;
+    description?: string;
+    color?: string;
+    competences?: Competence[];
     semesters: SemesterProgram[];
 }
+
+export interface Competence {
+    name: string;
+    icon: string;
+    description?: string;
+}
+
+export interface FormationStat {
+    label: string;
+    value: string | number;
+    icon: string;
+}
+
+export interface Poursuite {
+    type: string;
+    title: string;
+    icon: string;
+    description: string;
+    percentage?: number;
+    examples?: string[];
+}
+
+export interface Metier {
+    title: string;
+    icon: string;
+    description: string;
+    salaire: string;
+    skills?: string[];
+}
+
+export interface FormationSectionItem {
+    id: FormationSection;
+    title: string;
+    icon: string;
+}
+
+export type FormationSection = 'overview' | 'programme' | 'cmi' | 'poursuites' | 'metiers';
 
 // ============================================================================
 // STATISTIQUES DE LA FORMATION
 // ============================================================================
-export const FORMATION_STATS = {
-    places: 125,
-    candidatures: 856,
-    tauxSelection: '14.6%',
-    fraisInscription: '178€/an',
-    duree: '3 ans (6 semestres)',
-    ects: 180,
-    poursuitesMaster: '77%',
-    insertionPro: '92%',
-    salaireMoyen: '1790€ net/mois (premier emploi)',
-};
+export const FORMATION_STATS: FormationStat[] = [
+    { label: 'Places', value: 125, icon: '🎯' },
+    { label: 'Candidatures', value: 856, icon: '📝' },
+    { label: 'Taux sélection', value: '14.6%', icon: '✅' },
+    { label: 'Frais inscription', value: '178€/an', icon: '💶' },
+    { label: 'Durée', value: '3 ans', icon: '📅' },
+    { label: 'ECTS', value: 180, icon: '🎓' },
+];
 
 // ============================================================================
 // PROGRAMME DÉTAILLÉ PAR ANNÉE
@@ -57,8 +95,19 @@ export const FORMATION_STATS = {
 export const PROGRAM_BY_YEAR: YearProgram[] = [
     // ==================== L1 ====================
     {
-        year: 1,
-        title: 'Première année - Fondamentaux',
+        year: 'L1',
+        title: 'Première année',
+        subtitle: 'Fondamentaux',
+        description: 'Découverte des bases de l\'informatique, de la programmation et des mathématiques appliquées. Introduction aux systèmes et au développement web.',
+        color: '#3498DB',
+        competences: [
+            { name: 'Python', icon: '🐍', description: 'Langage de programmation polyvalent' },
+            { name: 'Java', icon: '☕', description: 'Programmation orientée objet' },
+            { name: 'HTML/CSS', icon: '🌐', description: 'Développement web frontend' },
+            { name: 'Linux', icon: '🐧', description: 'Système d\'exploitation Unix' },
+            { name: 'Algorithmique', icon: '📊', description: 'Conception d\'algorithmes' },
+            { name: 'Mathématiques', icon: '📐', description: 'Analyse et logique' },
+        ],
         semesters: [
             // ---------- SEMESTRE 1 ----------
             {
@@ -439,8 +488,19 @@ export const PROGRAM_BY_YEAR: YearProgram[] = [
 
     // ==================== L2 ====================
     {
-        year: 2,
-        title: 'Deuxième année - Approfondissement',
+        year: 'L2',
+        title: 'Deuxième année',
+        subtitle: 'Approfondissement',
+        description: 'Consolidation des connaissances en programmation, réseaux, bases de données et structures de données. Premières notions de sécurité.',
+        color: '#9B59B6',
+        competences: [
+            { name: 'C', icon: '⚙️', description: 'Programmation système bas niveau' },
+            { name: 'PHP', icon: '🐘', description: 'Développement web backend' },
+            { name: 'SQL', icon: '🗃️', description: 'Bases de données relationnelles' },
+            { name: 'Réseaux', icon: '🌐', description: 'Protocoles TCP/IP' },
+            { name: 'UML', icon: '📐', description: 'Modélisation logicielle' },
+            { name: 'Git', icon: '📦', description: 'Gestion de versions' },
+        ],
         semesters: [
             // ---------- SEMESTRE 3 ----------
             {
@@ -895,8 +955,19 @@ export const PROGRAM_BY_YEAR: YearProgram[] = [
 
     // ==================== L3 ====================
     {
-        year: 3,
-        title: 'Troisième année - Professionnalisation',
+        year: 'L3',
+        title: 'Troisième année',
+        subtitle: 'Professionnalisation',
+        description: 'Spécialisation technique avec choix de parcours (IoT/Mobile ou IA/Vision). Stage professionnel obligatoire pour mise en pratique des compétences.',
+        color: '#27AE60',
+        competences: [
+            { name: 'Sécurité', icon: '🔒', description: 'Cybersécurité et protection des systèmes' },
+            { name: 'Cloud/Docker', icon: '☁️', description: 'Conteneurisation et cloud computing' },
+            { name: 'Machine Learning', icon: '🤖', description: 'Apprentissage automatique' },
+            { name: 'Mobile', icon: '📱', description: 'Développement d\'applications mobiles' },
+            { name: 'IoT', icon: '🔌', description: 'Internet des objets et embarqué' },
+            { name: 'Compilation', icon: '⚡', description: 'Théorie des langages et compilateurs' },
+        ],
         semesters: [
             // ---------- SEMESTRE 5 ----------
             {
@@ -1376,17 +1447,92 @@ export const PROGRAM_BY_YEAR: YearProgram[] = [
 // INFORMATIONS CMI
 // ============================================================================
 export const CMI_INFO = {
-    places: 20,
-    candidatures: 245,
-    duree: '5 ans (Licence + Master)',
-    label: 'FIGURE',
-    plusValue: '+20% enseignements',
+    // Propriétés pour l'affichage UI
+    title: 'CMI Informatique',
+    subtitle: 'Cursus Master en Ingénierie',
+    description: 'Formation d\'excellence sur 5 ans (Licence + Master) avec label FIGURE. Programme renforcé (+20% enseignements), stages dès la L1, et immersion en laboratoire de recherche.',
+
+    stats: [
+        { label: 'Places', value: '20', icon: '🎯' },
+        { label: 'Durée', value: '5 ans', icon: '📅' },
+        { label: 'ECTS', value: '300', icon: '🎓' },
+        { label: 'Label', value: 'FIGURE', icon: '🏅' },
+    ],
+
+    laboratory: {
+        name: 'L3i',
+        fullName: 'Laboratoire Informatique, Image et Interaction',
+        members: 100,
+        researchers: 38,
+        description: 'Laboratoire de recherche en informatique de La Rochelle Université, spécialisé dans l\'IA, le traitement d\'images et les interactions homme-machine.',
+        axes: [
+            'IA et apprentissage automatique',
+            'Image et contenus numériques',
+            'Supervision du littoral',
+            'Humanités numériques',
+        ],
+    },
+
+    secondLab: {
+        name: 'MIA',
+        fullName: 'Mathématiques, Image et Applications',
+        description: 'Laboratoire axé sur l\'analyse numérique, l\'optimisation et la modélisation mathématique appliquée.',
+    },
+
+    // Le CMI est un DU suivi EN PARALLÈLE de la licence
+    nature: 'Diplôme Universitaire (DU) complémentaire',
+    duree: '5 ans (10 semestres)',
+    ects: 300,
+    label: 'Réseau FIGURE',
+    plusValue: '+20% d\'enseignements supplémentaires',
+
+    responsable: {
+        nom: 'Hélène Thomas',
+        tel: '05 86 56 21 02',
+        email: 'cmi@univ-lr.fr'
+    },
+
+    specialiteInformatique: 'Ingénierie des contenus numériques',
+
+    // Les 7 spécialités CMI à La Rochelle
+    specialites: [
+        'Ingénierie du bâtiment (Génie civil)',
+        'Durabilité des matériaux et des structures',
+        'Ingénierie territoriale des environnements (Géographie)',
+        'Géosciences et géophysique du littoral',
+        'Ingénierie des contenus numériques (Informatique)',
+        'Mathématiques et applications',
+        'Génie biotechnologique'
+    ],
+
+    // Conditions d'obtention du label CMI
+    conditionsObtention: [
+        'Validation licence ET master disciplinaire',
+        'Validation des UE complémentaires CMI',
+        'Mobilité internationale de 3 mois minimum',
+        'TOEIC ≥ 785 points',
+        'PIX ≥ 400 points',
+        'Certification Ecrit+',
+        '14 semaines minimum en entreprise',
+        '5 semaines minimum en laboratoire (dès la L1)'
+    ],
+
     highlights: [
-        'Stages dès la L1',
-        'Immersion laboratoire L3i',
-        'Mobilité internationale obligatoire',
-        'Double compétence scientifique/managériale'
-    ]
+        'Formation sélective et renforcée',
+        'Encadrement personnalisé en petit groupe',
+        'Stages en laboratoires reconnus internationalement',
+        'Mobilité internationale obligatoire (3 mois)',
+        'Possibilité d\'alternance dès la L1',
+        'Double compétence scientifique/managériale',
+        'Réseau national et international (Fédération CMI France)'
+    ],
+
+    candidature: {
+        plateforme: 'Parcoursup',
+        voeu: 'Cursus Master en Ingénierie',
+        selection: 'Dossier + lettre motivation + entretien',
+        important: 'Inscription simultanée OBLIGATOIRE en Licence Informatique'
+    }
 };
 
 // ============================================================================
@@ -1409,6 +1555,120 @@ export const LABORATOIRES = {
         axes: ['Analyse numérique', 'Optimisation', 'Modélisation']
     }
 };
+
+// ============================================================================
+// RESPONSABLE DE LA FORMATION
+// ============================================================================
+export const RESPONSABLE = {
+    name: 'Responsable de la Licence Informatique',
+    message: `La Licence Informatique de La Rochelle Université forme des professionnels polyvalents du numérique. Notre formation allie théorie solide et pratique intensive, avec un accent particulier sur les technologies actuelles et les enjeux du développement durable.
+
+Nos étudiants bénéficient d'un encadrement de qualité, d'équipements modernes et d'un accès privilégié à nos laboratoires de recherche L3i et MIA. Le stage de fin d'études permet une première expérience professionnelle significative.`,
+};
+
+// ============================================================================
+// POURSUITES D'ÉTUDES
+// ============================================================================
+export const POURSUITES: Poursuite[] = [
+    {
+        type: 'master',
+        title: 'Master Informatique',
+        icon: '🎓',
+        description: 'Poursuite naturelle pour approfondir ses compétences techniques et se spécialiser.',
+        percentage: 77,
+        examples: [
+            'Master Architecte Logiciel',
+            'Master Ingénierie des Données',
+            'Master Cybersécurité',
+            'Master Intelligence Artificielle',
+        ],
+    },
+    {
+        type: 'ecole',
+        title: 'Écoles d\'ingénieurs',
+        icon: '🏫',
+        description: 'Admission sur dossier dans les écoles d\'ingénieurs en informatique.',
+        percentage: 15,
+        examples: [
+            'ENSEIRB-MATMECA',
+            'ISAE-ENSMA',
+            'EIGSI La Rochelle',
+            'Polytech',
+        ],
+    },
+    {
+        type: 'emploi',
+        title: 'Vie active',
+        icon: '💼',
+        description: 'Insertion professionnelle directe sur des postes techniques.',
+        percentage: 8,
+        examples: [
+            'Développeur web',
+            'Technicien informatique',
+            'Assistant chef de projet',
+            'Support technique',
+        ],
+    },
+];
+
+// ============================================================================
+// MÉTIERS ET DÉBOUCHÉS
+// ============================================================================
+export const METIERS: Metier[] = [
+    {
+        title: 'Développeur Full-Stack',
+        icon: '💻',
+        description: 'Conception et développement d\'applications web complètes (frontend et backend).',
+        salaire: '32-45k€',
+        skills: ['JavaScript', 'React/Vue', 'Node.js', 'SQL'],
+    },
+    {
+        title: 'Développeur Mobile',
+        icon: '📱',
+        description: 'Création d\'applications mobiles natives ou cross-platform.',
+        salaire: '35-48k€',
+        skills: ['Kotlin', 'Swift', 'Flutter', 'React Native'],
+    },
+    {
+        title: 'DevOps Engineer',
+        icon: '⚙️',
+        description: 'Automatisation du déploiement et gestion de l\'infrastructure.',
+        salaire: '38-55k€',
+        skills: ['Docker', 'Kubernetes', 'CI/CD', 'Cloud'],
+    },
+    {
+        title: 'Data Analyst',
+        icon: '📊',
+        description: 'Analyse et visualisation de données pour aide à la décision.',
+        salaire: '35-50k€',
+        skills: ['Python', 'SQL', 'Power BI', 'Machine Learning'],
+    },
+    {
+        title: 'Administrateur Systèmes',
+        icon: '🖥️',
+        description: 'Gestion et maintenance des infrastructures informatiques.',
+        salaire: '32-45k€',
+        skills: ['Linux', 'Windows Server', 'Réseaux', 'Sécurité'],
+    },
+    {
+        title: 'Ingénieur Cybersécurité',
+        icon: '🔒',
+        description: 'Protection des systèmes d\'information contre les menaces.',
+        salaire: '40-60k€',
+        skills: ['Pentest', 'SIEM', 'Cryptographie', 'Forensics'],
+    },
+];
+
+// ============================================================================
+// SECTIONS DE LA FORMATION (Navigation)
+// ============================================================================
+export const FORMATION_SECTIONS: FormationSectionItem[] = [
+    { id: 'overview', title: 'Vue d\'ensemble', icon: '🏠' },
+    { id: 'programme', title: 'Programme', icon: '📚' },
+    { id: 'cmi', title: 'CMI & Recherche', icon: '🔬' },
+    { id: 'poursuites', title: 'Poursuites', icon: '🚀' },
+    { id: 'metiers', title: 'Métiers', icon: '💼' },
+];
 
 // ============================================================================
 // HELPER FUNCTIONS

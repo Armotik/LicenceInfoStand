@@ -28,7 +28,6 @@ import {
   RESPONSABLE,
   type FormationSection,
   type YearProgram,
-  type SemesterProgram,
   type UEBlock,
   type UEModule,
 } from '../../content/formationData';
@@ -224,7 +223,7 @@ function YearOverviewCard({ year, index }: { year: YearProgram; index: number })
 
       {/* Compétences clés */}
       <div className="flex flex-wrap gap-2">
-        {year.competences.slice(0, 3).map((comp) => (
+        {year.competences?.slice(0, 3).map((comp) => (
           <Badge key={comp.name} text={comp.name} icon={comp.icon} color={year.color} />
         ))}
       </div>
@@ -269,8 +268,8 @@ function ProgrammeSection({
       <div className="flex justify-center gap-4">
         {PROGRAM_BY_YEAR.map((year) => (
           <motion.button
-            key={year.year}
-            onClick={() => onYearChange(year.year)}
+            key={String(year.year)}
+            onClick={() => onYearChange(year.year as 'L1' | 'L2' | 'L3')}
             className={`px-6 py-3 rounded-xl font-bold text-lg transition-all duration-300 ${
               selectedYear === year.year
                 ? 'text-white shadow-lg scale-110'
@@ -338,7 +337,7 @@ function ProgrammeSection({
                 <UEBlockCard
                   key={ueBlock.blockName}
                   ueBlock={ueBlock}
-                  color={yearData.color}
+                  color={yearData.color || '#3498DB'}
                   index={blockIdx}
                 />
               ))}
@@ -350,8 +349,8 @@ function ProgrammeSection({
                 <span>💪</span> Compétences acquises en {yearData.year}
               </h4>
               <div className="flex flex-wrap gap-2">
-                {yearData.competences.map((comp, idx) => (
-                  <CompetenceChip key={comp.name} {...comp} index={idx} />
+                {yearData.competences?.map((comp, idx) => (
+                  <CompetenceChip key={comp.name} {...comp} description={comp.description || ''} index={idx} />
                 ))}
               </div>
             </div>
@@ -627,7 +626,7 @@ function PoursuitesSection() {
       {/* Cards poursuites */}
       <div className="grid md:grid-cols-3 gap-6">
         {POURSUITES.map((poursuite, index) => (
-          <PoursuiteCard key={poursuite.title} {...poursuite} index={index} />
+          <PoursuiteCard key={poursuite.title} {...poursuite} type={poursuite.type} index={index} />
         ))}
       </div>
 
@@ -702,7 +701,7 @@ function MetiersSection() {
       {/* Grid métiers */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
         {METIERS.map((metier, index) => (
-          <MetierCard key={metier.title} {...metier} index={index} />
+          <MetierCard key={metier.title} {...metier} salaire={metier.salaire} index={index} />
         ))}
       </div>
 

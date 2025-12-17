@@ -220,7 +220,7 @@ function DemosUniverse() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
-              onClick={() => startDemo(demo.id as any)}
+              onClick={() => startDemo(demo.id as never)}
               className="bg-surface-light rounded-xl p-6 border border-primary-light/20 text-left group hover:border-orange-400/50 transition-all"
               whileHover={{ y: -5, scale: 1.02 }}
             >
