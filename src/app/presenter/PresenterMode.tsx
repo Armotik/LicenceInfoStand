@@ -5,6 +5,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore, UNIVERSES } from '../../stores/appStore';
 import { FormationUniverse } from './universes/FormationUniverse';
+import { VieEtudianteUniverse } from './universes/VieEtudianteUniverse';
 import type { ThemeUniverse } from '../../types';
 import clsx from 'clsx';
 
@@ -64,7 +65,6 @@ const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
 
 export function PresenterMode() {
   const { currentUniverse, setUniverse } = useAppStore();
-  const config = UNIVERSE_CONFIG[currentUniverse];
 
   return (
     <div className="w-full h-full flex flex-col bg-surface">
@@ -124,7 +124,7 @@ function UniverseRenderer({ universe }: { universe: ThemeUniverse }) {
     case 'formation':
       return <FormationUniverse />;
     case 'vie-etudiante':
-      return <VieEtudiantePlaceholder />;
+      return <VieEtudianteUniverse />;
     case 'la-rochelle':
       return <LaRochellePlaceholder />;
     case 'systeme-universitaire':
@@ -139,22 +139,6 @@ function UniverseRenderer({ universe }: { universe: ThemeUniverse }) {
 // ============================================
 // Placeholders pour les autres univers
 // ============================================
-
-function VieEtudiantePlaceholder() {
-  return (
-    <PlaceholderUniverse
-      icon="🏠"
-      title="Vie Étudiante"
-      color="#27AE60"
-      items={[
-        { icon: '🍽️', title: 'Restauration CROUS', desc: 'Repas à 3,30€ (1€ boursiers)' },
-        { icon: '🏠', title: 'Logement', desc: 'Résidences 150-350€/mois' },
-        { icon: '🏥', title: 'Santé', desc: 'Consultations gratuites' },
-        { icon: '🎉', title: 'Associations', desc: 'BDE, clubs, événements' },
-      ]}
-    />
-  );
-}
 
 function LaRochellePlaceholder() {
   return (
