@@ -24,6 +24,7 @@ import {
   SERVICES_RESTAURATION,
   ACTIVITES_SPORTIVES,
   EVENEMENTS_SPORTIFS,
+  SPORTS_MER_SPECIFICITY,
   SUAPSE_INFO,
   ESPACE_CULTURE_INFO,
   EQUIPEMENTS_CULTURELS,
@@ -33,6 +34,9 @@ import {
   BDE_PAR_COMPOSANTE,
   ASSOCIATIONS_THEMATIQUES,
   ENGAGEMENT_INFO,
+  SANTE_MENTALE_INFO,
+  ACCOMPAGNEMENT_PSY,
+  PREVENTION_INFO,
   SERVICES_SANTE,
   SERVICE_SOCIAL_INFO,
   HANDICAP_INFO,
@@ -461,6 +465,37 @@ function SportSection() {
         </div>
       </motion.div>
 
+      {/* Spécificité Sports en Mer */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-gradient-to-r from-cyan-900/40 to-blue-900/30 rounded-2xl p-6 border-2 border-cyan-500/50"
+      >
+        <h3 className="text-2xl font-bold text-cyan-400 mb-4">{SPORTS_MER_SPECIFICITY.titre}</h3>
+        <p className="text-text mb-4">{SPORTS_MER_SPECIFICITY.description}</p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="font-bold text-cyan-300 mb-3">Avantages uniques :</h4>
+            <ul className="space-y-2 text-sm text-text-muted">
+              {SPORTS_MER_SPECIFICITY.avantages.map((avantage, idx) => (
+                <li key={idx} className="flex items-start gap-2">
+                  <span className="text-cyan-400 mt-0.5">▸</span>
+                  <span>{avantage}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-cyan-300 mb-3">Activités nautiques proposées :</h4>
+            <div className="flex flex-wrap gap-2">
+              {SPORTS_MER_SPECIFICITY.activites.map((activite) => (
+                <Badge key={activite} text={activite} icon="⛵" color="#00BCD4" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Activités sportives */}
       <div>
         <h3 className="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">
@@ -489,24 +524,45 @@ function SportSection() {
         </div>
       </div>
 
-      {/* Événements sportifs */}
+      {/* Événements sportifs - VERSION ENRICHIE */}
       <div>
         <h3 className="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">
-          <span>🏆</span> Événements sportifs annuels
+          <span>🏆</span> Événements sportifs annuels - Moments forts de l'année
         </h3>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 gap-5">
           {EVENEMENTS_SPORTIFS.map((event, index) => (
             <motion.div
               key={event.nom}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-gradient-to-br from-orange-900/20 to-red-900/10 rounded-xl p-5 border border-orange-500/30"
+              className="bg-gradient-to-br from-orange-900/20 to-red-900/10 rounded-xl p-6 border border-orange-500/30 hover:border-orange-400/60 transition-all"
+              whileHover={{ y: -5 }}
             >
-              <h4 className="font-bold text-orange-400 mb-2">{event.nom}</h4>
-              <p className="text-sm text-text-muted mb-2">{event.description}</p>
-              {event.periode && (
-                <Badge text={event.periode} icon="📅" color="#F39C12" />
+              <div className="flex items-start gap-3 mb-3">
+                {event.icon && <span className="text-4xl">{event.icon}</span>}
+                <div className="flex-1">
+                  <h4 className="font-bold text-orange-400 text-lg mb-2">{event.nom}</h4>
+                  <p className="text-sm text-text-muted mb-3">{event.description}</p>
+                  {event.periode && (
+                    <Badge text={event.periode} icon="📅" color="#F39C12" />
+                  )}
+                  {event.participants && (
+                    <Badge text={event.participants} icon="👥" color="#27AE60" />
+                  )}
+                </div>
+              </div>
+              {event.details && (
+                <div className="mt-4 pt-4 border-t border-orange-500/20">
+                  <ul className="text-xs text-text-muted space-y-1.5">
+                    {event.details.map((detail, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-orange-400 mt-0.5">•</span>
+                        <span>{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </motion.div>
           ))}
@@ -646,24 +702,45 @@ function CultureSection() {
         </div>
       </motion.div>
 
-      {/* Événements culturels */}
+      {/* Événements culturels - VERSION ENRICHIE */}
       <div>
         <h3 className="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">
-          <span>🎪</span> Événements culturels majeurs
+          <span>🎪</span> Événements culturels majeurs - Une vie culturelle riche
         </h3>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 gap-5">
           {EVENEMENTS_CULTURELS.map((event, index) => (
             <motion.div
               key={event.nom}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="bg-surface-light rounded-xl p-5 border border-primary-light/20"
+              className="bg-gradient-to-br from-purple-900/20 to-pink-900/10 rounded-xl p-6 border border-purple-500/30 hover:border-purple-400/60 transition-all"
+              whileHover={{ y: -5 }}
             >
-              <h4 className="font-bold text-purple-400 mb-2">{event.nom}</h4>
-              <p className="text-sm text-text-muted mb-2">{event.description}</p>
-              {event.periode && (
-                <Badge text={event.periode} icon="📅" color="#9B59B6" />
+              <div className="flex items-start gap-3 mb-3">
+                {event.icon && <span className="text-4xl">{event.icon}</span>}
+                <div className="flex-1">
+                  <h4 className="font-bold text-purple-400 text-lg mb-2">{event.nom}</h4>
+                  <p className="text-sm text-text-muted mb-3">{event.description}</p>
+                  {event.periode && (
+                    <Badge text={event.periode} icon="📅" color="#9B59B6" />
+                  )}
+                  {event.participants && (
+                    <Badge text={event.participants} icon="👥" color="#27AE60" />
+                  )}
+                </div>
+              </div>
+              {event.details && (
+                <div className="mt-4 pt-4 border-t border-purple-500/20">
+                  <ul className="text-xs text-text-muted space-y-1.5">
+                    {event.details.map((detail, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-purple-400 mt-0.5">•</span>
+                        <span>{detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </motion.div>
           ))}
@@ -772,11 +849,141 @@ function ServicesSection() {
       <SectionTitle
         icon="🏥"
         title="Services & Accompagnement"
-        subtitle="Santé, social, handicap et aides financières"
+        subtitle="Santé mentale, santé physique, social et aides financières"
         color="#27AE60"
       />
 
-      {/* Santé */}
+      {/* SANTÉ MENTALE - Section principale */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-indigo-900/40 to-purple-900/30 rounded-2xl p-8 border-2 border-indigo-500/50"
+      >
+        <h3 className="text-3xl font-bold text-indigo-400 mb-4">{SANTE_MENTALE_INFO.titre}</h3>
+
+        {/* Contexte de la licence */}
+        <div className="bg-indigo-950/40 rounded-xl p-5 mb-6">
+          <h4 className="text-xl font-bold text-indigo-300 mb-3">
+            {SANTE_MENTALE_INFO.contexteLicence.titre}
+          </h4>
+          <p className="text-text-muted mb-4">{SANTE_MENTALE_INFO.contexteLicence.description}</p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {SANTE_MENTALE_INFO.contexteLicence.defis.map((defi, idx) => (
+              <div key={idx} className="bg-surface-light/30 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">{defi.icon}</span>
+                  <h5 className="font-bold text-indigo-300">{defi.titre}</h5>
+                </div>
+                <p className="text-xs text-text-muted">{defi.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Chiffres clés */}
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
+          {SANTE_MENTALE_INFO.chiffres.map((chiffre, idx) => (
+            <div key={idx} className="bg-red-900/20 rounded-lg p-4 text-center border border-red-500/30">
+              <div className="text-3xl font-bold text-red-400 mb-1">{chiffre.value}</div>
+              <div className="text-sm text-text-muted mb-1">{chiffre.label}</div>
+              <div className="text-xs text-red-300">{chiffre.description}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Message important */}
+        <div className="bg-green-900/20 rounded-lg p-4 border-l-4 border-green-500">
+          <p className="text-green-300 font-medium">
+            💚 {SANTE_MENTALE_INFO.message}
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Accompagnement psychologique */}
+      <div>
+        <h3 className="text-2xl font-bold text-indigo-400 mb-4 flex items-center gap-2">
+          <span>🧠</span> Accompagnement psychologique - Services gratuits et confidentiels
+        </h3>
+        <div className="grid md:grid-cols-2 gap-5">
+          {ACCOMPAGNEMENT_PSY.map((service, index) => (
+            <motion.div
+              key={service.name}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-gradient-to-br from-indigo-900/20 to-purple-900/10 rounded-xl p-6 border border-indigo-500/30"
+            >
+              <div className="flex items-start gap-4 mb-4">
+                <div className="text-4xl">{service.icon}</div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-indigo-400 text-lg mb-2">{service.name}</h4>
+                  <p className="text-sm text-text-muted mb-3">{service.description}</p>
+                  {service.contact && (
+                    <div className="text-sm text-indigo-300 mb-2">
+                      📞 {service.contact}
+                    </div>
+                  )}
+                  {service.horaires && (
+                    <div className="text-sm text-text-muted">
+                      🕐 {service.horaires}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {service.details && (
+                <ul className="text-sm text-text-muted space-y-2">
+                  {service.details.map((detail, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-indigo-400 mt-1">✓</span>
+                      <span>{detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Prévention et conseils */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-teal-900/30 to-cyan-900/20 rounded-2xl p-6 border border-teal-500/30"
+      >
+        <h3 className="text-xl font-bold text-teal-400 mb-4 flex items-center gap-2">
+          <span>🛡️</span> {PREVENTION_INFO.titre}
+        </h3>
+        <div className="grid md:grid-cols-2 gap-6 mb-6">
+          {PREVENTION_INFO.actions.map((action, idx) => (
+            <div key={idx} className="bg-surface-light/30 rounded-lg p-4">
+              <h4 className="font-bold text-teal-300 mb-2">{action.nom}</h4>
+              <p className="text-sm text-text-muted mb-2">{action.description}</p>
+              {action.periode && (
+                <Badge text={action.periode} icon="📅" color="#14B8A6" />
+              )}
+              <div className="mt-3 flex flex-wrap gap-1">
+                {action.activites.map((activite, i) => (
+                  <Badge key={i} text={activite} color="#0891B2" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <h4 className="font-bold text-teal-300 mb-3">Conseils pour prendre soin de sa santé mentale :</h4>
+          <div className="grid md:grid-cols-2 gap-2">
+            {PREVENTION_INFO.conseils.map((conseil, idx) => (
+              <div key={idx} className="flex items-start gap-2 text-sm text-text-muted">
+                <span className="text-teal-400 mt-0.5">→</span>
+                <span>{conseil}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Santé physique */}
       <div>
         <h3 className="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">
           <span>🏥</span> Service de Santé Universitaire (SSU)

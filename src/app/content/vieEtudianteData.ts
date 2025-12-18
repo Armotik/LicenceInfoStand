@@ -45,6 +45,9 @@ export interface EvenementSportif {
     nom: string;
     description: string;
     periode?: string;
+    details?: string[];
+    participants?: string;
+    icon?: string;
 }
 
 export interface AtelierCulturel {
@@ -272,35 +275,110 @@ export const ACTIVITES_SPORTIVES: ActiviteSportive[] = [
 export const EVENEMENTS_SPORTIFS: EvenementSportif[] = [
     {
         nom: 'Green Day',
-        description: 'Grand tournoi de sports collectifs à la rentrée',
-        periode: 'Septembre'
+        description: 'Grand tournoi de sports collectifs pour accueillir les nouveaux étudiants',
+        periode: 'Septembre',
+        icon: '🌱',
+        details: [
+            'Tournois multi-sports : football, basket, volley, handball',
+            'Journée d\'intégration et de convivialité',
+            'Ouvert à tous les niveaux, débutants bienvenus',
+            'Remise de prix et goodies'
+        ],
+        participants: '200+ étudiants'
     },
     {
         nom: 'Mille Sabords',
-        description: 'Raid urbain aquatique aux Minimes',
-        periode: 'Printemps'
+        description: 'Raid urbain aquatique unique aux Minimes - Épreuve emblématique rochelaise',
+        periode: 'Printemps',
+        icon: '🏴‍☠️',
+        details: [
+            'Parcours d\'obstacles urbains et nautiques',
+            'Épreuves en équipe dans le port des Minimes',
+            'Combinaison course à pied, kayak, et défis aquatiques',
+            'Ambiance festive garantie, costumes de pirates encouragés',
+            'Plus de 30 ans d\'histoire'
+        ],
+        participants: '150+ équipes'
     },
     {
         nom: 'Croisière de fin d\'année',
-        description: 'Navigation dans les pertuis rochelais',
-        periode: 'Juin'
+        description: 'Navigation exceptionnelle dans les pertuis rochelais - Activité unique en France métropolitaine',
+        periode: 'Juin',
+        icon: '⛵',
+        details: [
+            'Sortie en voilier dans l\'océan Atlantique',
+            'Découverte de Fort Boyard et des îles (Ré, Aix)',
+            'Encadrement par des moniteurs diplômés',
+            'Accessible aux débutants, initiation à la voile',
+            'Moment privilégié de cohésion entre étudiants',
+            'Apéritif en mer et pique-nique'
+        ],
+        participants: '100+ étudiants par session'
     },
     {
         nom: 'Les Nuits',
-        description: 'Nuit du volley, hand, badminton, basket, 3 raquettes',
-        periode: 'Toute l\'année'
+        description: 'Tournois nocturnes spectaculaires dans une ambiance électrique',
+        periode: 'Toute l\'année',
+        icon: '🌙',
+        details: [
+            'Nuit du Volley, du Hand, du Badminton, du Basket',
+            'Tournois en continu de 18h à minuit',
+            'Éclairage spécial, musique, ambiance festive',
+            'Mix étudiants/personnels/anciens',
+            'Buvette et restauration sur place'
+        ],
+        participants: '80-120 par nuit'
     },
     {
         nom: 'IUT Beach Tour',
-        description: 'Tournoi Beach Volley sur l\'Île de Ré',
-        periode: 'Été'
+        description: 'Tournoi Beach Volley sur les plages de l\'Île de Ré',
+        periode: 'Mai-Juin',
+        icon: '🏖️',
+        details: [
+            'Compétition inter-IUT sur sable',
+            'Cadre exceptionnel face à l\'océan',
+            'Tournoi par équipes mixtes',
+            'Journée complète : compétition + détente plage',
+            'Transport organisé depuis le campus'
+        ],
+        participants: '30+ équipes'
     },
     {
         nom: 'Challenge nautique',
-        description: 'Compétitions de voile',
-        periode: 'Printemps/Été'
+        description: 'Compétitions de voile régulières - Profitez de l\'océan toute l\'année',
+        periode: 'Printemps/Été',
+        icon: '🏆',
+        details: [
+            'Régates inter-universitaires',
+            'Formation continue en école de voile partenaire',
+            'Championnats universitaires de voile',
+            'Possibilité de passer des certifications (permis mer)',
+            'Matériel fourni : dériveurs, catamarans'
+        ],
+        participants: 'Variable'
     },
 ];
+
+export const SPORTS_MER_SPECIFICITY = {
+    titre: '🌊 La Rochelle : Seule ville universitaire de France métropolitaine avec des sports en mer intégrés',
+    description: 'Grâce à sa situation géographique exceptionnelle, La Rochelle est la seule université de France métropolitaine à proposer des activités nautiques océaniques dans le cadre du SUAPSE.',
+    avantages: [
+        'Accès direct à l\'océan Atlantique depuis le campus',
+        'Partenariats avec les écoles de voile locales',
+        'Matériel nautique fourni (voiliers, kayaks, planches)',
+        'Moniteurs diplômés d\'État',
+        'Conditions météo favorables (2100h de soleil/an)',
+        'Terrain de jeu unique : Fort Boyard, Île de Ré, Pertuis'
+    ],
+    activites: [
+        'Voile (dériveur, catamaran, planche à voile)',
+        'Surf et bodyboard',
+        'Aviron de mer',
+        'Kite-surf (initiation et perfectionnement)',
+        'Pirogue polynésienne (Va\'a)',
+        'Stand-up paddle'
+    ]
+};
 
 export const SUAPSE_INFO = {
     localisation: 'Gymnase universitaire de Bongraine, Avenue de la Rotonde, 17440 Aytré',
@@ -369,33 +447,97 @@ export const ATELIERS_ARTISTIQUES = [
 export const EVENEMENTS_CULTURELS: EvenementSportif[] = [
     {
         nom: 'Festival "Les Étudiants à l\'Affiche"',
-        description: '+25 ans d\'existence, restitutions des ateliers',
-        periode: 'Printemps'
+        description: 'LE rendez-vous culturel étudiant de l\'année - Plus de 25 ans de tradition',
+        periode: 'Printemps (Mai-Juin)',
+        icon: '🎭',
+        details: [
+            'Restitutions publiques de TOUS les ateliers artistiques de l\'année',
+            'Spectacles de théâtre, danse, concerts, expositions photos',
+            'Scène ouverte pour tous les artistes étudiants',
+            'Plusieurs soirées de programmation sur 2-3 semaines',
+            'Gratuit et ouvert à tous (étudiants, personnels, grand public)',
+            'Plus de 200 artistes étudiants sur scène',
+            'Moment fort de cohésion et de fierté pour la communauté étudiante'
+        ],
+        participants: '1000+ spectateurs'
     },
     {
-        nom: 'Ma Thèse en 180 secondes',
-        description: 'Concours de vulgarisation scientifique',
-        periode: 'Mars'
+        nom: 'Ma Thèse en 180 secondes (MT180)',
+        description: 'Concours national de vulgarisation scientifique - Épreuve d\'éloquence',
+        periode: 'Mars-Avril',
+        icon: '🎤',
+        details: [
+            'Doctorants présentent leur recherche en 3 minutes chrono',
+            'Finale locale puis régionale, possibilité d\'aller en finale nationale',
+            'Une seule diapositive autorisée, langage accessible au grand public',
+            'Jury mixte : scientifiques + grand public',
+            'Développe des compétences en communication scientifique',
+            'Événement festif et pédagogique',
+            'Retransmis en live'
+        ],
+        participants: '15-20 candidats'
     },
     {
         nom: 'Fête de la Science',
-        description: 'Thématique annuelle (ex: Intelligence(s))',
-        periode: 'Octobre'
+        description: 'Événement national avec thématique annuelle - Science pour tous',
+        periode: 'Octobre',
+        icon: '🔬',
+        details: [
+            'Village des sciences sur le campus',
+            'Ateliers interactifs, expériences ludiques, conférences',
+            'Thématique changeante (Intelligence(s), Climat, Biodiversité...)',
+            'Collaboration laboratoires L3i et MIA',
+            'Ouvert aux scolaires et au grand public',
+            'Les étudiants peuvent animer des stands',
+            'Découverte des métiers de la recherche'
+        ],
+        participants: '2000+ visiteurs'
     },
     {
         nom: 'Festival "Ici en Corée"',
-        description: 'Célébration de la culture coréenne',
-        periode: 'Variable'
+        description: 'Immersion totale dans la culture coréenne moderne et traditionnelle',
+        periode: 'Variable (Automne)',
+        icon: '🇰🇷',
+        details: [
+            'Projections de films coréens en VOST',
+            'Ateliers K-pop, calligraphie, cuisine coréenne',
+            'Conférences sur la société coréenne contemporaine',
+            'Stands gastronomiques (bibimbap, kimchi, tteokbokki)',
+            'Démonstrations d\'arts martiaux (Taekwondo)',
+            'Concert K-pop par des étudiants',
+            'Liens avec les partenariats universitaires en Corée du Sud'
+        ],
+        participants: '500+ personnes'
     },
     {
         nom: 'Ciné-Club étudiant',
-        description: 'Projections régulières',
-        periode: 'Toute l\'année'
+        description: 'Projections mensuelles suivies de débats cinéphiles',
+        periode: 'Toute l\'année',
+        icon: '🎬',
+        details: [
+            'Séances régulières à la Maison de l\'Étudiant (salle 500 places)',
+            'Programmation éclectique : classiques, films d\'auteur, documentaires',
+            'Débats animés après projection',
+            'Tarif préférentiel ou gratuit pour les étudiants',
+            'Parfois en présence de réalisateurs ou acteurs',
+            'Thématiques mensuelles (cinéma coréen, SF, écologie...)'
+        ],
+        participants: '50-150 par séance'
     },
     {
         nom: 'Rencontres LUDI',
-        description: 'Science et société',
-        periode: 'Variable'
+        description: 'Science et société : conférences-débats sur les enjeux contemporains',
+        periode: 'Variable (4-5 par an)',
+        icon: '💬',
+        details: [
+            'Format interactif : conférence courte + débat long',
+            'Thématiques variées : IA, climat, santé, numérique responsable',
+            'Intervenants experts (chercheurs, professionnels, associations)',
+            'Échanges entre sciences "dures" et sciences humaines',
+            'Ouvert à tous, gratuit',
+            'Buffet convivial après la rencontre'
+        ],
+        participants: '80-120 par rencontre'
     },
 ];
 
@@ -499,7 +641,145 @@ export const ENGAGEMENT_INFO = {
 };
 
 // ============================================================================
-// SANTÉ ET SERVICES
+// SANTÉ MENTALE ET ACCOMPAGNEMENT
+// ============================================================================
+export const SANTE_MENTALE_INFO = {
+    titre: '🧠 Santé mentale : Un enjeu majeur de la réussite universitaire',
+    contexteLicence: {
+        titre: 'La transition vers l\'autonomie : un défi pour tous',
+        description: 'La licence est une période de changements profonds qui peut s\'avérer difficile. L\'autonomie nouvellement acquise, si elle est libératrice, peut aussi être source de stress et d\'anxiété.',
+        defis: [
+            {
+                titre: 'Gestion de l\'autonomie',
+                description: 'Organisation du travail, gestion du temps, motivation personnelle',
+                icon: '📚'
+            },
+            {
+                titre: 'Éloignement familial',
+                description: 'Première expérience loin de chez soi, solitude, nostalgie',
+                icon: '🏠'
+            },
+            {
+                titre: 'Pression académique',
+                description: 'Volume de travail, examens, peur de l\'échec, doutes sur l\'orientation',
+                icon: '⚡'
+            },
+            {
+                titre: 'Précarité financière',
+                description: 'Budget serré, job étudiant, difficultés à se loger ou se nourrir',
+                icon: '💰'
+            },
+            {
+                titre: 'Isolement social',
+                description: 'Difficulté à créer de nouveaux liens, sentiment de ne pas appartenir',
+                icon: '😔'
+            }
+        ]
+    },
+    chiffres: [
+        { label: 'Des étudiants', value: '1/3', description: 'déclarent souffrir de solitude' },
+        { label: 'Des étudiants', value: '20%', description: 'présentent des symptômes dépressifs' },
+        { label: 'Des étudiants', value: '60%', description: 'se sentent stressés régulièrement' },
+    ],
+    message: 'Demander de l\'aide n\'est PAS un signe de faiblesse, mais une preuve de courage et de maturité. Les services sont là POUR vous, utilisez-les sans hésitation.'
+};
+
+export const ACCOMPAGNEMENT_PSY: ServiceInfo[] = [
+    {
+        name: 'Consultations psychologiques',
+        icon: '🧠',
+        description: 'Psychologues cliniciens disponibles sur le campus',
+        details: [
+            'Consultations GRATUITES et CONFIDENTIELLES',
+            '3 à 6 séances selon les besoins',
+            'Écoute bienveillante et sans jugement',
+            'Accompagnement pour stress, anxiété, dépression',
+            'Aide à la gestion des émotions',
+            'Prise de rendez-vous rapide (sous 1 semaine)'
+        ],
+        contact: '05 46 45 82 48',
+        horaires: 'Lun-Ven 9h-17h'
+    },
+    {
+        name: 'Plateforme Nightline',
+        icon: '🌙',
+        description: 'Service d\'écoute nocturne par et pour les étudiants',
+        details: [
+            'Disponible en soirée et la nuit',
+            'Écoute par des étudiants formés',
+            'Anonyme et confidentiel',
+            'Pour parler de tout : études, relations, mal-être',
+            'Pas de conseil, juste une oreille attentive'
+        ],
+        contact: 'nightline.fr'
+    },
+    {
+        name: 'Groupes de parole',
+        icon: '💬',
+        description: 'Ateliers collectifs thématiques',
+        details: [
+            'Gestion du stress et de l\'anxiété',
+            'Confiance en soi',
+            'Procrastination et motivation',
+            'Sommeil et équilibre de vie',
+            'Animés par des psychologues',
+            'Gratuit, sur inscription'
+        ],
+        horaires: 'Sessions mensuelles'
+    },
+    {
+        name: 'Numéros d\'urgence',
+        icon: '🆘',
+        description: 'En cas de détresse immédiate',
+        details: [
+            'Fil Santé Jeunes : 0 800 235 236 (gratuit, anonyme, 7j/7)',
+            'SOS Amitié : 09 72 39 40 50 (24h/24, 7j/7)',
+            '3114 : Numéro national de prévention du suicide (gratuit, 24h/24)',
+            'SAMU : 15 (urgence vitale)'
+        ]
+    },
+    {
+        name: 'Accompagnement à la réussite',
+        icon: '🎯',
+        description: 'Aide méthodologique et pédagogique',
+        details: [
+            'Ateliers "Apprendre à apprendre"',
+            'Gestion du temps et organisation',
+            'Préparation aux examens',
+            'Techniques de mémorisation',
+            'Lutte contre la procrastination',
+            'Tutorat par des étudiants de L3/Master'
+        ]
+    }
+];
+
+export const PREVENTION_INFO = {
+    titre: 'Actions de prévention',
+    actions: [
+        {
+            nom: 'Semaine de la Santé Mentale',
+            description: 'Événement annuel de sensibilisation et d\'information',
+            periode: 'Mars',
+            activites: ['Conférences', 'Ateliers bien-être', 'Stands associatifs', 'Sophrologie', 'Yoga gratuit']
+        },
+        {
+            nom: 'Permanences bien-être',
+            description: 'Ateliers réguliers sur le campus',
+            activites: ['Méditation pleine conscience', 'Relaxation', 'Sophrologie', 'Gestion du stress']
+        }
+    ],
+    conseils: [
+        'N\'attendez pas d\'être au bout du rouleau pour consulter',
+        'Parlez-en à vos proches, vos amis, votre famille',
+        'Maintenez un équilibre vie étudiante / vie personnelle',
+        'Pratiquez une activité sportive régulière (SUAPSE gratuit)',
+        'Gardez un rythme de sommeil régulier',
+        'Ne vous isolez pas : associations, BDE, activités culturelles'
+    ]
+};
+
+// ============================================================================
+// SANTÉ PHYSIQUE ET SERVICES
 // ============================================================================
 export const SERVICES_SANTE: ServiceInfo[] = [
     {
