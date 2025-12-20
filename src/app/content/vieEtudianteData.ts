@@ -443,9 +443,10 @@ export const TARIFS_SPORT = {
         description: 'Cotisation annuelle - Serviette fournie et obligatoire'
     },
     passportInfo: {
-        titre: 'Pass\'sport',
-        description: 'La plupart des autres activités sont gratuites grâce au Pass\'sport',
-        montantBoursier: 'Tarifs réduits pour les étudiants boursiers'
+        titre: 'Pass\'Sport',
+        montant: '70€',
+        description: 'Le Pass\'Sport est une aide financière de 70 € par jeune éligible pour couvrir tout ou partie des frais d\'inscription dans un club, association sportive ou salle de sport partenaire. Il prend la forme d\'une réduction immédiate lors de l\'inscription.',
+        objectif: 'Cette aide du ministère chargé des Sports s\'adresse aux enfants et aux jeunes qui rencontrent des obstacles à la pratique sportive – qu\'ils soient d\'ordre financier, social ou liés à un handicap. L\'objectif : leur permettre d\'accéder durablement à une activité physique encadrée, au sein d\'un environnement structurant, éducatif et sécurisé.'
     }
 };
 

@@ -623,11 +623,15 @@ function SportSection() {
 
         {/* Pass'sport info */}
         <div className="bg-green-900/20 rounded-lg p-4 border border-green-500/30">
-          <p className="text-green-300 font-medium">
-            ✓ <span className="font-bold">{TARIFS_SPORT.passportInfo.titre} :</span> {TARIFS_SPORT.passportInfo.description}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-bold text-green-300 text-lg">{TARIFS_SPORT.passportInfo.titre}</span>
+            <span className="bg-green-500 text-white px-2 py-0.5 rounded-full text-sm font-bold">{TARIFS_SPORT.passportInfo.montant}</span>
+          </div>
+          <p className="text-green-300">
+            {TARIFS_SPORT.passportInfo.description}
           </p>
-          <p className="text-sm text-green-400/70 mt-1">
-            {TARIFS_SPORT.passportInfo.montantBoursier}
+          <p className="text-sm text-green-400/70 mt-2">
+            {TARIFS_SPORT.passportInfo.objectif}
           </p>
         </div>
       </motion.div>
