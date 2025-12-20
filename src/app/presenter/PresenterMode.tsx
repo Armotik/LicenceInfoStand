@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore, UNIVERSES } from '../../stores/appStore';
 import { FormationUniverse } from './universes/FormationUniverse';
 import { VieEtudianteUniverse } from './universes/VieEtudianteUniverse';
+import { LaRochelleUniverse } from './universes/LaRochelleUniverse';
 import type { ThemeUniverse } from '../../types';
 import clsx from 'clsx';
 
@@ -126,7 +127,7 @@ function UniverseRenderer({ universe }: { universe: ThemeUniverse }) {
     case 'vie-etudiante':
       return <VieEtudianteUniverse />;
     case 'la-rochelle':
-      return <LaRochellePlaceholder />;
+      return <LaRochelleUniverse />;
     case 'systeme-universitaire':
       return <SystemeUniversitairePlaceholder />;
     case 'demos':
@@ -139,22 +140,6 @@ function UniverseRenderer({ universe }: { universe: ThemeUniverse }) {
 // ============================================
 // Placeholders pour les autres univers
 // ============================================
-
-function LaRochellePlaceholder() {
-  return (
-    <PlaceholderUniverse
-      icon="🌊"
-      title="La Rochelle"
-      color="#00BCD4"
-      items={[
-        { icon: '☀️', title: '2100h de soleil/an', desc: '1ère ville non-méditerranéenne' },
-        { icon: '🚌', title: 'Transports 100€/an', desc: 'Les moins chers de France' },
-        { icon: '🏠', title: 'Loyer ~570€', desc: 'vs 905€ à Paris' },
-        { icon: '🎭', title: 'Culture', desc: 'Francofolies, Pass Culture gratuit' },
-      ]}
-    />
-  );
-}
 
 function SystemeUniversitairePlaceholder() {
   return (
