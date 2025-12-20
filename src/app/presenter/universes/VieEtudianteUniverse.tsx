@@ -953,15 +953,38 @@ function AssociationsSection() {
         <h3 className="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">
           <span>🏆</span> Valorisation de l'engagement
         </h3>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
+        <div className="space-y-6">
+          <div className="bg-surface-light/50 rounded-xl p-5">
             <h4 className="font-bold text-text mb-2">{ENGAGEMENT_INFO.fdsie.nom}</h4>
-            <p className="text-sm text-text-muted mb-1">{ENGAGEMENT_INFO.fdsie.description}</p>
+            <p className="text-sm text-text-muted mb-3">{ENGAGEMENT_INFO.fdsie.description}</p>
             <Badge text={ENGAGEMENT_INFO.fdsie.frequence} icon="📅" color="#27AE60" />
+            {ENGAGEMENT_INFO.fdsie.criteres && (
+              <div className="mt-3">
+                <p className="text-xs font-bold text-text-muted mb-2">Critères d'éligibilité :</p>
+                <ul className="text-xs text-text-muted space-y-1">
+                  {ENGAGEMENT_INFO.fdsie.criteres.map((critere, idx) => (
+                    <li key={idx}>• {critere}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-          <div>
-            <h4 className="font-bold text-text mb-2">{ENGAGEMENT_INFO.bonus.nom}</h4>
-            <p className="text-sm text-text-muted">{ENGAGEMENT_INFO.bonus.description}</p>
+          <div className="bg-surface-light/50 rounded-xl p-5">
+            <h4 className="font-bold text-text mb-2">{ENGAGEMENT_INFO.b2e.nom}</h4>
+            <p className="text-sm text-text-muted mb-3">{ENGAGEMENT_INFO.b2e.description}</p>
+            {ENGAGEMENT_INFO.b2e.activitesEligibles && (
+              <div className="mt-3">
+                <p className="text-xs font-bold text-text-muted mb-2">Activités éligibles :</p>
+                <ul className="text-xs text-text-muted space-y-1">
+                  {ENGAGEMENT_INFO.b2e.activitesEligibles.map((activite, idx) => (
+                    <li key={idx}>✓ {activite}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {ENGAGEMENT_INFO.b2e.contact && (
+              <p className="text-xs text-green-400 mt-3">📧 Contact : {ENGAGEMENT_INFO.b2e.contact}</p>
+            )}
           </div>
         </div>
       </motion.div>
