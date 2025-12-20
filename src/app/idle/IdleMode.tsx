@@ -12,7 +12,27 @@ import type { CanvasContext, AnimationState, IdleEffect } from '../../types';
 
 function GlitchText({ text }: { text: string }) {
   const [glitchIndex, setGlitchIndex] = useState<number>(-1);
+  const [glitchChar, setGlitchChar] = useState<string>('');
   const [isGlitching, setIsGlitching] = useState(false);
+  const textRef = useRef<HTMLHeadingElement>(null);
+  const [charPositions, setCharPositions] = useState<{ left: number; width: number }[]>([]);
+
+  // Calculer les positions des caractères
+  useEffect(() => {
+    if (textRef.current) {
+      const spans = textRef.current.querySelectorAll('.char-span');
+      const positions: { left: number; width: number }[] = [];
+      spans.forEach((span) => {
+        const rect = span.getBoundingClientRect();
+        const parentRect = textRef.current!.getBoundingClientRect();
+        positions.push({
+          left: rect.left - parentRect.left,
+          width: rect.width,
+        });
+      });
+      setCharPositions(positions);
+    }
+  }, [text]);
 
   useEffect(() => {
     let timeoutId: number;
@@ -28,12 +48,14 @@ function GlitchText({ text }: { text: string }) {
         if (letters.length > 0) {
           const randomLetter = letters[Math.floor(Math.random() * letters.length)];
           setGlitchIndex(randomLetter.idx);
+          setGlitchChar(randomLetter.char);
           setIsGlitching(true);
 
-          // Le glitch dure 6000ms (6 secondes)
+          // Le glitch dure 3000ms
           glitchTimeoutId = window.setTimeout(() => {
             setIsGlitching(false);
             setGlitchIndex(-1);
+            setGlitchChar('');
             scheduleNextGlitch();
           }, 3000);
         } else {
@@ -51,118 +73,115 @@ function GlitchText({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <motion.h1
-      className="text-6xl md:text-8xl font-display font-bold mb-4 relative"
-      style={{
-        background: 'linear-gradient(90deg, #ffffff, #5DADE2, #2980B9, #5DADE2, #ffffff)',
-        backgroundSize: '200% auto',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
-      }}
-      animate={{
-        backgroundPosition: ['0% 50%', '200% 50%'],
-      }}
-      transition={{
-        duration: 3,
-        repeat: Infinity,
-        ease: "linear"
-      }}
-    >
-      {text.split('').map((char, index) => (
-        <span
-          key={index}
-          className="relative"
+    <div className="relative">
+      {/* Texte principal avec gradient animé */}
+      <motion.h1
+        ref={textRef}
+        className="text-6xl md:text-8xl font-display font-bold mb-4"
+        animate={{
+          backgroundPosition: ['0% 50%', '200% 50%'],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "linear"
+        }}
+        style={{
+          background: 'linear-gradient(90deg, #ffffff, #5DADE2, #2980B9, #5DADE2, #ffffff)',
+          backgroundSize: '200% auto',
+          WebkitBackgroundClip: 'text',
+          backgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        }}
+      >
+        {text.split('').map((char, index) => (
+          <span key={index} className="char-span">
+            {char === ' ' ? '\u00A0' : char}
+          </span>
+        ))}
+      </motion.h1>
+
+      {/* Effets glitch en superposition */}
+      {isGlitching && glitchIndex >= 0 && charPositions[glitchIndex] && (
+        <div
+          className="absolute top-0 pointer-events-none"
           style={{
-            display: char === ' ' ? 'inline' : 'inline-block',
+            left: charPositions[glitchIndex].left,
           }}
         >
-          {char === ' ' ? '\u00A0' : char}
+          {/* Clone rouge */}
+          <motion.span
+            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
+            style={{
+              color: '#ff0066',
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 25px #ff0066)',
+            }}
+            initial={{ opacity: 0, x: 0, y: 0 }}
+            animate={{
+              x: [-6, 6, -5, 5, -6, 4, -5, 3, -4, 2, -3, 0],
+              y: [0, -2, 2, -1, 1, -2, 1, -1, 2, -1, 1, 0],
+              opacity: [1, 0.8, 1, 0.7, 1, 0.8, 1, 0.7, 1, 0.8, 1, 1],
+            }}
+            transition={{
+              duration: 0.5,
+              repeat: 5,
+              ease: "linear",
+            }}
+          >
+            {glitchChar}
+          </motion.span>
 
-          {/* Effet glitch sur la lettre active */}
-          {isGlitching && glitchIndex === index && char !== ' ' && (
-            <>
-              {/* Clone rouge - plus visible */}
-              <motion.span
-                key={`glitch-red-${index}-${glitchIndex}`}
-                className="absolute top-0 left-0 pointer-events-none text-6xl md:text-8xl font-display font-bold"
-                style={{
-                  color: '#ff0066',
-                  mixBlendMode: 'screen',
-                  WebkitTextFillColor: '#ff0066',
-                  filter: 'drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 25px #ff0066)',
-                }}
-                initial={{ opacity: 0, x: 0, y: 0 }}
-                animate={{
-                  x: [-6, 6, -5, 5, -6, 4, -5, 3, -4, 2, -3, 0],
-                  y: [0, -2, 2, -1, 1, -2, 1, -1, 2, -1, 1, 0],
-                  opacity: [1, 0.8, 1, 0.7, 1, 0.8, 1, 0.7, 1, 0.8, 1, 1],
-                }}
-                transition={{
-                  duration: 0.5,
-                  repeat: 11,
-                  ease: "linear",
-                }}
-              >
-                {char}
-              </motion.span>
+          {/* Clone cyan */}
+          <motion.span
+            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
+            style={{
+              color: '#00ffff',
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 15px #00ffff) drop-shadow(0 0 25px #00ffff)',
+            }}
+            initial={{ opacity: 0, x: 0, y: 0 }}
+            animate={{
+              x: [6, -6, 5, -5, 6, -4, 5, -3, 4, -2, 3, 0],
+              y: [0, 2, -2, 1, -1, 2, -1, 1, -2, 1, -1, 0],
+              opacity: [1, 0.8, 1, 0.7, 1, 0.8, 1, 0.7, 1, 0.8, 1, 1],
+            }}
+            transition={{
+              duration: 0.5,
+              repeat: 5,
+              ease: "linear",
+              delay: 0.05,
+            }}
+          >
+            {glitchChar}
+          </motion.span>
 
-              {/* Clone cyan - plus visible */}
-              <motion.span
-                key={`glitch-cyan-${index}-${glitchIndex}`}
-                className="absolute top-0 left-0 pointer-events-none text-6xl md:text-8xl font-display font-bold"
-                style={{
-                  color: '#00ffff',
-                  mixBlendMode: 'screen',
-                  WebkitTextFillColor: '#00ffff',
-                  filter: 'drop-shadow(0 0 15px #00ffff) drop-shadow(0 0 25px #00ffff)',
-                }}
-                initial={{ opacity: 0, x: 0, y: 0 }}
-                animate={{
-                  x: [6, -6, 5, -5, 6, -4, 5, -3, 4, -2, 3, 0],
-                  y: [0, 2, -2, 1, -1, 2, -1, 1, -2, 1, -1, 0],
-                  opacity: [1, 0.8, 1, 0.7, 1, 0.8, 1, 0.7, 1, 0.8, 1, 1],
-                }}
-                transition={{
-                  duration: 0.5,
-                  repeat: 11,
-                  ease: "linear",
-                  delay: 0.05,
-                }}
-              >
-                {char}
-              </motion.span>
-
-              {/* Clone jaune/vert pour un effet RGB complet - NOUVEAU */}
-              <motion.span
-                key={`glitch-yellow-${index}-${glitchIndex}`}
-                className="absolute top-0 left-0 pointer-events-none text-6xl md:text-8xl font-display font-bold"
-                style={{
-                  color: '#ffff00',
-                  mixBlendMode: 'screen',
-                  WebkitTextFillColor: '#ffff00',
-                  filter: 'drop-shadow(0 0 12px #ffff00) drop-shadow(0 0 20px #ffff00)',
-                }}
-                initial={{ opacity: 0, x: 0, y: 0 }}
-                animate={{
-                  x: [0, 4, -4, 3, -3, 4, -3, 2, -2, 3, -1, 0],
-                  y: [3, -3, 2, -2, 1, -1, 2, -2, 1, -1, 1, 0],
-                  opacity: [0.9, 0.7, 1, 0.6, 0.9, 0.7, 1, 0.6, 0.9, 0.7, 1, 0.9],
-                }}
-                transition={{
-                  duration: 0.5,
-                  repeat: 11,
-                  ease: "linear",
-                  delay: 0.025,
-                }}
-              >
-                {char}
-              </motion.span>
-            </>
-          )}
-        </span>
-      ))}
-    </motion.h1>
+          {/* Clone jaune */}
+          <motion.span
+            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
+            style={{
+              color: '#ffff00',
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 12px #ffff00) drop-shadow(0 0 20px #ffff00)',
+            }}
+            initial={{ opacity: 0, x: 0, y: 0 }}
+            animate={{
+              x: [0, 4, -4, 3, -3, 4, -3, 2, -2, 3, -1, 0],
+              y: [3, -3, 2, -2, 1, -1, 2, -2, 1, -1, 1, 0],
+              opacity: [0.9, 0.7, 1, 0.6, 0.9, 0.7, 1, 0.6, 0.9, 0.7, 1, 0.9],
+            }}
+            transition={{
+              duration: 0.5,
+              repeat: 5,
+              ease: "linear",
+              delay: 0.025,
+            }}
+          >
+            {glitchChar}
+          </motion.span>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1545,49 +1564,57 @@ const EUROPEAN_COUNTRIES = [
     'TUR', 'RUS', 'GEO', 'ARM', 'AZE', 'MLT'
 ];
 
-// Coordonnées des universités EU-CONEXUS
+// Coordonnées des universités EU-CONEXUS avec informations détaillées
 const UNIVERSITIES = [
-    { name: 'La Rochelle Université', lat: 46.16, lon: -1.15, country: 'FRA' },
-    { name: 'Universidad Católica de Valencia', lat: 39.47, lon: -0.38, country: 'ESP' },
-    { name: 'Università del Salento', lat: 40.35, lon: 18.17, country: 'ITA' },
-    { name: 'Technical University Bucharest', lat: 44.44, lon: 26.05, country: 'ROU' },
-    { name: 'Klaipėda University', lat: 55.71, lon: 21.13, country: 'LTU' },
-    { name: 'Agricultural University of Athens', lat: 37.98, lon: 23.73, country: 'GRC' },
-    { name: 'University of Zadar', lat: 44.12, lon: 15.23, country: 'HRV' },
-    { name: 'XAMK', lat: 60.87, lon: 26.70, country: 'FIN' },
-    { name: 'Frederick University', lat: 35.17, lon: 33.36, country: 'CYP' },
+    { name: 'La Rochelle Université', shortName: 'La Rochelle', lat: 46.16, lon: -1.15, country: 'FRA', flag: '🇫🇷' },
+    { name: 'Universidad Católica de Valencia', shortName: 'Valencia', lat: 39.47, lon: -0.38, country: 'ESP', flag: '🇪🇸' },
+    { name: 'Università del Salento', shortName: 'Lecce', lat: 40.35, lon: 18.17, country: 'ITA', flag: '🇮🇹' },
+    { name: 'Technical University Bucharest', shortName: 'Bucarest', lat: 44.44, lon: 26.05, country: 'ROU', flag: '🇷🇴' },
+    { name: 'Klaipėda University', shortName: 'Klaipėda', lat: 55.71, lon: 21.13, country: 'LTU', flag: '🇱🇹' },
+    { name: 'Agricultural University of Athens', shortName: 'Athènes', lat: 37.98, lon: 23.73, country: 'GRC', flag: '🇬🇷' },
+    { name: 'University of Zadar', shortName: 'Zadar', lat: 44.12, lon: 15.23, country: 'HRV', flag: '🇭🇷' },
+    { name: 'XAMK', shortName: 'Kouvola', lat: 60.87, lon: 26.70, country: 'FIN', flag: '🇫🇮' },
+    { name: 'Frederick University', shortName: 'Nicosie', lat: 35.17, lon: 33.36, country: 'CYP', flag: '🇨🇾' },
 ];
 
 const LA_ROCHELLE_INDEX = 0;
-const GLOBE_RADIUS = 1.2;
 
-// Couleurs
+// Configuration pour la projection 2D centrée sur La Rochelle
+const LA_ROCHELLE_LAT = 46.16;
+const LA_ROCHELLE_LON = -1.15;
+const MAP_SCALE = 0.04; // Échelle de la carte (degrés vers unités 3D)
+
+// Couleurs améliorées pour meilleure visibilité
 const COLORS = {
     france: {
         fill: new THREE.Color('#E74C3C'),
-        fillOpacity: 0.5,
-        border: new THREE.Color('#E74C3C'),
+        fillOpacity: 0.6,
+        border: new THREE.Color('#FFFFFF'), // Blanc pour bien voir les frontières
         borderOpacity: 1.0,
     },
     partner: {
         fill: new THREE.Color('#5DADE2'),
-        fillOpacity: 0.4,
-        border: new THREE.Color('#5DADE2'),
-        borderOpacity: 0.9,
+        fillOpacity: 0.5,
+        border: new THREE.Color('#85C1E9'),
+        borderOpacity: 1.0,
     },
     background: {
         fill: new THREE.Color('#1A2942'),
-        fillOpacity: 0.2,
-        border: new THREE.Color('#2C3E50'),
-        borderOpacity: 0.3,
+        fillOpacity: 0.15,
+        border: new THREE.Color('#34495E'),
+        borderOpacity: 0.4,
     },
     university: {
         laRochelle: new THREE.Color('#E74C3C'),
         partner: new THREE.Color('#5DADE2'),
     },
     dataPacket: {
-        outgoing: new THREE.Color('#E74C3C'),
+        outgoing: new THREE.Color('#FF6B6B'),
         incoming: new THREE.Color('#5DADE2'),
+    },
+    arc: {
+        active: new THREE.Color('#5DADE2'),
+        pulse: new THREE.Color('#85C1E9'),
     }
 };
 
@@ -1603,6 +1630,7 @@ interface DataPacket {
     speed: number;
     curve: THREE.CubicBezierCurve3;
     mesh: THREE.Mesh;
+    glowMesh?: THREE.Mesh;
     isOutgoing: boolean;
 }
 
@@ -1611,25 +1639,26 @@ interface UniversityPoint {
     mesh: THREE.Mesh;
     glow: THREE.Mesh;
     ring?: THREE.Mesh;
+    pulseRing?: THREE.Mesh;
+    arcLine?: THREE.Line;
 }
 
 // ============================================
 // FONCTIONS UTILITAIRES
 // ============================================
 
-function latLonToVector3(lat: number, lon: number, radius: number): THREE.Vector3 {
-    const phi = (90 - lat) * (Math.PI / 180);
-    const theta = (lon + 180) * (Math.PI / 180);
-
-    return new THREE.Vector3(
-        -radius * Math.sin(phi) * Math.cos(theta),
-        radius * Math.cos(phi),
-        radius * Math.sin(phi) * Math.sin(theta)
-    );
+// Convertit lat/lon en coordonnées 2D centrées sur La Rochelle
+// X = longitude (Est à droite, Ouest à gauche)
+// Y = latitude (Nord en haut, Sud en bas)
+// Z = 0 (plan 2D)
+function latLonToVector3(lat: number, lon: number): THREE.Vector3 {
+    const x = (lon - LA_ROCHELLE_LON) * MAP_SCALE;
+    const y = (lat - LA_ROCHELLE_LAT) * MAP_SCALE;
+    return new THREE.Vector3(x, y, 0);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function createCountryGeometry(coordinates: any[], radius: number): THREE.BufferGeometry {
+function createCountryGeometry(coordinates: any[]): THREE.BufferGeometry {
     const positions: number[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1640,8 +1669,8 @@ function createCountryGeometry(coordinates: any[], radius: number): THREE.Buffer
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const [lon2, lat2] = coords[i + 1] as any[];
 
-            const v1 = latLonToVector3(lat1, lon1, radius);
-            const v2 = latLonToVector3(lat2, lon2, radius);
+            const v1 = latLonToVector3(lat1, lon1);
+            const v2 = latLonToVector3(lat2, lon2);
 
             positions.push(v1.x, v1.y, v1.z);
             positions.push(v2.x, v2.y, v2.z);
@@ -1672,12 +1701,18 @@ function createCountryGeometry(coordinates: any[], radius: number): THREE.Buffer
     return geometry;
 }
 
-function createArcCurve(from: THREE.Vector3, to: THREE.Vector3, radius: number): THREE.CubicBezierCurve3 {
+function createArcCurve(from: THREE.Vector3, to: THREE.Vector3): THREE.CubicBezierCurve3 {
+    // Pour la projection 2D, on crée un arc qui s'élève vers l'avant (axe Z)
+    const distance = from.distanceTo(to);
+    const arcHeight = distance * 0.3; // L'arc s'élève proportionnellement à la distance
+    
     const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
-    mid.normalize().multiplyScalar(radius * 1.4); // Arc s'élève au-dessus du globe
+    mid.z = arcHeight; // Arc vers l'avant pour la visibilité
 
     const control1 = new THREE.Vector3().lerpVectors(from, mid, 0.33);
+    control1.z = arcHeight * 0.6;
     const control2 = new THREE.Vector3().lerpVectors(mid, to, 0.67);
+    control2.z = arcHeight * 0.6;
 
     return new THREE.CubicBezierCurve3(from, control1, control2, to);
 }
@@ -1720,9 +1755,9 @@ export function GlobeEffect() {
         const height = containerRef.current.clientHeight;
 
         const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        // Position de la caméra optimisée pour zoomer sur La Rochelle
-        camera.position.set(0, 0, 2); // Zoom: z réduit pour mieux centrer sur La Rochelle
-        camera.lookAt(0, 0, 0); // Point de visée au centre pour centrer sur La Rochelle
+        // Position de la caméra optimisée pour zoomer sur l'Europe avec La Rochelle au centre
+        camera.position.set(0, 0, 2.8); // Distance ajustée pour voir toute l'Europe
+        camera.lookAt(0, 0, 0);
         cameraRef.current = camera;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -1740,38 +1775,21 @@ export function GlobeEffect() {
         scene.add(directionalLight);
 
         // ============================================
-        // 2. CRÉER LE GLOBE
+        // 2. CRÉER LE GROUPE DE LA CARTE 2D
         // ============================================
         const globeGroup = new THREE.Group();
         globeGroupRef.current = globeGroup;
 
-        // Globe wireframe (très subtil)
-        const sphereGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64);
-        const sphereMaterial = new THREE.MeshBasicMaterial({
-            color: 0x1A2942,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.1,
-        });
-        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        globeGroup.add(sphereMesh);
-
-        // Orientation du globe pour centrer sur La Rochelle (lat: 46.16°, lon: -1.15°)
-        const laRochelleLat = 46.16;
-        const laRochelleLon = -1.15;
-        const laRochellePos = latLonToVector3(laRochelleLat, laRochelleLon, GLOBE_RADIUS);
-
-        // Calculer l'angle de rotation nécessaire
-        const targetVector = new THREE.Vector3(0, 0, 1); // Axe Z
-        const rotationAxis = new THREE.Vector3().crossVectors(laRochellePos, targetVector).normalize();
-        const rotationAngle = Math.acos(laRochellePos.normalize().dot(targetVector));
-
-        // Appliquer la rotation au groupe du globe
-        globeGroup.rotateOnAxis(rotationAxis, rotationAngle);
-
-
+        // Pas de sphère - on utilise une projection 2D plate
+        // La Rochelle sera au centre (0, 0, 0)
 
         scene.add(globeGroup);
+
+        // Ajouter une grille de fond subtile pour montrer les axes
+        const gridHelper = new THREE.GridHelper(4, 20, 0x1A2942, 0x0F1A2A);
+        gridHelper.rotation.x = Math.PI / 2; // Tourner pour être dans le plan XY
+        gridHelper.position.z = -0.01; // Légèrement derrière la carte
+        scene.add(gridHelper);
 
         // ============================================
         // 3. CHARGER ET AFFICHER LES PAYS
@@ -1816,6 +1834,9 @@ export function GlobeEffect() {
 
                 const displayedCountries = { france: 0, partners: 0, background: 0, skipped: 0 };
 
+                // Stocker la France pour l'afficher en dernier (au-dessus des autres)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                let franceFeature: any = null;
 
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 features.forEach((country: any) => {
@@ -1831,6 +1852,8 @@ export function GlobeEffect() {
                     if (countryCode === MAIN_COUNTRY) {
                         style = 'france';
                         displayedCountries.france++;
+                        franceFeature = country; // Stocker pour afficher en dernier
+                        return; // Ne pas afficher maintenant
                     } else if (PARTNER_COUNTRIES.includes(countryCode)) {
                         style = 'partner';
                         displayedCountries.partners++;
@@ -1846,26 +1869,36 @@ export function GlobeEffect() {
                     }
                 });
 
+                // Afficher la France en dernier pour qu'elle soit au-dessus
+                if (franceFeature) {
+                    createCountryMesh(franceFeature, 'france', globeGroup);
+                    console.log('France affichée avec succès');
+                } else {
+                    console.warn('France non trouvée dans les données! Codes disponibles:', 
+                        features.slice(0, 10).map((f: any) => f.properties.ISO_A3 || f.properties.ADM0_A3));
+                }
+
 
                 // ============================================
                 // 4. AJOUTER LES POINTS DES UNIVERSITÉS
                 // ============================================
                 UNIVERSITIES.forEach((uni, index) => {
-                    const position = latLonToVector3(uni.lat, uni.lon, GLOBE_RADIUS);
+                    const position = latLonToVector3(uni.lat, uni.lon);
                     const isLaRochelle = index === LA_ROCHELLE_INDEX;
 
-                    // Point principal
-                    const radius = isLaRochelle ? 0.04 : 0.025;
-                    const geometry = new THREE.SphereGeometry(radius, 16, 16);
+                    // Point principal - taille réduite pour La Rochelle
+                    const pointRadius = isLaRochelle ? 0.025 : 0.02;
+                    const geometry = new THREE.CircleGeometry(pointRadius, 32);
                     const material = new THREE.MeshBasicMaterial({
                         color: isLaRochelle ? COLORS.university.laRochelle : COLORS.university.partner,
                     });
                     const mesh = new THREE.Mesh(geometry, material);
                     mesh.position.copy(position);
+                    mesh.position.z = 0.01; // Légèrement devant la carte
                     globeGroup.add(mesh);
 
-                    // Glow
-                    const glowGeometry = new THREE.SphereGeometry(radius * 2, 16, 16);
+                    // Glow plus subtil
+                    const glowGeometry = new THREE.CircleGeometry(pointRadius * 2, 32);
                     const glowMaterial = new THREE.MeshBasicMaterial({
                         color: isLaRochelle ? COLORS.university.laRochelle : COLORS.university.partner,
                         transparent: true,
@@ -1873,13 +1906,15 @@ export function GlobeEffect() {
                     });
                     const glow = new THREE.Mesh(glowGeometry, glowMaterial);
                     glow.position.copy(position);
+                    glow.position.z = 0.005;
                     globeGroup.add(glow);
 
                     const universityPoint: UniversityPoint = { position, mesh, glow };
 
-                    // Anneau pour La Rochelle
+                    // Anneaux pour La Rochelle (effet "hub central") - taille réduite
                     if (isLaRochelle) {
-                        const ringGeometry = new THREE.RingGeometry(radius * 1.5, radius * 2, 32);
+                        // Anneau intérieur
+                        const ringGeometry = new THREE.RingGeometry(pointRadius * 1.8, pointRadius * 2.2, 32);
                         const ringMaterial = new THREE.MeshBasicMaterial({
                             color: COLORS.university.laRochelle,
                             transparent: true,
@@ -1888,34 +1923,62 @@ export function GlobeEffect() {
                         });
                         const ring = new THREE.Mesh(ringGeometry, ringMaterial);
                         ring.position.copy(position);
-                        ring.lookAt(0, 0, 0);
+                        ring.position.z = 0.02;
                         globeGroup.add(ring);
                         universityPoint.ring = ring;
+
+                        // Anneau extérieur pulsant - plus petit
+                        const pulseRingGeometry = new THREE.RingGeometry(pointRadius * 2.5, pointRadius * 2.8, 32);
+                        const pulseRingMaterial = new THREE.MeshBasicMaterial({
+                            color: COLORS.university.laRochelle,
+                            transparent: true,
+                            opacity: 0.3,
+                            side: THREE.DoubleSide,
+                        });
+                        const pulseRing = new THREE.Mesh(pulseRingGeometry, pulseRingMaterial);
+                        pulseRing.position.copy(position);
+                        pulseRing.position.z = 0.015;
+                        globeGroup.add(pulseRing);
+                        universityPoint.pulseRing = pulseRing;
                     }
 
                     universityPointsRef.current.push(universityPoint);
                 });
 
                 // ============================================
-                // 5. CRÉER LES ARCS DE CONNEXION
+                // 5. CRÉER LES ARCS DE CONNEXION (plus visibles)
                 // ============================================
                 const laRochellePos = universityPointsRef.current[LA_ROCHELLE_INDEX].position;
 
                 universityPointsRef.current.forEach((uni, index) => {
                     if (index === LA_ROCHELLE_INDEX) return;
 
-                    const curve = createArcCurve(laRochellePos, uni.position, GLOBE_RADIUS);
-                    const points = curve.getPoints(50);
+                    const curve = createArcCurve(laRochellePos, uni.position);
+                    const points = curve.getPoints(80); // Plus de points pour un arc plus lisse
                     const arcGeometry = new THREE.BufferGeometry().setFromPoints(points);
 
+                    // Arc principal plus visible
                     const arcMaterial = new THREE.LineBasicMaterial({
-                        color: 0x5DADE2,
+                        color: COLORS.arc.active,
                         transparent: true,
-                        opacity: 0.3,
+                        opacity: 0.5,
                     });
 
                     const arcLine = new THREE.Line(arcGeometry, arcMaterial);
                     globeGroup.add(arcLine);
+                    
+                    // Stocker la référence de l'arc pour l'animation
+                    uni.arcLine = arcLine;
+
+                    // Arc de glow (plus épais visuellement via un tube)
+                    const tubeGeometry = new THREE.TubeGeometry(curve, 64, 0.003, 8, false);
+                    const tubeMaterial = new THREE.MeshBasicMaterial({
+                        color: COLORS.arc.pulse,
+                        transparent: true,
+                        opacity: 0.2,
+                    });
+                    const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+                    globeGroup.add(tubeMesh);
                 });
 
             } catch (error) {
@@ -1936,23 +1999,35 @@ export function GlobeEffect() {
 
             const from = universityPointsRef.current[fromIndex].position;
             const to = universityPointsRef.current[toIndex].position;
-            const curve = createArcCurve(from, to, GLOBE_RADIUS);
+            const curve = createArcCurve(from, to);
 
-            const geometry = new THREE.SphereGeometry(0.015, 8, 8);
+            // Particule principale plus grande et lumineuse (cercle 2D)
+            const geometry = new THREE.CircleGeometry(0.02, 16);
             const material = new THREE.MeshBasicMaterial({
                 color: isOutgoing ? COLORS.dataPacket.outgoing : COLORS.dataPacket.incoming,
             });
             const mesh = new THREE.Mesh(geometry, material);
             globeGroup.add(mesh);
 
+            // Glow autour de la particule
+            const glowGeometry = new THREE.CircleGeometry(0.035, 16);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: isOutgoing ? COLORS.dataPacket.outgoing : COLORS.dataPacket.incoming,
+                transparent: true,
+                opacity: 0.4,
+            });
+            const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+            globeGroup.add(glowMesh);
+
             const packet: DataPacket = {
                 id: packetIdCounterRef.current++,
                 fromIndex,
                 toIndex,
                 progress: 0,
-                speed: 0.005 + Math.random() * 0.005,
+                speed: 0.004 + Math.random() * 0.004,
                 curve,
                 mesh,
+                glowMesh,
                 isOutgoing,
             };
 
@@ -1963,7 +2038,7 @@ export function GlobeEffect() {
         // 7. ANIMATION LOOP
         // ============================================
         let lastPacketTime = 0;
-        const PACKET_INTERVAL = 800; // Créer un nouveau paquet toutes les 800ms
+        const PACKET_INTERVAL = 600; // Créer un nouveau paquet toutes les 600ms (plus fréquent)
 
         const animate = (time: number) => {
             animationFrameRef.current = requestAnimationFrame(animate);
@@ -1989,29 +2064,54 @@ export function GlobeEffect() {
                 if (packet.progress <= 1) {
                     const point = packet.curve.getPoint(packet.progress);
                     packet.mesh.position.copy(point);
+                    if (packet.glowMesh) {
+                        packet.glowMesh.position.copy(point);
+                    }
                     return true;
                 } else {
                     // Paquet arrivé à destination
                     globeGroup.remove(packet.mesh);
                     packet.mesh.geometry.dispose();
                     (packet.mesh.material as THREE.Material).dispose();
+                    if (packet.glowMesh) {
+                        globeGroup.remove(packet.glowMesh);
+                        packet.glowMesh.geometry.dispose();
+                        (packet.glowMesh.material as THREE.Material).dispose();
+                    }
                     return false;
                 }
             });
 
             // Animation des points d'universités (pulse)
-            const pulseValue = Math.sin(time * 0.002) * 0.15 + 0.85;
+            const pulseValue = Math.sin(time * 0.002) * 0.2 + 0.8;
+            const pulseRingValue = Math.sin(time * 0.001) * 0.3 + 1.2;
             universityPointsRef.current.forEach((uni, index) => {
                 if (index === LA_ROCHELLE_INDEX) {
                     uni.mesh.scale.setScalar(pulseValue);
-                    uni.glow.scale.setScalar(pulseValue);
+                    uni.glow.scale.setScalar(pulseValue * 1.1);
                     if (uni.ring) {
                         uni.ring.scale.setScalar(pulseValue);
+                        // Faire tourner l'anneau
+                        uni.ring.rotation.z += 0.005;
+                    }
+                    if (uni.pulseRing) {
+                        uni.pulseRing.scale.setScalar(pulseRingValue);
+                        uni.pulseRing.rotation.z -= 0.003;
+                        // Faire varier l'opacité
+                        (uni.pulseRing.material as THREE.MeshBasicMaterial).opacity = 0.3 + Math.sin(time * 0.002) * 0.15;
                     }
                 } else {
-                    const smallPulse = Math.sin(time * 0.003 + index) * 0.1 + 0.9;
+                    const smallPulse = Math.sin(time * 0.003 + index) * 0.15 + 0.85;
                     uni.mesh.scale.setScalar(smallPulse);
-                    uni.glow.scale.setScalar(smallPulse);
+                    uni.glow.scale.setScalar(smallPulse * 1.1);
+                }
+            });
+
+            // Animation subtile des arcs (opacité pulsante)
+            universityPointsRef.current.forEach((uni, index) => {
+                if (index !== LA_ROCHELLE_INDEX && uni.arcLine) {
+                    const arcPulse = Math.sin(time * 0.001 + index * 0.5) * 0.15 + 0.45;
+                    (uni.arcLine.material as THREE.LineBasicMaterial).opacity = arcPulse;
                 }
             });
 
@@ -2050,6 +2150,11 @@ export function GlobeEffect() {
             dataPacketsRef.current.forEach((packet) => {
                 if (globeGroup) {
                     globeGroup.remove(packet.mesh);
+                    if (packet.glowMesh) {
+                        globeGroup.remove(packet.glowMesh);
+                        packet.glowMesh.geometry.dispose();
+                        (packet.glowMesh.material as THREE.Material).dispose();
+                    }
                 }
                 packet.mesh.geometry.dispose();
                 (packet.mesh.material as THREE.Material).dispose();
@@ -2084,22 +2189,67 @@ function createCountryMesh(
     const coordinates = country.geometry.coordinates as any[];
     const styleConfig = COLORS[style];
 
-    // Créer les lignes (contours)
-    const geometry = createCountryGeometry(coordinates, GLOBE_RADIUS);
+    // Créer les lignes (contours) - sans GLOBE_RADIUS pour la projection 2D
+    const geometry = createCountryGeometry(coordinates);
+
+    // Pour la France, créer plusieurs lignes superposées pour un effet plus épais et visible
+    if (style === 'france') {
+        // Glow externe large (rouge diffus)
+        const glow3Material = new THREE.LineBasicMaterial({
+            color: new THREE.Color('#FF0000'),
+            transparent: true,
+            opacity: 0.15,
+        });
+        const glow3Lines = new THREE.LineSegments(geometry.clone(), glow3Material);
+        glow3Lines.position.z = 0.003;
+        group.add(glow3Lines);
+
+        // Glow moyen
+        const glow2Material = new THREE.LineBasicMaterial({
+            color: new THREE.Color('#FF3333'),
+            transparent: true,
+            opacity: 0.25,
+        });
+        const glow2Lines = new THREE.LineSegments(geometry.clone(), glow2Material);
+        glow2Lines.position.z = 0.004;
+        group.add(glow2Lines);
+
+        // Ligne de glow proche
+        const glowMaterial = new THREE.LineBasicMaterial({
+            color: new THREE.Color('#FF6666'),
+            transparent: true,
+            opacity: 0.4,
+        });
+        const glowLines = new THREE.LineSegments(geometry.clone(), glowMaterial);
+        glowLines.position.z = 0.005;
+        group.add(glowLines);
+
+        // Ligne principale France - blanc brillant au-dessus de tout
+        const franceMaterial = new THREE.LineBasicMaterial({
+            color: new THREE.Color('#FFFFFF'),
+            transparent: false,
+        });
+        const franceLines = new THREE.LineSegments(geometry.clone(), franceMaterial);
+        franceLines.position.z = 0.006; // Au-dessus de tout
+        group.add(franceLines);
+        
+        return; // Ne pas ajouter la ligne standard
+    }
 
     const material = new THREE.LineBasicMaterial({
         color: styleConfig.border,
         transparent: true,
-        opacity: style === 'france' ? 1.0 : style === 'partner' ? 0.9 : 0.5, // Augmenter l'opacité
-        // linewidth n'est PAS supporté dans WebGL!
+        opacity: style === 'partner' ? 0.9 : 0.5,
     });
 
     const lines = new THREE.LineSegments(geometry, material);
+    // Les autres pays sont légèrement derrière
+    lines.position.z = style === 'partner' ? 0.001 : 0;
     group.add(lines);
 
 
     // Animation pulse pour les pays partenaires
-    if (style === 'france' || style === 'partner') {
+    if (style === 'partner') {
         lines.userData.pulseSpeed = Math.random() * 0.001 + 0.001;
         lines.userData.baseOpacity = styleConfig.borderOpacity;
     }

@@ -1445,45 +1445,65 @@ export const PROGRAM_BY_YEAR: YearProgram[] = [
 
 // ============================================================================
 // INFORMATIONS CMI & ÉCOSYSTÈME RECHERCHE
+// Données issues du Rapport Stratégique sur l'Écosystème Recherche-Formation
+// de la Licence Informatique à La Rochelle Université (21 décembre 2025)
 // ============================================================================
 
 // ============================================
-// Institut LUDI - Signature Recherche
+// Institut LUDI - Matrice de la Stratégie Scientifique
 // ============================================
 export const INSTITUT_LUDI = {
     nom: 'LUDI - Littoral Urbain Durable Intelligent',
-    description: 'Signature de recherche unique de La Rochelle Université, matrice d\'une stratégie scientifique intégrée autour des enjeux du littoral.',
-    vision: 'Transformer le campus en laboratoire à ciel ouvert où l\'informatique devient un levier transversal aux transitions énergétique, environnementale et numérique.',
+    description: 'Signature de recherche unique de La Rochelle Université. L\'Institut LUDI se positionne comme une réponse systémique aux défis de l\'anthropisation des zones côtières.',
+    vision: 'Transformer le campus en laboratoire à ciel ouvert où l\'informatique n\'est plus une fin en soi, mais un levier transversal indispensable aux transitions énergétique, environnementale et numérique.',
 
     genese: {
-        titre: 'Une Spécialisation Stratégique',
-        contexte: 'Face aux défis globaux (changement climatique, montée des eaux, densification urbaine), l\'établissement a fait le pari de l\'interdisciplinarité radicale.',
+        titre: 'Genèse d\'un Modèle de Spécialisation',
+        contexte: 'Face à la complexité croissante des enjeux globaux — changement climatique, montée des eaux, densification urbaine, transition énergétique — l\'établissement a fait le pari de l\'interdisciplinarité radicale.',
         approche: 'Décloisonnement des savoirs : informaticiens, géographes, biologistes, juristes et mathématiciens collaborent autour d\'objets de recherche communs.',
-        impact: 'Le numérique enseigné comme outil de compréhension et d\'action sur le monde réel : Smart City, gestion des ressources, résilience des territoires.'
+        impact: 'Le numérique enseigné comme outil de compréhension et d\'action sur le monde réel : Smart City, gestion des ressources, résilience des territoires.',
+        territoires: 'Les territoires littoraux, interfaces fragiles entre la terre et l\'océan, concentrent une part majeure de la population mondiale et des activités économiques, tout en étant en première ligne face aux risques environnementaux.'
     },
 
     continuum: {
-        titre: 'Formation-Recherche-Innovation',
-        principe: 'Abolition des frontières entre pédagogie et recherche : formation "par la recherche et pour la recherche"',
+        titre: 'Le Continuum "Formation-Recherche-Innovation"',
+        principe: 'Abolition des frontières traditionnelles entre pédagogie et recherche : formation "par la recherche et pour la recherche".',
+        philosophie: 'La confrontation précoce des étudiants aux méthodes et questionnements de la recherche scientifique est le meilleur vecteur d\'acquisition de compétences durables et adaptables.',
         manifestations: [
-            'Enseignants-chercheurs injectant en temps réel leurs résultats dans les cours',
-            'Smart Rooms : espaces d\'apprentissage connectés et collaboratifs',
-            'Reproduction des conditions de travail R&D en salle de cours',
-            'Confrontation précoce aux méthodes scientifiques (dès la L1)'
+            'Enseignants-chercheurs injectant en temps réel les résultats de leurs travaux dans les contenus pédagogiques',
+            'Smart Rooms : espaces d\'apprentissage connectés transformant les salles de cours en lieux d\'expérimentation technologique',
+            'Reproduction des conditions de travail d\'une équipe de recherche ou d\'un département R&D',
+            'L\'étudiant y est acteur de sa formation, amené à résoudre des problèmes complexes par une démarche d\'investigation scientifique'
+        ],
+        exemples: [
+            'Un cours de traitement de l\'image en L3 s\'appuie sur les dernières avancées du L3i concernant l\'analyse de documents ou la vidéoprotection intelligente'
         ]
     },
 
     europeen: {
-        titre: 'Dimension Européenne : EU-CONEXUS',
+        titre: 'Impact Sociétal et Vision Européenne',
         alliance: 'EU-CONEXUS (European University for Smart Urban Coastal Sustainability)',
         role: 'La Rochelle Université est membre fondateur et coordinatrice',
-        portee: 'Les compétences acquises sont directement transposables à l\'échelle européenne',
-        benefice: 'Standard académique européen pour les sciences du littoral'
-    }
+        portee: 'Les compétences acquises sont directement transposables et valorisables à l\'échelle européenne.',
+        benefice: 'Standard académique européen pour les sciences du littoral.',
+        exemples: [
+            'Modélisation de données environnementales',
+            'Développement d\'applications pour le tourisme durable'
+        ]
+    },
+
+    pointsForts: [
+        { icon: '🔬', texte: 'Laboratoires ouverts sur les formations, pas des tours d\'ivoire' },
+        { icon: '📚', texte: 'Injection temps réel des résultats de recherche dans les cours' },
+        { icon: '🏢', texte: 'Smart Rooms : espaces collaboratifs équipés pour l\'hybridation' },
+        { icon: '🌍', texte: 'Dimension européenne via EU-CONEXUS (9 universités)' },
+        { icon: '🎯', texte: 'Approche Par Projets (APP) généralisée' },
+        { icon: '🌱', texte: 'Numérique au service des transitions durables' }
+    ]
 };
 
 // ============================================
-// Laboratoire L3i - Pôle d'Excellence
+// Laboratoire L3i - Pôle d'Excellence du Numérique
 // ============================================
 export const LABORATOIRE_L3I = {
     nom: 'L3i',
@@ -1493,95 +1513,99 @@ export const LABORATOIRE_L3I = {
     effectif: {
         total: 80,
         permanents: 34,
-        description: 'Force de frappe scientifique considérable pour un établissement de cette taille'
+        description: 'Force de frappe scientifique considérable, référence nationale et internationale'
     },
 
     identite: {
-        structure: 'Fédère IUT et Pôle Sciences : passerelle unique entre recherche technologique appliquée et recherche fondamentale',
+        historique: 'Fondé en 1993, le L3i a su évoluer pour devenir une unité de recherche de référence nationale et internationale.',
+        structure: 'Fédère les enseignants-chercheurs de l\'IUT et du Pôle Sciences : passerelle unique entre recherche technologique appliquée et recherche fondamentale.',
         gouvernance: 'Jean-Marc Ogier et Jean-Christophe Burie',
-        alignement: 'Exploitation intelligente des contenus numériques dans des contextes complexes'
+        alignement: 'Exploitation intelligente des contenus numériques, avec attention particulière à la valeur ajoutée de l\'information dans des contextes complexes.',
+        doubleCulture: 'Cette double culture garantit que les enseignements couvrent tout le spectre de la discipline, de l\'implémentation technique rigoureuse à la conceptualisation abstraite.'
     },
 
     axes: [
         {
             nom: 'Analyse de Documents (Document Analysis)',
             expertise: 'Leadership mondial en Document Analysis and Recognition',
-            enjeu: 'Comprendre sémantiquement des flux documentaires massifs, hétérogènes et dégradés',
+            enjeu: 'À l\'ère de la transformation numérique, il ne s\'agit plus seulement de numériser du papier (OCR classique), mais de comprendre sémantiquement des flux documentaires massifs, hétérogènes et parfois dégradés.',
             projets: [
                 {
                     nom: 'SmartDoc',
-                    description: 'Capture de documents via smartphones dans conditions non contrôlées',
+                    description: 'Capture de documents via smartphones dans des conditions non contrôlées (éclairage variable, déformations géométriques, flou)',
                     technologies: ['Géométrie projective', 'Traitement du signal', 'Rectification temps réel'],
-                    impact: 'Algorithmes de rectification, rehaussement et extraction en temps réel'
+                    impact: 'Algorithmes capables de rectifier, rehausser et extraire l\'information de ces images en temps réel.',
+                    pedagogie: 'Illustre concrètement l\'application des mathématiques (géométrie projective) et du traitement du signal à des usages quotidiens.'
                 }
             ]
         },
         {
             nom: 'Intelligence Artificielle et Contenus (Équipe IC)',
             responsable: 'Petra Gomez-Krämer',
-            frontiere: 'Vision par ordinateur et IA',
-            technologies: ['Deep Learning', 'Réseaux de neurones', 'Computer Vision'],
+            frontiere: 'Vision par ordinateur et Intelligence Artificielle',
+            technologies: ['Deep Learning', 'Réseaux de neurones profonds', 'Computer Vision'],
             projets: [
                 {
                     nom: 'IDECYS+',
                     periode: '2018-2022',
                     partenaire: 'Ariadnext',
                     financement: 'FUI (Fonds Unique Interministériel)',
-                    objectif: 'Sécuriser l\'identité numérique des TPE-PME',
-                    role: 'Authentification automatique de documents d\'identité et détection de falsifications',
-                    pertinence: 'Démonstration de la pertinence économique directe des études'
+                    objectif: 'Sécuriser l\'identité numérique des TPE-PME en luttant contre la fraude documentaire.',
+                    role: 'Conception de briques technologiques capables d\'authentifier automatiquement des documents d\'identité et de détecter des falsifications invisibles à l\'œil nu.',
+                    pertinence: 'Ce type de projet, à forte composante industrielle, démontre aux étudiants la pertinence économique directe de leurs études.'
                 }
             ]
         },
         {
             nom: 'Humanités Numériques',
             lien: 'Axe "Sociétés" de l\'Institut LUDI',
-            objectif: 'Mettre la puissance de calcul au service du patrimoine culturel et historique',
+            objectif: 'Mettre la puissance de calcul et d\'analyse de l\'informatique au service de la préservation et de la diffusion du patrimoine culturel et historique.',
             realisations: [
-                'Interfaces de réalité virtuelle pour archives numériques',
-                'Reconnaissance gestuelle pour exploration immersive',
-                'Dispositifs grand public (Fête de la Science)',
-                'Interaction Homme-Machine : ergonomie cognitive et design'
+                'Interfaces de réalité virtuelle pour exploration d\'archives numériques',
+                'Reconnaissance gestuelle pour navigation immersive sans contact',
+                'Dispositifs grand public présentés à la Fête de la Science',
+                'Travaux sur l\'Interaction Homme-Machine (IHM) intégrant ergonomie cognitive et design d\'interaction'
             ],
             projets: [
                 {
                     nom: 'TOURINFLUX',
                     domaine: 'Tourisme durable',
                     technologies: ['Big Data', 'Analyse comportementale'],
-                    objectif: 'Analyse des flux touristiques pour optimiser sites et améliorer expérience visiteur',
-                    application: 'Gestion territoriale durable'
+                    objectif: 'Analyse des flux touristiques pour optimiser la gestion des sites et améliorer l\'expérience visiteur.',
+                    application: 'Modélisation des déplacements dans la ville, illustrant l\'application de l\'informatique à la gestion territoriale durable.'
                 }
-            ]
+            ],
+            sciences: 'Ces travaux enrichissent la formation des étudiants au-delà du simple code en intégrant des dimensions d\'ergonomie, de design et de sciences humaines.'
         }
     ],
 
     integration: {
         titre: 'Symbiose L3i ↔ Licence Informatique',
-        principe: 'Quasi-totalité des enseignants de spécialisation L3 sont chercheurs actifs',
+        principe: 'La quasi-totalité des enseignants intervenant dans les modules de spécialisation de L3 (Intelligence Artificielle, Traitement de l\'Image, Base de Données Avancées) sont des chercheurs actifs du laboratoire.',
         exemples: [
             {
                 module: 'Programmation Orientée Objet',
-                lien: 'Architecture logicielle des plateformes de dématérialisation'
+                lien: 'Architecture logicielle utilisée dans les plateformes de dématérialisation du laboratoire'
             },
             {
                 module: 'Bases de Données',
-                lien: 'Gestion de corpus documentaires massifs (Big Data)'
+                lien: 'Gestion de corpus documentaires massifs (Big Data) issus des projets de numérisation'
             },
             {
                 module: 'Intelligence Artificielle (L3)',
-                lien: 'Algorithmes de classification et réseaux de neurones (équipe Images et Contenus)'
+                lien: 'Algorithmes de classification et réseaux de neurones étudiés dans l\'équipe Images et Contenus'
             },
             {
                 module: 'Projet Tuteuré',
-                lien: 'Sujets proposés par doctorants/chercheurs sur problématiques exploratoires'
+                lien: 'Sujets souvent proposés par les doctorants ou chercheurs sur des problématiques exploratoires (ex: détection de fraude, analyse de flux vidéo)'
             }
         ],
-        veille: 'Intégration rapide des avancées récentes (LLM, IA générative) grâce à la veille scientifique'
+        veille: 'L\'essor récent des modèles de langage (LLM) et de l\'IA générative est rapidement intégré dans les enseignements grâce à la veille scientifique effectuée par les chercheurs du laboratoire.'
     }
 };
 
 // ============================================
-// Laboratoire MIA - Mathématiques & Numérique
+// Laboratoire MIA - L'Alliance des Mathématiques et du Numérique
 // ============================================
 export const LABORATOIRE_MIA = {
     nom: 'MIA',
@@ -1589,73 +1613,80 @@ export const LABORATOIRE_MIA = {
     statut: 'EA 3165',
 
     identite: {
-        approche: 'Socle de rigueur théorique indispensable aux technologies avancées',
-        pluridisciplinarite: 'Mathématiciens purs, mathématiciens appliqués et informaticiens',
-        conviction: 'Les verrous technologiques (IA, cryptographie, modélisation climatique) nécessitent de nouveaux outils mathématiques'
+        approche: 'Le socle de rigueur théorique indispensable à la maîtrise des technologies avancées.',
+        pluridisciplinarite: 'Mathématiciens purs, mathématiciens appliqués et informaticiens regroupés au sein d\'une même unité.',
+        conviction: 'Les verrous technologiques actuels (en IA, en cryptographie, en modélisation climatique) ne peuvent être levés sans de nouveaux outils mathématiques.',
+        environnement: 'Les chercheurs en informatique du MIA travaillent en interaction constante avec leurs collègues mathématiciens, créant un environnement intellectuel stimulant où l\'abstraction nourrit l\'application.'
     },
 
     chercheurs: [
         {
             nom: 'Thierry Bouwmans',
-            specialite: 'Détection d\'objets'
+            specialite: 'Détection d\'objets, Background Subtraction'
         },
         {
             nom: 'Renaud Peteri',
-            specialite: 'Vision par ordinateur'
+            specialite: 'Vision par ordinateur, analyse de mouvement'
+        },
+        {
+            nom: 'Julien de Saint Angel',
+            specialite: 'Réseaux de neurones hypersphériques (thèse 2025)'
         }
     ],
 
     axes: [
         {
-            domaine: 'Traitement de l\'Image et Vision par Ordinateur',
-            approche: 'Algorithmes appuyés sur fondements géométriques et statistiques solides',
+            domaine: 'Traitement de l\'Image, Vision par Ordinateur et IA',
+            approche: 'Contrairement aux approches purement "données" qui peuvent manquer de robustesse, le MIA appuie ses algorithmes sur des fondements géométriques et statistiques solides.',
             innovations: [
                 {
                     nom: 'GraphBGS (Background Subtraction)',
-                    description: 'Théorie des graphes pour séparer objets en mouvement du fond statique',
-                    applications: ['Surveillance automatisée', 'Comptage de biodiversité', 'Smart City durable']
+                    description: 'Utilisation de la théorie des graphes pour séparer les objets en mouvement du fond statique dans une vidéo.',
+                    applications: ['Surveillance automatisée des espaces publics', 'Comptage de biodiversité', 'Smart City durable'],
+                    importance: 'Cette technologie est cruciale pour les applications directes de la "Smart City" durable.'
                 },
                 {
-                    nom: 'Réseaux de Neurones Hypersphériques',
-                    these: 'Julien de Saint Angel (2025)',
-                    innovation: 'Repenser les fondements géométriques du Deep Learning',
-                    objectif: 'Améliorer la détection d\'anomalies',
-                    niveau: 'Travaux de pointe présentés aux étudiants'
+                    nom: 'Réseaux de Neurones à Couches Hypersphériques',
+                    these: 'Julien de Saint Angel (soutenue en 2025)',
+                    innovation: 'Repenser les fondements géométriques de l\'apprentissage profond.',
+                    objectif: 'Améliorer la détection d\'anomalies.',
+                    niveau: 'Ces travaux de pointe sont présentés aux étudiants comme des exemples de ce que la recherche peut apporter au-delà de l\'ingénierie classique.'
                 },
                 {
                     nom: 'Fine-Grained Sport Action Recognition',
-                    description: 'Reconnaissance fine d\'actions sportives',
-                    technologies: ['Réseaux convolutionnels spatio-temporels'],
-                    expertise: 'Traitement de la dimension temporelle des données vidéo'
+                    description: 'Reconnaissance fine d\'actions sportives utilisant des réseaux convolutionnels spatio-temporels.',
+                    technologies: ['Réseaux convolutionnels spatio-temporels', 'Analyse temporelle'],
+                    expertise: 'Démontre l\'expertise du laboratoire dans le traitement de la dimension temporelle des données vidéo.'
                 }
             ]
         },
         {
             domaine: 'Modélisation Environnementale et Systèmes Dynamiques',
-            role: 'Apport fondamental pour modéliser phénomènes physiques du littoral',
-            specialite: 'Étude théorique et numérique des Équations aux Dérivées Partielles (EDP)',
+            role: 'L\'apport des mathématiques à l\'Institut LUDI est fondamental pour modéliser les phénomènes physiques du littoral.',
+            specialite: 'Excellence dans l\'étude théorique et numérique des Équations aux Dérivées Partielles (EDP).',
             travaux: [
                 {
                     sujet: 'Équations de Navier-Stokes',
-                    importance: 'Modélisation dynamique des fluides (courants marins, pollution, inondations)',
-                    statut: 'Problème du millénaire',
-                    contribution: 'Compréhension des systèmes complexes'
+                    importance: 'La compréhension de la dynamique des fluides est essentielle pour modéliser les courants marins, la dispersion des polluants ou les inondations.',
+                    statut: 'Un des "problèmes du millénaire" en mathématiques.',
+                    contribution: 'Le laboratoire apporte une contribution majeure à la compréhension des systèmes complexes.'
                 },
                 {
                     sujet: 'Optimisation des Réseaux de Capteurs',
-                    contexte: 'Ville intelligente avec milliers de capteurs IoT',
-                    methode: 'Homogénéisation pour optimisation du routage WiFi',
-                    benefice: 'Réseaux plus économes en énergie et plus fiables'
+                    contexte: 'Dans une ville intelligente, la collecte de données repose sur des milliers de capteurs (IoT).',
+                    methode: 'Optimisation du routage dans les réseaux WiFi par des méthodes d\'homogénéisation.',
+                    benefice: 'Réseaux plus économes en énergie et plus fiables.'
                 }
             ]
         }
     ],
 
     valeurAjoutee: {
-        justification: 'Justifie l\'importance des mathématiques (algèbre linéaire, probabilités, graphes) dès la L1',
-        comprehension: 'L\'informatique n\'est pas que du code, mais aussi science de la modélisation',
-        concepts: 'Topologie et géométrie différentielle trouvent applications concrètes (imagerie médicale, simulation environnementale)',
-        marche: 'Double compétence Maths-Info extrêmement recherchée (Data Scientist, ingénieur simulation)'
+        titre: 'La Valeur Ajoutée pour la Licence Informatique',
+        justification: 'L\'existence du MIA confère à la Licence Informatique une coloration scientifique particulière, justifiant aux yeux des étudiants l\'importance des enseignements de mathématiques (algèbre linéaire, probabilités, graphes) dispensés dès la L1.',
+        comprehension: 'Grâce au MIA, les étudiants comprennent que l\'informatique ne se réduit pas à l\'écriture de code, mais qu\'elle est aussi une science de la modélisation.',
+        concepts: 'Les concepts de topologie ou de géométrie différentielle, souvent perçus comme abstraits, trouvent ici des applications concrètes dans le traitement d\'images médicales ou la simulation environnementale.',
+        marche: 'Cette double compétence Mathématiques-Informatique est extrêmement recherchée sur le marché du travail, notamment pour les postes de Data Scientist ou d\'ingénieur en simulation numérique.'
     }
 };
 
@@ -1796,47 +1827,74 @@ export const CMI_INFO = {
 };
 
 // ============================================
-// EU-CONEXUS - Alliance Européenne
+// EU-CONEXUS - L'Ouverture Internationale
 // ============================================
 export const EU_CONEXUS = {
     nom: 'EU-CONEXUS',
     nomComplet: 'European University for Smart Urban Coastal Sustainability',
     role: 'La Rochelle Université est membre fondateur et coordinatrice',
+    soutien: 'Initiative soutenue par la Commission Européenne',
 
     vision: {
-        campus: 'Campus interuniversitaire européen dédié aux problématiques du littoral',
-        portee: 'Campus étudiant étendu à Athènes, Bucarest, Klaipeda, Valence, Zadar, etc.',
-        recherche: 'Collaboration laboratoires sur économie bleue et tourisme maritime durable'
+        titre: 'Une Université Européenne Intégrée',
+        campus: 'Véritable campus interuniversitaire européen dédié aux problématiques du littoral.',
+        portee: 'Le campus de l\'étudiant ne se limite pas à La Rochelle, mais s\'étend à Athènes, Bucarest, Klaipeda, Valence, Zadar, etc.',
+        recherche: 'La recherche menée au sein de l\'alliance est partagée, les laboratoires collaborent étroitement sur l\'économie bleue ("Blue Economy") et le tourisme maritime durable.',
+        changement: 'Cette appartenance change la donne pour la Licence Informatique.'
     },
+
+    universites: [
+        { nom: 'La Rochelle Université', pays: 'France', role: 'Coordinatrice' },
+        { nom: 'Agricultural University of Athens', pays: 'Grèce', specialite: 'Aquaculture durable' },
+        { nom: 'Technical University of Civil Engineering Bucharest', pays: 'Roumanie', specialite: 'SIG' },
+        { nom: 'Klaipeda University', pays: 'Lituanie', specialite: 'Sciences marines' },
+        { nom: 'Universitat Politècnica de València', pays: 'Espagne', specialite: 'Ingénierie côtière' },
+        { nom: 'University of Zadar', pays: 'Croatie', specialite: 'Tourisme durable' }
+    ],
 
     opportunites: [
         {
             type: 'Mineures Internationales',
-            description: 'Mineures thématiques en anglais par universités partenaires',
+            icon: '📚',
+            description: 'Les étudiants peuvent choisir des "Mineures" thématiques dispensées en anglais par les universités partenaires.',
             exemples: [
                 {
                     nom: 'Blue Economy and Growth',
-                    possibilite: 'Cours de SIG par Université Technique de Bucarest'
+                    possibilite: 'Cours de Systèmes d\'Information Géographique (SIG) dispensé par l\'Université Technique de Construction de Bucarest'
                 },
                 {
                     nom: 'Coastal Development and Sustainable Maritime Tourism',
-                    possibilite: 'Module aquaculture durable par Université Agricole d\'Athènes'
+                    possibilite: 'Module sur l\'aquaculture durable piloté par l\'Université Agricole d\'Athènes'
                 }
             ],
-            valeur: 'Double compétence rare pour informaticien'
+            valeur: 'Permet à un informaticien d\'acquérir une double compétence rare.'
         },
         {
             type: 'Mobilité Physique et Virtuelle',
+            icon: '✈️',
+            description: 'Les échanges sont facilités, que ce soit pour un semestre d\'études ou pour des stages courts en laboratoire.',
             duree: 'Semestre d\'études ou stages courts en laboratoire',
-            importance: 'Formation chercheurs ouverts, capables de collaborer en environnements multiculturels'
+            importance: 'Cette mobilité est essentielle pour former des chercheurs ouverts sur le monde, capables de collaborer dans des environnements multiculturels.'
         },
         {
             type: 'Micro-certifications',
-            description: 'Modules courts certifiants',
+            icon: '🎖️',
+            description: 'L\'alliance propose des modules courts certifiants permettant d\'acquérir des compétences spécifiques.',
             domaines: ['Compétences vertes', 'Soft skills interculturelles'],
-            benefice: 'Enrichissement du CV étudiant'
+            benefice: 'Ces certifications viennent enrichir le CV de l\'étudiant.'
         }
-    ]
+    ],
+
+    beneficeFormation: {
+        titre: 'Valeur pour la Licence Informatique',
+        description: 'Pour la Licence Informatique, cette appartenance change la donne.',
+        points: [
+            'Campus étendu à travers l\'Europe',
+            'Recherche partagée entre laboratoires partenaires',
+            'Compétences transposables à l\'échelle européenne',
+            'Accès à des modules spécialisés dans d\'autres universités'
+        ]
+    }
 };
 
 // ============================================
