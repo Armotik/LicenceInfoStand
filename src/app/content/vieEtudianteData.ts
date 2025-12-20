@@ -82,11 +82,11 @@ export interface VieEtudianteSectionItem {
 // STATISTIQUES GÉNÉRALES
 // ============================================================================
 export const VIE_ETUDIANTE_STATS: VieEtudianteStat[] = [
-    { label: 'Étudiants', value: '14 000', icon: '👥' },
+    { label: 'Étudiants total', value: '15 000', icon: '👥' },
+    { label: 'À l\'université', value: '8 000', icon: '🎓' },
     { label: 'Classement villes', value: 'Top 3', icon: '🏆' },
-    { label: 'Recommandation', value: '95%', icon: '⭐' },
-    { label: 'Cadre de vie', value: '2ème', icon: '🌟' },
-    { label: 'Pistes cyclables', value: '100+ km', icon: '🚴' },
+    { label: 'Ensoleillement', value: '2250h/an', icon: '☀️' },
+    { label: 'Équipements sportifs', value: '300+', icon: '🏟️' },
     { label: 'Activités sport', value: '40+', icon: '⚽' },
 ];
 
@@ -107,29 +107,40 @@ export const ATOUTS_ROCHELLE = [
 // ============================================================================
 export const RESIDENCES_CROUS: Residence[] = [
     {
-        name: 'Cité Antinéa',
-        type: 'Chambres',
-        capacite: '252',
-        tarif: '200-300€/mois',
-        description: '9-12m², meublées, cuisine collective'
+        name: 'Résidence Antinéa',
+        type: 'Chambres et Studios',
+        tarif: '150-450€/mois',
+        description: 'Quartier des Minimes, proche IUT et UFR Droit. WiFi, gardien, équipements PMR'
+    },
+    {
+        name: 'Résidence République',
+        type: 'Chambres et Studios',
+        tarif: '150-450€/mois',
+        description: 'Quartier historique étudiant, accès direct au RU République, bien desservie par bus Yélo'
+    },
+    {
+        name: 'Résidence Coureilles',
+        type: 'Studios',
+        tarif: '300-450€/mois',
+        description: 'Rue de Coureilles, à proximité de l\'UFR Droit et Gestion et de l\'IUT'
     },
     {
         name: 'Résidence Aziyadé',
-        type: 'Studios',
-        tarif: '250-350€/mois',
-        description: 'Studios privés avec kitchenette'
+        type: 'Studios T1',
+        tarif: '300-450€/mois',
+        description: 'T1 meublés équipés de kitchenette et sanitaires individuels (19-26m²)'
     },
     {
         name: 'Résidence Ville en Bois',
         type: 'Studios',
-        tarif: '250-350€/mois',
-        description: 'Studios meublés et équipés'
+        tarif: '300-450€/mois',
+        description: 'Avenue des Amériques, logements meublés, salle de travail, salle TV, laverie'
     },
     {
         name: 'Résidence Jean Jouzel',
         type: 'Studios',
-        tarif: '250-350€/mois',
-        description: 'Résidence récente et moderne'
+        tarif: '300-450€/mois',
+        description: 'Rue de Coureilles, logements récents et modernes'
     },
 ];
 
@@ -137,8 +148,17 @@ export const AUTRES_LOGEMENTS: ServiceInfo[] = [
     {
         name: 'ARHPEJ',
         icon: '🏠',
-        description: 'Plus de 600 logements au cœur du campus et près du Vieux-Port',
-        tarif: '350-500€/mois'
+        description: 'Plus de 650 logements au cœur du campus, près du centre-ville et du Vieux-Port. Nouvelle résidence Hélios (132 logements, septembre 2025)',
+        tarif: 'Studios 281€, T1 Bis 377€, T2 438€',
+        details: [
+            'Résidence Parc de la Francophonie (Alcyon, Calypso)',
+            'Résidence Amérigo Vespucci (180 logements, domotique)',
+            'Résidence Le Platin (front de mer)',
+            'Résidence Lavoisier (quartier calme, balcons)',
+            'Résidence Hélios (132 logements neufs, normes HQE)',
+            'Services : Internet fibre, veilleur de nuit, laverie (3,50€)'
+        ],
+        contact: 'accueil@arhpej.fr - 05 46 45 95 00'
     },
     {
         name: 'CLLAJ',
@@ -182,22 +202,26 @@ export const RESTAURANTS_UNIVERSITAIRES: Restaurant[] = [
     {
         name: 'RU Vespucci',
         localisation: 'Rue du Loup Marin (près LLASH et MDE)',
-        horaires: 'Lun-Ven 11h30-14h'
+        horaires: 'Lun-Ven 11h30-14h',
+        tarif: 'Self et vente à emporter'
     },
     {
         name: 'RU République',
         localisation: '90 bd de la République (près Droit/IAE)',
-        horaires: 'Lun-Ven 11h30-14h'
+        horaires: 'Lun-Ven 11h30-14h',
+        tarif: 'Self et vente à emporter'
     },
     {
         name: 'Brasserie Antinéa',
-        localisation: 'Résidence Antinéa',
-        horaires: 'Lun-Ven 11h30-14h'
+        localisation: '15 rue François de Vaux de Foletier (près IUT)',
+        horaires: 'Lun-Ven 11h30-13h45',
+        tarif: 'Self'
     },
     {
         name: 'So What',
-        localisation: '15 rue Vaux de Foletier (près IUT)',
-        horaires: 'Lun-Ven 11h30-14h'
+        localisation: '15 rue François de Vaux de Foletier (même bâtiment qu\'Antinéa)',
+        horaires: 'Lun-Ven 9h-15h30',
+        tarif: 'Restauration rapide diversifiée : grillades, salades, pâtes, pizzas, sandwichs, hamburgers'
     },
 ];
 
@@ -360,33 +384,56 @@ export const EVENEMENTS_SPORTIFS: EvenementSportif[] = [
 ];
 
 export const SPORTS_MER_SPECIFICITY = {
-    titre: '🌊 La Rochelle : Seule ville universitaire de France métropolitaine avec des sports en mer intégrés',
-    description: 'Grâce à sa situation géographique exceptionnelle, La Rochelle est la seule université de France métropolitaine à proposer des activités nautiques océaniques dans le cadre du SUAPSE.',
+    titre: '🌊 La Rochelle : Destination sportive nautique d\'exception',
+    description: 'La Rochelle est l\'une des rares universités françaises à proposer une gamme complète de sports du littoral intégrés au cursus universitaire. Situé à quelques minutes de la plage des Minimes et du plus grand port de plaisance de la côte atlantique.',
+    climat: {
+        titre: 'Un climat idéal pour le sport',
+        description: 'Plus de 2 250 heures de soleil par an - Le meilleur ensoleillement du littoral atlantique',
+        details: ['Climat quasi-méditerranéen', 'Hivers doux (4 jours de neige/an)', 'Pratique extérieure toute l\'année']
+    },
     avantages: [
-        'Accès direct à l\'océan Atlantique depuis le campus',
-        'Partenariats avec les écoles de voile locales',
+        'Campus à quelques minutes de la plage des Minimes',
+        'Plus grand port de plaisance de la côte atlantique',
+        'Partenariats : Centre Nautique des Minimes, École de Voile Rochelaise',
+        'Centre Nautique d\'Angoulins (bassin intérieur débutants)',
         'Matériel nautique fourni (voiliers, kayaks, planches)',
         'Moniteurs diplômés d\'État',
-        'Conditions météo favorables (2100h de soleil/an)',
-        'Terrain de jeu unique : Fort Boyard, Île de Ré, Pertuis'
+        'Conditions météo exceptionnelles (2250h de soleil/an)',
+        'Terrain de jeu unique : Fort Boyard, Île de Ré, Pertuis d\'Antioche',
+        'Ville labellisée "Ville Active et Sportive"',
+        '300 sites et équipements sportifs dans la ville'
     ],
     activites: [
-        'Voile (dériveur, catamaran, planche à voile)',
-        'Surf et bodyboard',
+        'Voile (dériveur, catamaran, habitable)',
+        'Surf',
+        'Planche à voile',
         'Aviron de mer',
-        'Kite-surf (initiation et perfectionnement)',
-        'Pirogue polynésienne (Va\'a)',
-        'Stand-up paddle'
-    ]
+        'Kitesurf',
+        'Pirogue polynésienne',
+        'Plongée sous-marine'
+    ],
+    validationCursus: 'Ces activités peuvent être validées en bonification dans le diplôme !'
 };
 
 export const SUAPSE_INFO = {
-    localisation: 'Gymnase universitaire de Bongraine, Avenue de la Rotonde, 17440 Aytré',
+    localisation: 'Halle Universitaire de Bongraine, Avenue de la Rotonde, 17440 Aytré',
     contact: '05 46 45 18 94',
+    site: 'mon-espace-suapse.univ-lr.fr',
     activites: '40+',
-    tarif: 'Adhésion annuelle SUAPSE',
-    validation: 'Bonification possible dans le cursus (EC libre)',
-    competitions: 'Coupe de France des IUT, championnats universitaires'
+    tarif: 'Carte SUAPSE via application CARTUM',
+    validation: 'Deux modes : Bonification (compte pour le diplôme) ou Loisir (pratique personnelle)',
+    competitions: 'Coupe de France des IUT, Championnat de France, Challenge régional Poitou-Charentes',
+    sportHautNiveau: '50 sportifs de haut niveau accueillis chaque année',
+    infrastructures: {
+        surfaceTotale: '1 900 m²',
+        salleMultisports: '1 104 m² (basket, hand, volley, badminton, tennis)',
+        musculation: '180 m², 18 postes cardio-training',
+        danse: 'Salle en parquet',
+        squash: '2 courts en parquet',
+        vestiaires: '3 vestiaires avec douches',
+        labelHQE: 'Démarche Haute Qualité Environnementale'
+    },
+    formations: ['BNSSA', 'PSC 1', 'PSE 1 et PSE 2', 'Recyclage secourisme']
 };
 
 // ============================================================================

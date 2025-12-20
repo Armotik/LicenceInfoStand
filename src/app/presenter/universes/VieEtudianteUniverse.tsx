@@ -449,7 +449,7 @@ function SportSection() {
         <h3 className="text-2xl font-bold text-blue-400 mb-4">
           SUAPSE - Service Universitaire des Activités Physiques Sportives et d'Expression
         </h3>
-        <div className="grid md:grid-cols-2 gap-4 text-sm text-text">
+        <div className="grid md:grid-cols-2 gap-4 text-sm text-text mb-6">
           <div>
             <span className="text-blue-400">📍 Localisation :</span> {SUAPSE_INFO.localisation}
           </div>
@@ -457,11 +457,67 @@ function SportSection() {
             <span className="text-blue-400">📞 Contact :</span> {SUAPSE_INFO.contact}
           </div>
           <div>
+            <span className="text-blue-400">🌐 Site :</span> {SUAPSE_INFO.site}
+          </div>
+          <div>
             <span className="text-blue-400">🎯 Activités :</span> {SUAPSE_INFO.activites} disciplines
           </div>
           <div>
             <span className="text-blue-400">🏆 Compétitions :</span> {SUAPSE_INFO.competitions}
           </div>
+          <div>
+            <span className="text-blue-400">⭐ Sport haut niveau :</span> {SUAPSE_INFO.sportHautNiveau}
+          </div>
+        </div>
+
+        {/* Infrastructures détaillées */}
+        <div className="bg-blue-950/40 rounded-xl p-5">
+          <h4 className="text-lg font-bold text-blue-300 mb-4 flex items-center gap-2">
+            <span>🏢</span> Infrastructures - Halle Universitaire de Bongraine
+          </h4>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm mb-4">
+            <div className="bg-surface-light/30 rounded-lg p-3">
+              <div className="font-bold text-blue-400 mb-1">Surface totale</div>
+              <div className="text-text-muted">{SUAPSE_INFO.infrastructures.surfaceTotale}</div>
+            </div>
+            <div className="bg-surface-light/30 rounded-lg p-3">
+              <div className="font-bold text-blue-400 mb-1">Salle multisports</div>
+              <div className="text-text-muted">{SUAPSE_INFO.infrastructures.salleMultisports}</div>
+            </div>
+            <div className="bg-surface-light/30 rounded-lg p-3">
+              <div className="font-bold text-blue-400 mb-1">Musculation</div>
+              <div className="text-text-muted">{SUAPSE_INFO.infrastructures.musculation}</div>
+            </div>
+            <div className="bg-surface-light/30 rounded-lg p-3">
+              <div className="font-bold text-blue-400 mb-1">Danse</div>
+              <div className="text-text-muted">{SUAPSE_INFO.infrastructures.danse}</div>
+            </div>
+            <div className="bg-surface-light/30 rounded-lg p-3">
+              <div className="font-bold text-blue-400 mb-1">Squash</div>
+              <div className="text-text-muted">{SUAPSE_INFO.infrastructures.squash}</div>
+            </div>
+            <div className="bg-surface-light/30 rounded-lg p-3">
+              <div className="font-bold text-blue-400 mb-1">Vestiaires</div>
+              <div className="text-text-muted">{SUAPSE_INFO.infrastructures.vestiaires}</div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Badge text={SUAPSE_INFO.infrastructures.labelHQE} icon="🌱" color="#27AE60" />
+          </div>
+          <div>
+            <h5 className="font-bold text-blue-300 mb-2">Formations et certifications :</h5>
+            <div className="flex flex-wrap gap-2">
+              {SUAPSE_INFO.formations.map((formation) => (
+                <Badge key={formation} text={formation} icon="🎓" color="#3498DB" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 p-4 bg-green-900/20 rounded-lg border border-green-500/30">
+          <p className="text-sm text-green-300">
+            💡 <span className="font-bold">Validation :</span> {SUAPSE_INFO.validation}
+          </p>
         </div>
       </motion.div>
 
@@ -473,6 +529,20 @@ function SportSection() {
       >
         <h3 className="text-2xl font-bold text-cyan-400 mb-4">{SPORTS_MER_SPECIFICITY.titre}</h3>
         <p className="text-text mb-4">{SPORTS_MER_SPECIFICITY.description}</p>
+
+        {/* Climat section */}
+        <div className="bg-yellow-900/20 rounded-xl p-4 mb-6 border border-yellow-500/30">
+          <h4 className="font-bold text-yellow-400 mb-2 flex items-center gap-2">
+            <span>☀️</span> {SPORTS_MER_SPECIFICITY.climat.titre}
+          </h4>
+          <p className="text-sm text-text-muted mb-3">{SPORTS_MER_SPECIFICITY.climat.description}</p>
+          <div className="flex flex-wrap gap-2">
+            {SPORTS_MER_SPECIFICITY.climat.details.map((detail, idx) => (
+              <Badge key={idx} text={detail} icon="☀️" color="#F59E0B" />
+            ))}
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <h4 className="font-bold text-cyan-300 mb-3">Avantages uniques :</h4>
@@ -493,6 +563,12 @@ function SportSection() {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 p-4 bg-cyan-900/20 rounded-lg border border-cyan-500/30">
+          <p className="text-sm text-cyan-300">
+            💡 <span className="font-bold">Validation cursus :</span> {SPORTS_MER_SPECIFICITY.validationCursus}
+          </p>
         </div>
       </motion.div>
 
