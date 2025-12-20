@@ -61,6 +61,11 @@ export interface Association {
     type: string;
     description: string;
     icon: string;
+    logo?: string;
+    contact?: {
+        email?: string;
+        instagram?: string;
+    };
 }
 
 export type VieEtudianteSection =
@@ -628,73 +633,178 @@ export const SUPER_PASS_INFO = {
 // ============================================================================
 export const BDE_PAR_COMPOSANTE: Association[] = [
     {
-        nom: 'BDE IAE La Rochelle',
-        type: 'BDE',
-        description: 'Organisation du Gala, WEI, participation à la Coupe de France des IAE. Modèle "École de Commerce" avec budget important et partenariats commerciaux',
-        icon: '💼'
-    },
-    {
-        nom: 'Alumni IAE',
-        type: 'Réseau',
-        description: 'Réseau des diplômés : insertion professionnelle, mentorat, annuaire des freelances, afterworks réseau',
-        icon: '🎓'
-    },
-    {
-        nom: 'BDE TC (IUT)',
-        type: 'BDE',
-        description: 'Bureau des Étudiants Techniques de Commercialisation. Reconnu pour son dynamisme, anime la filière commerciale',
-        icon: '💻'
-    },
-    {
-        nom: 'AS IUT',
-        type: 'Sport & BDE',
-        description: 'Association Sportive de l\'IUT : séjours sportifs (ski, surf), tournois inter-départements, Nuit du Hand',
-        icon: '⚽'
-    },
-    {
         nom: 'BDE Droit',
         type: 'BDE',
-        description: 'Fédère les étudiants juristes : soirées, intégration, boutique de produits dérivés (sweats de promo)',
-        icon: '⚖️'
+        description: 'Depuis plusieurs années, le Bureau des Étudiants de Droit tente de rendre la vie étudiante plus agréable pour que nos étudiants aient un bagage de joyeux souvenirs de leurs années universitaires. Nous tentons également de mettre en relation nos étudiants afin qu\'ils apprennent à se connaitre, qu\'ils échangent sur leur parcours, leurs difficultés et leurs impressions sur le monde universitaire à travers les évènements que nous organisons. Les activités de notre BDE tournent autour de l\'organisation de divers évènements comme les soirées, les afterworks ou encore le Gala. Nous mettons également en place un système de parrainage avec les étudiants de première année pour qu\'il ne soit pas perdu, et puisse avoir quelqu\'un vers qui se tourner en cas de difficulté. Le BDE fait également des prêts d\'ouvrage juridique comme des codes ou encore des manuels. Chaque année, le BDE organise également la vente de sweats brodés, tote-bag et autres goodies. Pour finir, il vend également chaque année sa carte d\'adhésion pour avoir les meilleurs tarifs préférentiels chez ses partenaires, mais également les bracelets, les sweats et la place de Gala à prix réduit.',
+        icon: '⚖️',
+        logo: '/assets/{images,icons}/associations/Logo-BDEdroit-300x300.jpg',
+        contact: {
+            email: 'bde.facultededroit.larochelle@gmail.com',
+            instagram: 'bdedroitlr'
+        }
+    },
+    {
+        nom: 'BDE FLLASH Back',
+        type: 'BDE',
+        description: 'Hello ! Nous sommes le BDE FLLASH Back ! Si tu es en langues, histoire, géographie ou encore lettres c\'est vers nous que tu dois te tourner ! Nous sommes une fine équipe sympathique dont le but et de rendre ton année fun, sympa et surtout à petit prix. Notamment grâce à nos soirées et à nos partenariats un peu partout dans la ville. Nous somme aussi là le plus et le mieux possible si tu as besoin d\'un soutien et d\'une oreille, car notre but est de t\'aider à passer une super année ! Alors fais parti de l\'aventure cette année !',
+        icon: '📚',
+        logo: '/assets/{images,icons}/associations/logo-fllash-back.png.avif',
+        contact: {
+            email: 'fllashbackbde@gmail.com',
+            instagram: 'bdefllashback'
+        }
+    },
+    {
+        nom: 'L\'Abulle',
+        type: 'BDE',
+        description: 'L\'Abulle c\'est un groupe d\'amis qui se sont rencontrés en première année de BUT génie biologique et qui ont décidé de reprendre le flambeau du Bureau Des Étudiants. L\'équipe est composée de personnes qui ont un seul mot d\'ordre : rigoler toute la journée. Ce sont des étudiants très sociables, drôles et bien intentionnés : le combo parfait pour passer des superbes années. Nous sommes un BDE qui est reliés autour de l\'amitié, la bonne humeur et l\'entraide dans le but de faire passer aux étudiants leurs meilleures années étudiantes possible ! L\'Abulle fait de son mieux pour permettre aux promotions d\'avoir une véritable cohésion entres elles afin de créer une famille. Nous sommes disponibles à tout moment pour accompagner chaque étudiant, si tu as des questions sur n\'importe quel sujet.',
+        icon: '🧬',
+        logo: '/assets/{images,icons}/associations/Logo-BDE-IUT.png.avif',
+        contact: {
+            email: 'labullegb@gmail.com',
+            instagram: 'l.abulle'
+        }
+    },
+    {
+        nom: 'BDE IAE La Rochelle',
+        type: 'BDE',
+        description: 'Le Bureau des Étudiants de l\'IAE La Rochelle est une association étudiante dynamique. Notre objectif principal est de promouvoir le bien-être des étudiants de notre université en leur offrant un large éventail d\'activités et d\'opportunités. C\'est aussi une association étudiante engagée qui se soucie du bien-être des étudiants, de l\'environnement et de la promotion du respect mutuel.',
+        icon: '💼',
+        logo: '/assets/{images,icons}/associations/logo-BDE-IAE.jpg.avif',
+        contact: {
+            email: 'bde.gestion@gmail.com',
+            instagram: 'bdeiaelr'
+        }
+    },
+    {
+        nom: 'BDE Informatique',
+        type: 'BDE',
+        description: 'Nous sommes le Bureau des Étudiants (BDE) informatique de l\'IUT de La Rochelle. Dans notre local les étudiants peuvent venir se reposer et se restaurer. Nous proposons snacks et boissons à des prix très abordables afin de financer nos projets telles que des soirées ou des après-midis organisés à destination des étudiants. Si vous avez des questions, n\'hésitez pas à nous contacter sur notre compte Instagram.',
+        icon: '💻',
+        logo: '/assets/{images,icons}/associations/LogoBDE-Info.png.avif',
+        contact: {
+            email: 'bde.infolr@gmail.com',
+            instagram: 'bde.info.lr'
+        }
+    },
+    {
+        nom: 'BDE TC',
+        type: 'BDE',
+        description: 'Bureau des étudiant·es Techniques de commercialisation IUT.',
+        icon: '🛒',
+        contact: {
+            email: 'bde.tc.larochelle@gmail.com',
+            instagram: 'bdetclr'
+        }
+    },
+    {
+        nom: 'BDE Génie Civil',
+        type: 'BDE',
+        description: 'Bureau des étudiant·es Génie Civil.',
+        icon: '🏗️',
+        logo: '/assets/{images,icons}/associations/BDE-genie-civil.jpg.avif',
+        contact: {
+            email: 'bde.gccd.lr@gmail.com',
+            instagram: 'bdegccd.lr'
+        }
     },
     {
         nom: 'BDE Sciences',
         type: 'BDE',
-        description: 'Crée une identité commune pour les étudiants du pôle Sciences et Technologies, animation du campus sciences',
-        icon: '🔬'
-    },
-    {
-        nom: 'BDE FLLASH BACK',
-        type: 'BDE',
-        description: 'Représente les étudiants en Lettres, Langues, Arts et Sciences Humaines. Animation culturelle du site centre-ville',
-        icon: '📚'
+        description: 'Le Bureau des Étudiants de Sciences, situé à la Maison des sciences de l\'ingénieur, est l\'endroit idéal pour s\'impliquer dans la vie universitaire. Le bureau organise régulièrement des soirées et des divers événements, offrant aux étudiants une ambiance conviviale et dynamique. En plus de ces activités, le bureau propose des services pratiques tels que la reprographie, pour imprimer tout vos documents. Pour les petites faims, un espace snacking est également disponible pour se restaurer rapidement entre les cours. De plus, les étudiant·es peuvent consulter et emprunter des annales pour se préparer aux examens. Rejoignez le BDE pour vivre une expérience étudiante riche et diversifiée au cœur du pôle sciences.',
+        icon: '🔬',
+        logo: '/assets/{images,icons}/associations/bde_sciences.png.webp',
+        contact: {
+            email: 'bde.sciences.larochelle@gmail.com',
+            instagram: 'bdescienceslr'
+        }
     },
 ];
 
 export const ASSOCIATIONS_THEMATIQUES: Association[] = [
     {
-        nom: 'Efficience',
-        type: 'Représentation',
-        description: 'Acteur majeur local, apolitique et pragmatique. Représentation dans les conseils centraux (CA, CFVU), défense des intérêts étudiants sur des problématiques concrètes (restauration, transports)',
-        icon: '🗳️'
+        nom: 'A vous de jouer',
+        type: 'Loisirs',
+        description: 'A vous de jouer est une association qui désire rassembler les étudiants autour des jeux de société. Notre souhait est de partager des moments conviviaux, découvrir de nouvelles mécaniques et évidemment de s\'amuser ! Débutants comme experts, tout le monde est le bienvenu !',
+        icon: '🎲',
+        logo: '/assets/{images,icons}/associations/Logo-AVDJ.png.avif',
+        contact: {
+            email: 'avousdejouer.lr17@gmail.com',
+            instagram: 'avousdejouerlr'
+        }
     },
     {
-        nom: 'FAGE (Bouge ta fac)',
-        type: 'Représentation',
-        description: 'Fédération d\'associations de filières, historiquement puissante. S\'appuie sur le réseau des BDE pour mobiliser les étudiants',
-        icon: '📢'
+        nom: 'Les Blairoudeurs',
+        type: 'Nature',
+        description: 'Un blairoudeur, c\'est quelqu\'un qui aime la nature, qui veut en apprendre plus sur cette dernière, ou juste se promener pour s\'émerveiller. Un blairoudeur, c\'est quelqu\'un qui s\'ouvre au monde qui l\'entoure, qui plante des arbres, qui écoute les oiseaux, qui regarde sous ses pieds et haut dans le ciel. Un blairoudeur, c\'est quelqu\'un qui aime partager des moments de joie, d\'enchantement, et de convivialité ! Tu es un blairoudeur ? Rejoins-nous vite !',
+        icon: '🦡',
+        logo: '/assets/{images,icons}/associations/Logo-Blairoudeurs-298x300.png',
+        contact: {
+            email: 'larochelle@blairoudeurs.fr',
+            instagram: 'blairoudeurs.larochelle'
+        }
+    },
+    {
+        nom: 'Bouée Bleue Productions',
+        type: 'Cinéma',
+        description: 'Bouée Bleue Productions est une association étudiante de cinéma qui accompagne les étudiants dans la création de projet audiovisuel (court-métrage, clip,…) et qui crée des rencontres entre professionnels du domaine et les étudiants à travers des projections, festivals et ateliers. Nous produisons nos propres films, avec des équipes mêlant amateurs et professionnels, jeunes et professionnels.',
+        icon: '🎬',
+        logo: '/assets/{images,icons}/associations/Bouee-bleue.png.avif',
+        contact: {
+            email: 'boueebleue.production@gmail.com',
+            instagram: 'boueebleueproduction'
+        }
+    },
+    {
+        nom: 'Eloquentia La Rochelle',
+        type: 'Expression orale',
+        description: 'Eloquentia La Rochelle est une association d\'expression orale qui promeut la prise de parole en public dans sa diversité auprès des jeunes de La Rochelle âgés de 18 à 30 ans. Des ateliers de masterclass sont organisés sur divers sujets, de la plaidoirie au slam, en passant par de l\'improvisation, la gestion de la voix et même la rédaction de discours. Eloquentia La Rochelle, c\'est aussi un concours au terme duquel est élu le meilleur orateur de la Charente maritime qui représentera l\'association au concours international d\'Eloquentia.',
+        icon: '🎤',
+        logo: '/assets/{images,icons}/associations/Phlogo-eloquentia-LA-ROCHELLE.png',
+        contact: {
+            email: 'eloquentialarochelle@gmail.com',
+            instagram: 'eloquentia.larochelle'
+        }
+    },
+    {
+        nom: 'EMU La Rochelle',
+        type: 'Musique',
+        description: 'Tu aimes jouer de la musique et t\'amuser ?! Alors n\'attends pas, contacte nous et rejoins nous ! Nous déciderons du jour et du créneau en fonction des disponibilités de chacun·e. Les répétitions auront lieu à la Maison de l\'étudiant entre 12h-14h ou 17h-19h !',
+        icon: '🎵',
+        logo: '/assets/{images,icons}/associations/logo-the-peas1.png.avif',
+        contact: {
+            email: 'contact.emulr@gmail.com',
+            instagram: 'thepeas.emulr'
+        }
+    },
+    {
+        nom: 'ESN La Rochelle',
+        type: 'International',
+        description: 'Erasmus Student Network La Rochelle, section rochelaise du réseau ESN International. Envie de te faire des amis venant du monde entier ? Envie d\'organiser des évènements ? Envie d\'être porte-parole de la mobilité internationale ? Nos deux missions : Accueillir et Intégrer les étudiants internationaux sur La Rochelle, et Sensibiliser à la Mobilité Internationale.',
+        icon: '🌍',
+        logo: '/assets/{images,icons}/associations/Logo-ESN-La-Rochelle-300x167.png',
+        contact: {
+            email: 'contact@esnlarochelle.org',
+            instagram: 'esnlarochelle'
+        }
     },
     {
         nom: 'La Sauce Culturelle',
         type: 'Culture',
         description: 'Portée par les étudiants des masters culture. Montage de festivals, expositions, programmation artistique en lien avec l\'Espace Culture. Acteur majeur de la vie culturelle du campus',
-        icon: '🎭'
+        icon: '🎭',
+        logo: '/assets/{images,icons}/associations/Logo-La-sauce-culturelle-300x300.png'
     },
     {
-        nom: 'Univert LR',
+        nom: 'Uni\'vert',
         type: 'Écologie',
-        description: 'Sensibilisation au développement durable en cohérence avec la stratégie LUDI. Projets concrets : Jardins d\'Orbigny (permaculture sur les toits), recyclage, économie circulaire',
-        icon: '🌱'
+        description: 'Uni\'vert est une association étudiante qui a pour objectif de montrer que la transition écologique et sociale est POSSIBLE pour tous ! Elle s\'adresse aux étudiants et personnels de l\'université en leur proposant diverses activités : ciné débat, ateliers DIY, cleanwalks et bien plus… Mais elle travaille aussi avec l\'Université pour participer à sa transition : intégration de groupes de travail, porteuse de la signature de la COP 2 étudiante… En bref Univert c\'est le champ (bio bien sûr !) des possibles.',
+        icon: '🌱',
+        logo: '/assets/{images,icons}/associations/logo-univert.jpg.avif',
+        contact: {
+            email: 'univert.lr@gmail.com',
+            instagram: 'univert_17'
+        }
     },
     {
         nom: 'AFEV',
@@ -703,10 +813,201 @@ export const ASSOCIATIONS_THEMATIQUES: Association[] = [
         icon: '🤝'
     },
     {
-        nom: 'ESN La Rochelle',
-        type: 'International',
-        description: 'Erasmus Student Network. Accueil des étudiants internationaux, Buddy System (parrainage), cafés linguistiques, voyages et événements d\'intégration',
-        icon: '🌍'
+        nom: 'Géocéan',
+        type: 'Géographie',
+        description: 'Géocéan, c\'est l\'association des géographes de La Rochelle Université ! Autour de multiples événements organisés au cours de l\'année, tels que des cafés-géo, quiz, sorties et autres, son but est de rassembler et de rendre accessible la Géographie à tous. Que vous soyez géographes ou non, nous serons ravis de vous accueillir !',
+        icon: '🌍',
+        logo: '/assets/{images,icons}/associations/Logo-Geocean-e1692872052754-300x300.png',
+        contact: {
+            email: 'asso.geocean@gmail.com',
+            instagram: 'geoceanlr'
+        }
+    },
+    {
+        nom: 'La Rochelle Beach Club',
+        type: 'Sport',
+        description: 'Vous êtes passionné·e de beach-volley ou simplement à la recherche d\'une activité fun en plein air ? Rejoignez notre club à la plage des Minimes ! Que vous soyez débutant·e, amateur ou compétiteur, nous vous proposons un accès à des sessions de loisirs ou des entraînements de compétition, le tout à des prix très abordables ! N\'hésitez pas à nous contacter pour toutes demandes d\'informations !',
+        icon: '🏐',
+        logo: '/assets/{images,icons}/associations/logo-LRBC.png.avif',
+        contact: {
+            email: 'contact@larochelle-beachclub.fr',
+            instagram: 'lrbc.volley'
+        }
+    },
+    {
+        nom: 'Legio XX Valeria Victrix',
+        type: 'Histoire',
+        description: 'Nous sommes une association de reconstitution, de (re)médiation historique et d\'archéologie expérimentale avec pour objet central l\'armée romaine des Ier et IIe siècles après J.-C. « L\'Histoire est une science vivante »',
+        icon: '⚔️',
+        logo: '/assets/{images,icons}/associations/Logo-Legio-XX-Valeria-300x261.png',
+        contact: {
+            email: 'comm.legxx@gmail.com',
+            instagram: 'legioxxvaleriavictrix'
+        }
+    },
+    {
+        nom: 'LemonSea',
+        type: 'Environnement',
+        description: 'LemonSea est une association de sensibilisation aux impacts du changement climatique sur les milieux marins à travers l\'un de ses effets méconnu : l\'acidification des océans. Grâce à des expériences et des supports pédagogiques adaptées à tout le monde, nous allons au contact des enfants et des adultes pour leur donner des clés de compréhension et d\'actions. Tous et toutes, faisons un Zeste pour l\'océan !',
+        icon: '🍋',
+        logo: '/assets/{images,icons}/associations/Logo-Lemonsea-300x300.png',
+        contact: {
+            email: 'webmaster.lemonsea@gmail.com',
+            instagram: 'lemonseatron'
+        }
+    },
+    {
+        nom: 'Les Ruchelaises',
+        type: 'Apiculture',
+        description: 'Les Ruchelaises est une association étudiante de découverte de l\'apiculture et de sensibilisation à la biodiversité, notamment aux pollinisateurs. Nous sommes l\'une des rares associations à créer un produit de A à Z sur le campus universitaire, en proposant un miel conçu dans Les Minimes. Nous possédons plusieurs ruches sur le campus et travaillons avec une apicultrice. Nous développons des activités complémentaires, comme la fabrication de bee-wraps, un emballage écologique et économique à base de cire d\'abeille.',
+        icon: '🐝',
+        logo: '/assets/{images,icons}/associations/logo-les-ruchelaises-300x200.jpeg',
+        contact: {
+            email: 'lesruchelaises.lru@gmail.com',
+            instagram: 'les_ruchelaises'
+        }
+    },
+    {
+        nom: 'NESSA',
+        type: 'Entraide',
+        description: 'L\'association « NESSA » est le créateur et le gestionnaire de la plateforme numérique « NESSA » dédiée aux annales étudiantes. Elle a pour finalité de mettre à la disposition des étudiants des annales d\'examen, des fiches de travaux dirigés, des fiches de révision et des corrigés.',
+        icon: '📚',
+        logo: '/assets/{images,icons}/associations/logo-Nessa.png.webp',
+        contact: {
+            email: 'nessa.annalesetudiantes@gmail.com',
+            instagram: 'nessa.ae.lr'
+        }
+    },
+    {
+        nom: 'Projet Primrose',
+        type: 'Solidarité',
+        description: 'Le projet Primrose a été créé en 2019 par des étudiants du CMI. Son but est de mettre à disposition des protections hygiéniques gratuites et de qualité pour les étudiant.e.s de La Rochelle. Ces protections hygiéniques sont faites avec du coton bio, saines pour la santé et l\'environnement. Nous avons actuellement 4 distributeurs situés à la LLASH, en Orbigny, à l\'IAE et au SUAPSE. Nous recherchons de nouvelles personnes intéressées par l\'idée de s\'engager pour la cause de la précarité menstruelle.',
+        icon: '🌸',
+        logo: '/assets/{images,icons}/associations/Logo-PrimRose.png.avif',
+        contact: {
+            email: 'projet.primrose@gmail.com',
+            instagram: 'primrose_lr'
+        }
+    },
+    {
+        nom: 'Slack en L\'R',
+        type: 'Sport',
+        description: 'Slack en L\'R est une association sportive visant à partager la pratique de la slackline (funambulisme sur sangle) à La Rochelle. Ce sport et les activités associées développent l\'équilibre, l\'écoute de la respiration et le partage. N\'hésitez pas à nous contacter pour venir essayer.',
+        icon: '🤸',
+        logo: '/assets/{images,icons}/associations/Logo_lack_en_LR.jpeg.avif',
+        contact: {
+            email: 'slackenlair@gmail.com',
+            instagram: 'Slack En L\'air'
+        }
+    },
+    {
+        nom: 'Société Rochelaise du Droit',
+        type: 'Droit',
+        description: 'Née en 2019 sous l\'impulsion de doctorant·es rochelais, la Société Rochelaise du Droit est une association loi 1901 reconnue d\'intérêt général depuis 2022. Composée d\'étudiants, d\'enseignants, de praticiens du Droit et ouverte à toutes les personnes intéressées par la défense de la res publica, la SRD se veut un réseau des juristes rochelais au service du Droit et des citoyens.',
+        icon: '⚖️',
+        logo: '/assets/{images,icons}/associations/logo-association-juridique-la-rochelle-societe-rochelaise-droit.png.avif',
+        contact: {
+            email: 'bureau@srdroit.fr',
+            instagram: 'srdroit'
+        }
+    },
+    {
+        nom: 'Média Étudiant Rochelais',
+        type: 'Média',
+        description: 'Le Média Étudiant Rochelais est une association étudiante née de la volonté d\'accompagner les étudiants vivant à La Rochelle dans leur parcours universitaire. Il a pour vocation de rassembler, en un seul lieu, les informations essentielles concernant la vie locale susceptibles d\'intéresser les étudiants. Il diffusera à la fois des informations à caractère festif, celles liées aux initiatives étudiantes et tous les bons plans, afin de refléter la diversité de la vie étudiante rochelaise.',
+        icon: '📰',
+        logo: '/assets/{images,icons}/associations/Logo-association-MER.png.webp',
+        contact: {
+            email: 'mediaetudiantrochelais@gmail.com',
+            instagram: 'media_etudiant_rochelais'
+        }
+    },
+];
+
+// ============================================================================
+// ASSOCIATIONS DE FORMATION
+// ============================================================================
+export const ASSOCIATIONS_FORMATION: Association[] = [
+    {
+        nom: 'ADocs',
+        type: 'Doctorants',
+        description: 'L\'ADocs est l\'association des doctorant·es et jeunes chercheurs et chercheuses de La Rochelle Université. Depuis 25 ans, l\'association favorise les rencontres et échanges entre doctorants et jeunes chercheurs de différentes disciplines autour de projets culturels, festifs, d\'animations et de vulgarisation.',
+        icon: '🎓',
+        logo: '/assets/{images,icons}/associations/Logo-Adocs-300x136.png',
+        contact: {
+            email: 'Adocs@univ-lr.fr',
+            instagram: 'adocsulr'
+        }
+    },
+    {
+        nom: 'Biotech The New Hop',
+        type: 'Biotechnologies',
+        description: 'Biotechthenewhop est une association fondée par des masters en biotechnologies. Si vous êtes étudiant·e en master biotechnologies parcours Biochimie ou Génie biotechnologique et management en agro-industries, nous serons ravis de vous compter parmi nous.',
+        icon: '🧬',
+        logo: '/assets/{images,icons}/associations/logo-biotechthenewhop.jpg.avif',
+        contact: {
+            email: 'biotech-tnh@outlook.fr',
+            instagram: 'biotech_thenewhop'
+        }
+    },
+    {
+        nom: 'La Sauce Culturelle',
+        type: 'Culture & Patrimoine',
+        description: 'La Sauce Culturelle est une association portée par les étudiant·es des Masters Histoire (parcours DPEC, MEPAT et Histoire) et E-Tourisme (parcours E-Tourisme et ingénierie culturelle des patrimoines). Tout au long de l\'année, l\'association porte les projets culturels des étudiants et participe à la vie associative et culturelle de La Rochelle Université.',
+        icon: '🎭',
+        logo: '/assets/{images,icons}/associations/Logo-La-sauce-culturelle-300x300.png',
+        contact: {
+            email: 'lassos.culturelle@gmail.com',
+            instagram: 'lasauceculturelle'
+        }
+    },
+    {
+        nom: 'MEEF LR',
+        type: 'Enseignement',
+        description: 'Association ouverte à tous les étudiants de Master MEEF 1er degré. Elle a pour but de développer l\'échange entre les étudiants et de créer du lien entre les deux années. Maison Étudiante Éducative et Festive.',
+        icon: '👩‍🏫',
+        logo: '/assets/{images,icons}/associations/logo-meef.png.avif',
+        contact: {
+            email: 'assomeeflr@gmail.com',
+            instagram: 'meef_lr'
+        }
+    },
+];
+
+// ============================================================================
+// SYNDICATS ET REPRÉSENTATION ÉTUDIANTE
+// ============================================================================
+export const SYNDICATS_REPRESENTATION: Association[] = [
+    {
+        nom: 'Efficience',
+        type: 'Syndicat étudiant & Association de représentation',
+        description: 'Nous sommes Efficience, une association apartisane et locale créée par des étudiants pour les étudiants ! Notre but : représenter et défendre les étudiants via différentes actions : siéger en conseils, clean walks, restructuration des cours… Si tu souhaites t\'investir dans la politique universitaire, Efficience est faite pour toi, rejoins-nous !',
+        icon: '🗳️',
+        logo: '/assets/{images,icons}/associations/logo-efficience.jpg.avif',
+        contact: {
+            email: 'efficiencelarochelle@gmail.com',
+            instagram: 'efficience_lr'
+        }
+    },
+    {
+        nom: 'La Voix Étudiante',
+        type: 'Syndicat étudiant & Association de représentation',
+        description: 'La Voix Étudiante est une organisation étudiante de La Rochelle Université. Notre mission ? Représenter les étudiants dans les conseils de l\'université, défendre leurs intérêts, porter leurs projets et faire bouger les lignes. Parce qu\'une université vivante se construit avec et pour ses étudiants, nous sommes là pour faire entendre votre voix !',
+        icon: '📢',
+        logo: '/assets/{images,icons}/associations/la_voix_etudiante.jpg.webp',
+        contact: {
+            email: 'lavoixetudiante.lr@gmail.com',
+            instagram: 'lavoixetudiante.lr'
+        }
+    },
+    {
+        nom: 'Uni & Indépendants',
+        type: 'Syndicat étudiant',
+        description: 'Syndicat étudiant engagé pour la défense des droits et intérêts des étudiants de La Rochelle Université.',
+        icon: '✊',
+        contact: {
+            instagram: 'uni.la.rochelle'
+        }
     },
 ];
 

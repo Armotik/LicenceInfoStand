@@ -34,6 +34,8 @@ import {
   SUPER_PASS_INFO,
   BDE_PAR_COMPOSANTE,
   ASSOCIATIONS_THEMATIQUES,
+  ASSOCIATIONS_FORMATION,
+  SYNDICATS_REPRESENTATION,
   ENGAGEMENT_INFO,
   SANTE_MENTALE_INFO,
   ACCOMPAGNEMENT_PSY,
@@ -46,6 +48,54 @@ import {
   VIE_ETUDIANTE_SECTIONS,
   type VieEtudianteSection,
 } from '../../content/vieEtudianteData';
+
+// ============================================
+// Composant pour afficher le logo d'une association
+// ============================================
+interface AssociationLogoProps {
+  logo?: string;
+  icon: string;
+  name: string;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+function AssociationLogo({ logo, icon, name, size = 'md' }: AssociationLogoProps) {
+  const sizeClasses = {
+    sm: 'w-10 h-10',
+    md: 'w-14 h-14',
+    lg: 'w-16 h-16'
+  };
+
+  const textSizeClasses = {
+    sm: 'text-2xl',
+    md: 'text-3xl',
+    lg: 'text-4xl'
+  };
+
+  if (logo) {
+    return (
+      <div className={`${sizeClasses[size]} flex-shrink-0 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center`}>
+        <img
+          src={logo}
+          alt={`Logo ${name}`}
+          className="w-full h-full object-contain p-1"
+          onError={(e) => {
+            // Fallback to icon if image fails to load
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+            target.parentElement!.innerHTML = `<span class="${textSizeClasses[size]}">${icon}</span>`;
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${sizeClasses[size]} flex-shrink-0 flex items-center justify-center`}>
+      <span className={textSizeClasses[size]}>{icon}</span>
+    </div>
+  );
+}
 
 // ============================================
 // Composant Principal
@@ -913,9 +963,38 @@ function AssociationsSection() {
               className="bg-surface-light rounded-xl p-5 border border-primary-light/20 hover:border-green-400/50 transition-all"
               whileHover={{ y: -5 }}
             >
-              <div className="text-4xl mb-3">{bde.icon}</div>
-              <h4 className="font-bold text-text mb-2">{bde.nom}</h4>
-              <p className="text-sm text-text-muted">{bde.description}</p>
+              <div className="flex items-start gap-3 mb-3">
+                <AssociationLogo logo={bde.logo} icon={bde.icon} name={bde.nom} size="lg" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-text mb-1">{bde.nom}</h4>
+                  <Badge text={bde.type} color="#27AE60" />
+                </div>
+              </div>
+              <p className="text-sm text-text-muted mb-3">{bde.description}</p>
+              {bde.contact && (
+                <div className="flex flex-wrap gap-3 pt-2 border-t border-primary-light/10">
+                  {bde.contact.email && (
+                    <a
+                      href={`mailto:${bde.contact.email}`}
+                      className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>📧</span> {bde.contact.email}
+                    </a>
+                  )}
+                  {bde.contact.instagram && (
+                    <a
+                      href={`https://instagram.com/${bde.contact.instagram}`}
+                      className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>📷</span> @{bde.contact.instagram}
+                    </a>
+                  )}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
@@ -936,13 +1015,139 @@ function AssociationsSection() {
               className="bg-surface-light rounded-xl p-5 border border-primary-light/20"
             >
               <div className="flex items-start gap-3 mb-3">
-                <span className="text-3xl">{asso.icon}</span>
-                <div>
+                <AssociationLogo logo={asso.logo} icon={asso.icon} name={asso.nom} size="md" />
+                <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-text mb-1">{asso.nom}</h4>
                   <Badge text={asso.type} color="#3498DB" />
                 </div>
               </div>
-              <p className="text-sm text-text-muted">{asso.description}</p>
+              <p className="text-sm text-text-muted mb-3">{asso.description}</p>
+              {asso.contact && (
+                <div className="flex flex-wrap gap-3 pt-2 border-t border-primary-light/10">
+                  {asso.contact.email && (
+                    <a
+                      href={`mailto:${asso.contact.email}`}
+                      className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>📧</span> {asso.contact.email}
+                    </a>
+                  )}
+                  {asso.contact.instagram && (
+                    <a
+                      href={`https://instagram.com/${asso.contact.instagram}`}
+                      className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>📷</span> @{asso.contact.instagram}
+                    </a>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Associations de formation */}
+      <div>
+        <h3 className="text-xl font-bold text-purple-400 mb-4 flex items-center gap-2">
+          <span>🎓</span> Associations de formation
+        </h3>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {ASSOCIATIONS_FORMATION.map((asso, index) => (
+            <motion.div
+              key={asso.nom}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-surface-light rounded-xl p-5 border border-primary-light/20"
+            >
+              <div className="flex items-start gap-3 mb-3">
+                <AssociationLogo logo={asso.logo} icon={asso.icon} name={asso.nom} size="md" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-text mb-1">{asso.nom}</h4>
+                  <Badge text={asso.type} color="#9B59B6" />
+                </div>
+              </div>
+              <p className="text-sm text-text-muted mb-3">{asso.description}</p>
+              {asso.contact && (
+                <div className="flex flex-wrap gap-3 pt-2 border-t border-primary-light/10">
+                  {asso.contact.email && (
+                    <a
+                      href={`mailto:${asso.contact.email}`}
+                      className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>📧</span> {asso.contact.email}
+                    </a>
+                  )}
+                  {asso.contact.instagram && (
+                    <a
+                      href={`https://instagram.com/${asso.contact.instagram}`}
+                      className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>📷</span> @{asso.contact.instagram}
+                    </a>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Syndicats et représentation étudiante */}
+      <div>
+        <h3 className="text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+          <span>✊</span> Syndicats et représentation étudiante
+        </h3>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {SYNDICATS_REPRESENTATION.map((asso, index) => (
+            <motion.div
+              key={asso.nom}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-surface-light rounded-xl p-5 border border-red-500/20"
+            >
+              <div className="flex items-start gap-3 mb-3">
+                <AssociationLogo logo={asso.logo} icon={asso.icon} name={asso.nom} size="md" />
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-text mb-1">{asso.nom}</h4>
+                  <Badge text={asso.type} color="#E74C3C" />
+                </div>
+              </div>
+              <p className="text-sm text-text-muted mb-3">{asso.description}</p>
+              {asso.contact && (
+                <div className="flex flex-wrap gap-3 pt-2 border-t border-primary-light/10">
+                  {asso.contact.email && (
+                    <a
+                      href={`mailto:${asso.contact.email}`}
+                      className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>📧</span> {asso.contact.email}
+                    </a>
+                  )}
+                  {asso.contact.instagram && (
+                    <a
+                      href={`https://instagram.com/${asso.contact.instagram}`}
+                      className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 transition-colors"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <span>📷</span> @{asso.contact.instagram}
+                    </a>
+                  )}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
