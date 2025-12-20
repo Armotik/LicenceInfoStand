@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
+import { feature } from 'topojson-client';
 import { useAppStore } from '../../stores/appStore';
 import { useCanvas } from '../../shared/hooks';
 import type { CanvasContext, AnimationState, IdleEffect } from '../../types';
@@ -170,101 +171,76 @@ function GlitchText({ text }: { text: string }) {
 // ============================================
 
 export function IdleMode() {
-  const { currentIdleEffect, showIdleTitle } = useAppStore();
+    const { currentIdleEffect, showIdleTitle } = useAppStore();
 
-  return (
-    <div className="relative w-full h-full idle-mode">
-      {/* Canvas d'effet */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIdleEffect}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute inset-0"
-        >
-          <EffectRenderer effect={currentIdleEffect} />
-        </motion.div>
-      </AnimatePresence>
-
-      {/* Overlay avec logo et titre */}
-      <AnimatePresence>
-        {showIdleTitle && (
-          <motion.div
-            className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1 }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
-              className="relative text-center px-16 py-12"
-            >
-              {/* Cadre avec fond semi-transparent (statique) */}
-              <div className="absolute inset-0 bg-surface/40 backdrop-blur-md rounded-2xl border border-primary-light/20 shadow-2xl" />
-
-              {/* Contenu du titre avec animations */}
-              <div className="relative z-10">
-                {/* Titre principal avec gradient animé */}
-                <div className="relative inline-block">
-                  <GlitchText text="Licence Informatique" />
-                </div>
-
-                {/* Sous-titre */}
-                <motion.p
-                  className="text-2xl md:text-3xl text-primary-light font-light"
-                  animate={{
-                    opacity: [0.7, 1, 0.7],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
+    return (
+        <div className="relative w-full h-full idle-mode">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={currentIdleEffect}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="absolute inset-0"
                 >
-                  La Rochelle Université
-                </motion.p>
-              </div>
-            </motion.div>
+                    <EffectRenderer effect={currentIdleEffect} />
+                </motion.div>
+            </AnimatePresence>
 
-            {/* Hint en bas */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              transition={{ delay: 1.5 }}
-              className="absolute bottom-20 text-text-muted text-lg"
-            >
-              Appuyez sur <span className="text-primary-light font-semibold">Espace</span> pour explorer
-            </motion.p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+            <AnimatePresence>
+                {showIdleTitle && (
+                    <motion.div
+                        className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1 }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5, duration: 0.8 }}
+                            className="relative text-center px-16 py-12"
+                        >
+                            <div className="absolute inset-0 bg-surface/40 backdrop-blur-md rounded-2xl border border-primary-light/20 shadow-2xl" />
+                            <div className="relative z-10">
+                                <div className="relative inline-block">
+                                    <GlitchText text="Licence Informatique" />
+                                </div>
+                                <motion.p
+                                    className="text-2xl md:text-3xl text-primary-light font-light"
+                                    animate={{ opacity: [0.7, 1, 0.7] }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                >
+                                    La Rochelle Université
+                                </motion.p>
+                            </div>
+                        </motion.div>
+
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.6 }}
+                            transition={{ delay: 1.5 }}
+                            className="absolute bottom-20 text-text-muted text-lg"
+                        >
+                            Appuyez sur <span className="text-primary-light font-semibold">Espace</span> pour explorer
+                        </motion.p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
 }
 
-
-// ============================================
-// Renderer d'effet
-// ============================================
-
 function EffectRenderer({ effect }: { effect: IdleEffect }) {
-  switch (effect) {
-    case 'matrix':
-      return <MatrixRainEffect />;
-    case 'boids':
-      return <BoidsEffect />;
-    case 'neural':
-      return <NeuralNetworkEffect />;
-    case 'globe':
-      return <GlobeEffect />;
-    default:
-      return <MatrixRainEffect />;
-  }
+    switch (effect) {
+        case 'matrix': return <MatrixRainEffect />;
+        case 'boids': return <BoidsEffect />;
+        case 'neural': return <NeuralNetworkEffect />;
+        case 'globe': return <GlobeEffect />;
+        default: return <MatrixRainEffect />;
+    }
 }
 
 // ============================================
@@ -1540,760 +1516,593 @@ function NeuralNetworkEffect() {
   );
 }
 
-// ============================================
-// Placeholder pour Globe Effect
+/// ============================================
+// Globe Effect Placeholder
 // ============================================
 
-// Données des universités EU-CONEXUS
-const EU_CONEXUS_UNIVERSITIES = [
-    { name: 'La Rochelle Université', city: 'La Rochelle', country: 'France', lat: 46.1591, lon: -1.1520, isMain: true },
-    { name: 'Universidad Católica de Valencia', city: 'Valence', country: 'Espagne', lat: 39.4699, lon: -0.3763, isMain: false },
-    { name: 'Università del Salento', city: 'Lecce', country: 'Italie', lat: 40.3516, lon: 18.1750, isMain: false },
-    { name: 'Technical University of Civil Engineering', city: 'Bucarest', country: 'Roumanie', lat: 44.4268, lon: 26.1025, isMain: false },
-    { name: 'Klaipėda University', city: 'Klaipėda', country: 'Lituanie', lat: 55.7033, lon: 21.1443, isMain: false },
-    { name: 'Agricultural University of Athens', city: 'Athènes', country: 'Grèce', lat: 37.9838, lon: 23.7275, isMain: false },
-    { name: 'University of Zadar', city: 'Zadar', country: 'Croatie', lat: 44.1194, lon: 15.2314, isMain: false },
-    { name: 'XAMK', city: 'Kotka', country: 'Finlande', lat: 60.4664, lon: 26.9458, isMain: false },
-    { name: 'Frederick University', city: 'Nicosie', country: 'Chypre', lat: 35.1856, lon: 33.3823, isMain: false },
+// ============================================
+// CONFIGURATION
+// ============================================
+
+// Pays principal (France) - affiché en rouge
+const MAIN_COUNTRY = 'FRA';
+
+// Codes ISO des pays partenaires EU-CONEXUS - affichés en bleu
+const PARTNER_COUNTRIES = ['ESP', 'ITA', 'ROU', 'LTU', 'GRC', 'HRV', 'FIN', 'CYP'];
+
+// Autres pays européens à afficher en fond - affichés en gris foncé
+// Note: Seuls les pays dans ces 3 listes seront affichés sur le globe
+const EUROPEAN_COUNTRIES = [
+    // Europe de l'Ouest
+    'DEU', 'GBR', 'PRT', 'NLD', 'BEL', 'AUT', 'CHE', 'IRL', 'LUX', 'MCO', 'AND',
+    // Europe du Nord
+    'NOR', 'SWE', 'DNK', 'ISL',
+    // Europe de l'Est
+    'POL', 'CZE', 'SVK', 'HUN', 'UKR', 'BLR', 'MDA', 'LVA', 'EST',
+    // Balkans
+    'SRB', 'BIH', 'ALB', 'MKD', 'MNE', 'SVN', 'BGR', 'XKX', // XKX = Kosovo
+    // Autres
+    'TUR', 'RUS', 'GEO', 'ARM', 'AZE', 'MLT'
 ];
 
-// ============================================
-// Données géographiques des 9 pays EU-CONEXUS
-// ============================================
-// Format GeoJSON : [longitude, latitude] avec support multi-polygones
-// Les coordonnées sont les vraies frontières simplifiées des pays
-const EU_CONEXUS_COUNTRIES: Record<string, { coordinates: number[][][]; isMain: boolean }> = {
-    // FRANCE (pays principal - mis en évidence en orange)
-    FRA: {
-        isMain: true,
-        coordinates: [[
-            [2.51, 51.15], [2.66, 50.80], [3.12, 50.78], [3.59, 50.49], [3.68, 50.31],
-            [4.05, 50.29], [4.15, 49.97], [4.44, 49.94], [4.83, 50.17], [4.87, 49.79],
-            [5.47, 49.50], [5.84, 49.54], [6.34, 49.46], [6.73, 49.17], [7.19, 49.12],
-            [7.42, 48.87], [7.90, 48.67], [8.23, 48.97], [7.70, 47.54], [7.02, 47.32],
-            [6.24, 46.86], [6.04, 46.43], [6.80, 46.14], [6.76, 45.78], [7.04, 45.93],
-            [6.75, 45.14], [7.10, 44.85], [6.63, 44.13], [7.38, 43.76], [7.85, 43.77],
-            [7.53, 43.78], [6.94, 43.50], [6.19, 43.07], [5.24, 43.42], [4.81, 43.40],
-            [3.94, 43.54], [3.40, 43.27], [3.17, 42.43], [1.79, 42.50], [0.70, 42.80],
-            [-0.05, 42.69], [-1.57, 43.08], [-1.77, 43.36], [-1.41, 43.27], [-1.38, 44.02],
-            [-1.07, 44.30], [-1.15, 44.66], [-1.25, 44.64], [-1.02, 45.35], [-0.55, 45.93],
-            [-1.19, 45.83], [-1.09, 46.01], [-1.26, 46.26], [-2.00, 46.61], [-2.20, 47.06],
-            [-2.96, 47.29], [-4.11, 47.35], [-4.49, 47.95], [-2.79, 48.56], [-1.95, 48.65],
-            [-1.62, 48.38], [-1.93, 48.73], [-1.38, 48.65], [-1.57, 49.20], [-1.19, 49.36],
-            [-0.98, 49.35], [0.20, 49.45], [0.19, 49.70], [1.26, 49.99], [1.59, 49.96],
-            [1.87, 50.11], [2.51, 51.15]
-        ]]
-    },
+// Coordonnées des universités EU-CONEXUS
+const UNIVERSITIES = [
+    { name: 'La Rochelle Université', lat: 46.16, lon: -1.15, country: 'FRA' },
+    { name: 'Universidad Católica de Valencia', lat: 39.47, lon: -0.38, country: 'ESP' },
+    { name: 'Università del Salento', lat: 40.35, lon: 18.17, country: 'ITA' },
+    { name: 'Technical University Bucharest', lat: 44.44, lon: 26.05, country: 'ROU' },
+    { name: 'Klaipėda University', lat: 55.71, lon: 21.13, country: 'LTU' },
+    { name: 'Agricultural University of Athens', lat: 37.98, lon: 23.73, country: 'GRC' },
+    { name: 'University of Zadar', lat: 44.12, lon: 15.23, country: 'HRV' },
+    { name: 'XAMK', lat: 60.87, lon: 26.70, country: 'FIN' },
+    { name: 'Frederick University', lat: 35.17, lon: 33.36, country: 'CYP' },
+];
 
-    // ESPAGNE
-    ESP: {
-        isMain: false,
-        coordinates: [[
-            [-9.03, 41.88], [-8.98, 42.59], [-9.29, 43.02], [-7.98, 43.75], [-7.59, 43.73],
-            [-6.22, 43.57], [-5.69, 43.59], [-4.53, 43.40], [-3.58, 43.52], [-1.77, 43.36],
-            [-1.57, 43.08], [-0.05, 42.69], [0.70, 42.80], [1.79, 42.50], [3.17, 42.43],
-            [3.32, 42.33], [3.04, 41.79], [2.09, 41.29], [0.81, 41.01], [0.72, 40.68],
-            [0.11, 40.12], [-0.33, 39.49], [0.11, 38.74], [-0.53, 38.33], [-0.65, 37.64],
-            [-1.44, 37.44], [-1.74, 37.46], [-2.11, 36.71], [-4.37, 36.71], [-4.99, 36.32],
-            [-5.38, 35.95], [-5.87, 36.03], [-6.24, 36.37], [-6.93, 37.19], [-7.41, 37.18],
-            [-7.50, 37.53], [-6.95, 38.19], [-7.03, 38.88], [-7.17, 38.89], [-7.34, 39.47],
-            [-7.04, 39.67], [-7.02, 40.18], [-6.86, 40.33], [-6.85, 41.11], [-6.21, 41.57],
-            [-6.54, 41.69], [-7.45, 41.86], [-8.02, 41.79], [-8.27, 42.14], [-8.67, 42.13],
-            [-9.03, 41.88]
-        ]]
-    },
+const LA_ROCHELLE_INDEX = 0;
+const GLOBE_RADIUS = 1.2;
 
-    // ITALIE (mainland + Sicile + Sardaigne)
-    ITA: {
-        isMain: false,
-        coordinates: [
-            // Péninsule principale
-            [
-                [6.63, 45.12], [7.04, 45.93], [6.76, 46.16], [6.80, 46.43], [7.10, 46.50],
-                [8.43, 46.46], [8.47, 46.03], [9.02, 46.03], [9.30, 46.56], [9.93, 46.32],
-                [10.44, 46.89], [11.15, 46.93], [11.16, 46.70], [12.15, 47.08], [12.27, 46.84],
-                [13.81, 46.51], [13.70, 45.60], [13.94, 45.59], [13.14, 45.74], [12.33, 45.38],
-                [12.59, 44.09], [13.63, 43.73], [14.24, 42.43], [15.19, 41.92], [15.97, 41.94],
-                [16.02, 41.44], [17.25, 40.40], [18.53, 40.10], [18.49, 39.35], [17.99, 38.77],
-                [16.57, 38.71], [16.01, 37.96], [15.76, 37.91], [15.65, 38.00], [15.70, 38.21],
-                [15.90, 38.76], [16.11, 38.96], [15.69, 40.03], [14.87, 40.60], [14.46, 40.63],
-                [13.85, 41.12], [12.63, 41.47], [11.28, 42.36], [11.15, 42.41], [10.51, 42.93],
-                [10.02, 44.01], [9.09, 44.07], [8.73, 44.38], [8.01, 43.69], [7.53, 43.78],
-                [7.04, 44.85], [6.63, 45.12]
-            ],
-            // Sicile
-            [
-                [15.09, 36.62], [15.28, 37.13], [15.10, 37.52], [15.65, 38.00], [15.56, 38.30],
-                [14.51, 38.04], [13.70, 37.54], [12.43, 37.80], [12.57, 38.08], [13.36, 38.18],
-                [13.35, 37.94], [12.84, 37.57], [12.44, 37.80], [12.57, 37.58], [13.33, 37.35],
-                [15.09, 36.62]
-            ],
-            // Sardaigne
-            [
-                [9.63, 41.21], [9.81, 40.50], [9.67, 39.18], [9.02, 39.24], [8.41, 38.97],
-                [8.39, 39.28], [8.19, 40.50], [8.78, 40.91], [9.21, 41.27], [9.63, 41.21]
-            ]
-        ]
+// Couleurs
+const COLORS = {
+    france: {
+        fill: new THREE.Color('#E74C3C'),
+        fillOpacity: 0.5,
+        border: new THREE.Color('#E74C3C'),
+        borderOpacity: 1.0,
     },
-
-    // ROUMANIE
-    ROU: {
-        isMain: false,
-        coordinates: [[
-            [22.71, 47.88], [23.14, 48.10], [24.40, 47.98], [24.87, 47.74], [25.21, 47.89],
-            [26.62, 48.22], [27.23, 47.83], [27.77, 47.23], [28.95, 46.29], [29.00, 45.60],
-            [29.68, 45.26], [29.63, 44.84], [28.89, 44.91], [28.56, 43.71], [27.09, 44.11],
-            [25.50, 43.67], [24.03, 43.74], [22.94, 43.82], [22.37, 44.01], [22.50, 44.47],
-            [22.15, 44.48], [21.56, 44.77], [21.48, 45.18], [20.87, 45.42], [20.26, 46.13],
-            [21.02, 46.32], [21.63, 46.99], [22.10, 47.67], [22.71, 47.88]
-        ]]
+    partner: {
+        fill: new THREE.Color('#5DADE2'),
+        fillOpacity: 0.4,
+        border: new THREE.Color('#5DADE2'),
+        borderOpacity: 0.9,
     },
-
-    // LITUANIE
-    LTU: {
-        isMain: false,
-        coordinates: [[
-            [21.05, 56.03], [21.09, 55.89], [22.83, 55.41], [22.84, 54.90], [22.77, 54.36],
-            [23.80, 53.94], [24.58, 53.98], [25.86, 54.17], [26.49, 55.62], [26.59, 55.17],
-            [25.77, 54.85], [25.54, 54.32], [24.45, 53.91], [23.49, 53.95], [23.37, 54.20],
-            [22.77, 54.36], [22.83, 54.90], [22.84, 55.41], [21.09, 55.89], [21.05, 56.03]
-        ]]
+    background: {
+        fill: new THREE.Color('#1A2942'),
+        fillOpacity: 0.2,
+        border: new THREE.Color('#2C3E50'),
+        borderOpacity: 0.3,
     },
-
-    // GRÈCE (mainland + quelques îles principales)
-    GRC: {
-        isMain: false,
-        coordinates: [
-            // Continent
-            [
-                [20.00, 39.71], [19.98, 39.69], [20.19, 39.34], [20.77, 38.77], [21.11, 38.38],
-                [21.35, 37.92], [21.82, 36.84], [22.76, 36.79], [22.72, 37.54], [23.19, 37.95],
-                [23.71, 37.95], [24.02, 38.22], [24.04, 38.39], [23.65, 38.35], [23.25, 38.61],
-                [22.84, 38.60], [23.01, 39.10], [22.38, 39.34], [22.92, 40.59], [22.95, 41.09],
-                [24.06, 41.53], [25.29, 41.24], [26.04, 40.62], [26.29, 40.94], [26.60, 41.34],
-                [26.12, 41.83], [24.93, 41.58], [23.88, 41.46], [23.35, 42.03], [22.95, 41.34],
-                [22.88, 41.99], [22.38, 42.32], [21.92, 42.30], [21.06, 40.85], [20.98, 40.86],
-                [20.72, 40.28], [20.15, 39.62], [20.00, 39.71]
-            ],
-            // Crète
-            [
-                [23.51, 35.28], [24.02, 35.09], [25.77, 35.04], [26.29, 35.30], [26.17, 35.00],
-                [24.72, 34.92], [23.51, 35.28]
-            ]
-        ]
+    university: {
+        laRochelle: new THREE.Color('#E74C3C'),
+        partner: new THREE.Color('#5DADE2'),
     },
-
-    // CROATIE
-    HRV: {
-        isMain: false,
-        coordinates: [[
-            [13.66, 45.46], [14.57, 45.66], [14.92, 45.08], [15.33, 45.03], [15.28, 44.23],
-            [16.02, 44.04], [16.50, 44.18], [17.07, 43.55], [17.63, 42.90], [17.67, 42.92],
-            [18.45, 42.57], [18.52, 42.41], [17.87, 42.75], [17.00, 43.30], [16.92, 43.64],
-            [17.30, 43.45], [17.00, 43.55], [16.85, 43.74], [16.30, 44.08], [15.96, 43.50],
-            [15.75, 43.93], [15.17, 44.24], [14.85, 44.12], [14.51, 45.03], [14.24, 45.15],
-            [13.95, 44.82], [13.66, 45.46]
-        ]]
-    },
-
-    // FINLANDE
-    FIN: {
-        isMain: false,
-        coordinates: [[
-            [20.65, 60.04], [21.07, 59.04], [22.87, 59.85], [23.67, 59.99], [24.74, 59.81],
-            [25.66, 60.11], [26.46, 60.42], [27.80, 60.54], [29.14, 61.17], [28.07, 63.55],
-            [27.43, 64.44], [26.00, 64.92], [24.93, 65.07], [24.16, 65.81], [21.25, 65.03],
-            [21.37, 64.41], [21.67, 63.58], [22.18, 63.42], [21.21, 62.03], [21.54, 61.70],
-            [20.65, 60.04]
-        ]]
-    },
-
-    // CHYPRE
-    CYP: {
-        isMain: false,
-        coordinates: [[
-            [32.26, 35.10], [33.16, 35.17], [34.00, 35.06], [34.57, 35.67], [34.64, 35.18],
-            [34.05, 34.98], [32.94, 34.57], [32.49, 34.70], [32.26, 35.10]
-        ]]
+    dataPacket: {
+        outgoing: new THREE.Color('#E74C3C'),
+        incoming: new THREE.Color('#5DADE2'),
     }
 };
 
-// Conversion lat/lon vers coordonnées 3D sur une sphère
+// ============================================
+// INTERFACES
+// ============================================
+
+interface DataPacket {
+    id: number;
+    fromIndex: number;
+    toIndex: number;
+    progress: number;
+    speed: number;
+    curve: THREE.CubicBezierCurve3;
+    mesh: THREE.Mesh;
+    isOutgoing: boolean;
+}
+
+interface UniversityPoint {
+    position: THREE.Vector3;
+    mesh: THREE.Mesh;
+    glow: THREE.Mesh;
+    ring?: THREE.Mesh;
+}
+
+// ============================================
+// FONCTIONS UTILITAIRES
+// ============================================
+
 function latLonToVector3(lat: number, lon: number, radius: number): THREE.Vector3 {
     const phi = (90 - lat) * (Math.PI / 180);
     const theta = (lon + 180) * (Math.PI / 180);
 
-    const x = -radius * Math.sin(phi) * Math.cos(theta);
-    const y = radius * Math.cos(phi);
-    const z = radius * Math.sin(phi) * Math.sin(theta);
-
-    return new THREE.Vector3(x, y, z);
+    return new THREE.Vector3(
+        -radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+    );
 }
 
-// Créer les contours d'un pays (supporte multi-polygones)
-function createCountryOutline(
-    coordinates: number[][][],
-    radius: number,
-    color: number,
-    opacity: number,
-    isMain: boolean
-): THREE.Group {
-    const group = new THREE.Group();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createCountryGeometry(coordinates: any[], radius: number): THREE.BufferGeometry {
+    const positions: number[] = [];
 
-    // Chaque élément de coordinates est un polygone (un pays peut avoir plusieurs polygones pour les îles)
-    coordinates.forEach((polygon) => {
-        const points: THREE.Vector3[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const processCoordinates = (coords: any[]) => {
+        for (let i = 0; i < coords.length - 1; i++) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const [lon1, lat1] = coords[i] as any[];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const [lon2, lat2] = coords[i + 1] as any[];
 
-        // Convertir chaque point [lon, lat] en position 3D sur la sphère
-        polygon.forEach(([lon, lat]) => {
-            points.push(latLonToVector3(lat, lon, radius));
-        });
+            const v1 = latLonToVector3(lat1, lon1, radius);
+            const v2 = latLonToVector3(lat2, lon2, radius);
 
-        // Fermer le polygone en ajoutant le premier point à la fin si ce n'est pas déjà fait
-        if (points.length > 0) {
-            const first = points[0];
-            const last = points[points.length - 1];
-            if (first.distanceTo(last) > 0.001) {
-                points.push(first.clone());
-            }
+            positions.push(v1.x, v1.y, v1.z);
+            positions.push(v2.x, v2.y, v2.z);
         }
+    };
 
-        // Créer la géométrie de ligne
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-
-        // Ligne principale (contour net)
-        const mainMaterial = new THREE.LineBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: opacity,
-            linewidth: 2,
-        });
-        const mainLine = new THREE.LineLoop(geometry, mainMaterial);
-        group.add(mainLine);
-
-        // Couche de glow 1 (proche, assez opaque)
-        const glow1Material = new THREE.LineBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: opacity * 0.7,
-            linewidth: 4,
-        });
-        const glow1Line = new THREE.LineLoop(geometry.clone(), glow1Material);
-        group.add(glow1Line);
-
-        // Couche de glow 2 (plus large, plus diffuse)
-        const glow2Material = new THREE.LineBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: opacity * 0.4,
-            linewidth: 6,
-        });
-        const glow2Line = new THREE.LineLoop(geometry.clone(), glow2Material);
-        group.add(glow2Line);
-
-        // Couche de glow 3 (très large, très diffuse) - surtout pour les pays non-principaux
-        if (!isMain) {
-            const glow3Material = new THREE.LineBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: opacity * 0.3,
-                linewidth: 8,
+    if (coordinates.length > 0) {
+        if (Array.isArray(coordinates[0][0][0])) {
+            // MultiPolygon
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            coordinates.forEach((polygon: any[]) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                polygon.forEach((ring: any[]) => {
+                    processCoordinates(ring);
+                });
             });
-            const glow3Line = new THREE.LineLoop(geometry.clone(), glow3Material);
-            group.add(glow3Line);
+        } else if (Array.isArray(coordinates[0][0])) {
+            // Polygon
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            coordinates.forEach((ring: any[]) => {
+                processCoordinates(ring);
+            });
         }
+    }
 
-        // Créer un remplissage semi-transparent pour mieux voir la forme
-        if (points.length >= 3) {
-            const vertices: number[] = [];
-            const indices: number[] = [];
-
-            // Ajouter tous les points comme vertices
-            points.forEach((point) => {
-                vertices.push(point.x, point.y, point.z);
-            });
-
-            // Triangulation simple en éventail depuis le premier point
-            for (let i = 1; i < points.length - 2; i++) {
-                indices.push(0, i, i + 1);
-            }
-
-            const fillGeometry = new THREE.BufferGeometry();
-            fillGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-            fillGeometry.setIndex(indices);
-            fillGeometry.computeVertexNormals();
-
-            // Opacité du remplissage
-            const fillOpacity = isMain ? 0.25 : 0.15;
-            const fillMaterial = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: fillOpacity,
-                side: THREE.DoubleSide,
-            });
-
-            const fillMesh = new THREE.Mesh(fillGeometry, fillMaterial);
-            group.add(fillMesh);
-        }
-    });
-
-    return group;
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    return geometry;
 }
 
-// Créer un arc courbe entre deux points sur le globe
-function createArc(start: THREE.Vector3, end: THREE.Vector3, globeRadius: number): THREE.CubicBezierCurve3 {
-    const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
-    const midLength = mid.length();
+function createArcCurve(from: THREE.Vector3, to: THREE.Vector3, radius: number): THREE.CubicBezierCurve3 {
+    const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
+    mid.normalize().multiplyScalar(radius * 1.4); // Arc s'élève au-dessus du globe
 
-    // Élever le point de contrôle au-dessus de la surface
-    const arcHeight = start.distanceTo(end) * 0.4;
-    mid.normalize().multiplyScalar(midLength + arcHeight);
+    const control1 = new THREE.Vector3().lerpVectors(from, mid, 0.33);
+    const control2 = new THREE.Vector3().lerpVectors(mid, to, 0.67);
 
-    // Points de contrôle pour une courbe plus lisse
-    const control1 = new THREE.Vector3().lerpVectors(start, mid, 0.33);
-    control1.normalize().multiplyScalar(globeRadius + arcHeight * 0.5);
-
-    const control2 = new THREE.Vector3().lerpVectors(mid, end, 0.33);
-    control2.normalize().multiplyScalar(globeRadius + arcHeight * 0.5);
-
-    return new THREE.CubicBezierCurve3(start, control1, control2, end);
+    return new THREE.CubicBezierCurve3(from, control1, control2, to);
 }
 
 // ============================================
-// Globe 3D avec contours des pays EU-CONEXUS
-// ============================================
-// Ce composant affiche un globe 3D interactif avec Three.js qui visualise
-// le réseau EU-CONEXUS des 9 universités européennes côtières.
-//
-// Fonctionnalités :
-// - Globe wireframe avec grille de méridiens et parallèles
-// - Contours géographiques des 9 pays partenaires (GeoJSON simplifié)
-// - Remplissage coloré des pays avec transparence
-// - Points lumineux pour chaque université
-// - Arcs de connexion depuis La Rochelle vers les autres universités
-// - Particules animées le long des arcs
-// - Étoiles en arrière-plan
-// - Atmosphère lumineuse autour du globe
-//
-// La France est mise en évidence avec une couleur orange et une opacité plus forte.
-// Les coordonnées géographiques sont projetées sur une sphère de rayon 1.2.
+// COMPOSANT PRINCIPAL
 // ============================================
 
-function GlobeEffect() {
+export function GlobeEffect() {
     const containerRef = useRef<HTMLDivElement>(null);
     const sceneRef = useRef<THREE.Scene | null>(null);
-    const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+    const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const globeGroupRef = useRef<THREE.Group | null>(null);
-    const animationIdRef = useRef<number>(0);
-    const particlesRef = useRef<THREE.Points | null>(null);
-    const arcParticlesRef = useRef<{ mesh: THREE.Mesh; curve: THREE.CubicBezierCurve3; progress: number; speed: number }[]>([]);
-    const timeRef = useRef<number>(0);
+    const universityPointsRef = useRef<UniversityPoint[]>([]);
+    const dataPacketsRef = useRef<DataPacket[]>([]);
+    const animationFrameRef = useRef<number>(0);
+    const packetIdCounterRef = useRef<number>(0);
 
     useEffect(() => {
         if (!containerRef.current) return;
 
-        const container = containerRef.current;
-        const width = container.clientWidth;
-        const height = container.clientHeight;
+        // IMPORTANT: Vider le conteneur au cas où il y aurait déjà un canvas
+        // (peut arriver avec React StrictMode qui démonte/remonte)
+        while (containerRef.current.firstChild) {
+            containerRef.current.removeChild(containerRef.current.firstChild);
+        }
 
-        // ========================================
-        // Setup Scene, Camera, Renderer
-        // ========================================
+        // Stocker la référence du conteneur pour le cleanup
+        const container = containerRef.current;
+
+        // ============================================
+        // 1. SETUP THREE.JS
+        // ============================================
         const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#0A1628');
         sceneRef.current = scene;
 
-        // Caméra avec zoom sur l'Europe
+        const width = containerRef.current.clientWidth;
+        const height = containerRef.current.clientHeight;
+
         const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        camera.position.z = 2; // Zoom important (était à 4, maintenant à 2.2)
-        camera.position.y = 0.5;
+        // Position de la caméra optimisée pour zoomer sur La Rochelle
+        camera.position.set(0, 0, 2); // Zoom: z réduit pour mieux centrer sur La Rochelle
+        camera.lookAt(0, 0, 0); // Point de visée au centre pour centrer sur La Rochelle
         cameraRef.current = camera;
 
-        const renderer = new THREE.WebGLRenderer({
-            antialias: true,
-            alpha: true,
-            powerPreference: 'high-performance'
-        });
-        renderer.setSize(width, height);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setClearColor(0x0A1628, 1);
         container.appendChild(renderer.domElement);
         rendererRef.current = renderer;
 
-        // ========================================
-        // Globe Group (pour rotation)
-        // ========================================
+        // Lumières
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 3, 5);
+        scene.add(directionalLight);
+
+        // ============================================
+        // 2. CRÉER LE GLOBE
+        // ============================================
         const globeGroup = new THREE.Group();
-
-        // Centrage sur l'Europe centrale (autour de 10°E, 50°N)
-        // Pour avoir une vue optimale des 9 pays EU-CONEXUS
-        const europeCenterLon = 10.0; // Centre de l'Europe (entre France et Roumanie)
-
-        // Rotation pour centrer l'Europe face à la caméra
-        globeGroup.rotation.y = (90 - (europeCenterLon + 180)) * (Math.PI / 180);
-
-        // Inclinaison pour bien voir l'Europe (légèrement plus inclinée)
-        globeGroup.rotation.x = 0.3; // Angle optimisé pour l'Europe
-
-        scene.add(globeGroup);
         globeGroupRef.current = globeGroup;
 
-        const GLOBE_RADIUS = 1.2;
-
-        // ========================================
-        // Globe Wireframe
-        // ========================================
-        // Sphère principale (wireframe)
-        const globeGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 48, 32);
-        const globeMaterial = new THREE.MeshBasicMaterial({
+        // Globe wireframe (très subtil)
+        const sphereGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 64, 64);
+        const sphereMaterial = new THREE.MeshBasicMaterial({
             color: 0x1A2942,
             wireframe: true,
             transparent: true,
-            opacity: 0.15,
+            opacity: 0.1,
         });
-        const globeMesh = new THREE.Mesh(globeGeometry, globeMaterial);
-        globeGroup.add(globeMesh);
+        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        globeGroup.add(sphereMesh);
 
-        // Grille de latitude/longitude plus visible
-        const gridMaterial = new THREE.LineBasicMaterial({
-            color: 0x2980B9,
-            transparent: true,
-            opacity: 0.3,
-        });
+        // Orientation du globe pour centrer sur La Rochelle (lat: 46.16°, lon: -1.15°)
+        const laRochelleLat = 46.16;
+        const laRochelleLon = -1.15;
+        const laRochellePos = latLonToVector3(laRochelleLat, laRochelleLon, GLOBE_RADIUS);
 
-        // Méridiens (longitude)
-        for (let i = 0; i < 12; i++) {
-            const curve = new THREE.EllipseCurve(0, 0, GLOBE_RADIUS, GLOBE_RADIUS, 0, Math.PI * 2, false, 0);
-            const points = curve.getPoints(64);
-            const geometry = new THREE.BufferGeometry().setFromPoints(
-                points.map(p => new THREE.Vector3(p.x, p.y, 0))
-            );
-            const line = new THREE.Line(geometry, gridMaterial);
-            line.rotation.y = (i / 12) * Math.PI;
-            globeGroup.add(line);
-        }
+        // Calculer l'angle de rotation nécessaire
+        const targetVector = new THREE.Vector3(0, 0, 1); // Axe Z
+        const rotationAxis = new THREE.Vector3().crossVectors(laRochellePos, targetVector).normalize();
+        const rotationAngle = Math.acos(laRochellePos.normalize().dot(targetVector));
 
-        // Parallèles (latitude)
-        for (let i = 1; i < 6; i++) {
-            const lat = (i / 6) * Math.PI - Math.PI / 2;
-            const radius = Math.cos(lat) * GLOBE_RADIUS;
-            const y = Math.sin(lat) * GLOBE_RADIUS;
+        // Appliquer la rotation au groupe du globe
+        globeGroup.rotateOnAxis(rotationAxis, rotationAngle);
 
-            const curve = new THREE.EllipseCurve(0, 0, radius, radius, 0, Math.PI * 2, false, 0);
-            const points = curve.getPoints(64);
-            const geometry = new THREE.BufferGeometry().setFromPoints(
-                points.map(p => new THREE.Vector3(p.x, y, p.y))
-            );
-            const line = new THREE.Line(geometry, gridMaterial);
-            globeGroup.add(line);
-        }
 
-        // ========================================
-        // Contours des pays EU-CONEXUS (vraies frontières)
-        // ========================================
 
-        // Légèrement au-dessus du globe pour éviter le z-fighting
-        const COUNTRY_RADIUS = GLOBE_RADIUS + 0.003;
+        scene.add(globeGroup);
 
-        // Rendu des 9 pays avec leurs vraies frontières géographiques
-        Object.values(EU_CONEXUS_COUNTRIES).forEach((data) => {
-            const color = data.isMain ? 0xE74C3C : 0xF39C12; // Orange vif pour la France, orange clair pour les autres (meilleur contraste)
-            const opacity = data.isMain ? 1.0 : 0.95; // Opacité très élevée pour bien voir tous les pays
+        // ============================================
+        // 3. CHARGER ET AFFICHER LES PAYS
+        // ============================================
+        const loadCountries = async () => {
+            try {
+                // Charger le fichier TopoJSON
+                const response = await fetch('/data/ne_50m_admin_0_countries_lakes.json');
 
-            const countryOutline = createCountryOutline(
-                data.coordinates,
-                COUNTRY_RADIUS,
-                color,
-                opacity,
-                data.isMain
-            );
-
-            globeGroup.add(countryOutline);
-        });
-
-        // ========================================
-        // Atmosphère (glow)
-        // ========================================
-        const atmosphereGeometry = new THREE.SphereGeometry(GLOBE_RADIUS * 1.15, 32, 32);
-        const atmosphereMaterial = new THREE.ShaderMaterial({
-            vertexShader: `
-        varying vec3 vNormal;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-            fragmentShader: `
-        varying vec3 vNormal;
-        void main() {
-          float intensity = pow(0.7 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 2.0);
-          gl_FragColor = vec4(0.16, 0.5, 0.72, 1.0) * intensity * 0.5;
-        }
-      `,
-            blending: THREE.AdditiveBlending,
-            side: THREE.BackSide,
-            transparent: true,
-        });
-        const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-        globeGroup.add(atmosphere);
-
-        // ========================================
-        // Points des universités
-        // ========================================
-        const laRochellePosition = latLonToVector3(
-            EU_CONEXUS_UNIVERSITIES[0].lat,
-            EU_CONEXUS_UNIVERSITIES[0].lon,
-            GLOBE_RADIUS
-        );
-
-        EU_CONEXUS_UNIVERSITIES.forEach((uni) => {
-            const position = latLonToVector3(uni.lat, uni.lon, GLOBE_RADIUS);
-
-            // Taille et couleur selon si c'est La Rochelle ou non
-            const pointSize = uni.isMain ? 0.06 : 0.04;
-            const pointColor = uni.isMain ? 0xE74C3C : 0x5DADE2;
-
-            // Sphère principale
-            const pointGeometry = new THREE.SphereGeometry(pointSize, 16, 16);
-            const pointMaterial = new THREE.MeshBasicMaterial({
-                color: pointColor,
-                transparent: true,
-                opacity: 0.9,
-            });
-            const point = new THREE.Mesh(pointGeometry, pointMaterial);
-            point.position.copy(position);
-            globeGroup.add(point);
-
-            // Glow autour du point
-            const glowGeometry = new THREE.SphereGeometry(pointSize * 2.5, 16, 16);
-            const glowMaterial = new THREE.MeshBasicMaterial({
-                color: pointColor,
-                transparent: true,
-                opacity: 0.3,
-            });
-            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-            glow.position.copy(position);
-            globeGroup.add(glow);
-
-            // Ring pour La Rochelle (plus visible)
-            if (uni.isMain) {
-                const ringGeometry = new THREE.RingGeometry(0.08, 0.12, 32);
-                const ringMaterial = new THREE.MeshBasicMaterial({
-                    color: 0xE74C3C,
-                    transparent: true,
-                    opacity: 0.8,
-                    side: THREE.DoubleSide,
-                });
-                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-                ring.position.copy(position);
-                ring.lookAt(0, 0, 0);
-                globeGroup.add(ring);
-            }
-        });
-
-        // ========================================
-        // Arcs de connexion
-        // ========================================
-        const arcMaterial = new THREE.LineBasicMaterial({
-            color: 0x5DADE2,
-            transparent: true,
-            opacity: 0.6,
-        });
-
-        // Créer des arcs depuis La Rochelle vers chaque autre université
-        EU_CONEXUS_UNIVERSITIES.slice(1).forEach((uni) => {
-            const endPosition = latLonToVector3(uni.lat, uni.lon, GLOBE_RADIUS);
-            const arc = createArc(laRochellePosition, endPosition, GLOBE_RADIUS);
-
-            const arcPoints = arc.getPoints(50);
-            const arcGeometry = new THREE.BufferGeometry().setFromPoints(arcPoints);
-            const arcLine = new THREE.Line(arcGeometry, arcMaterial);
-            globeGroup.add(arcLine);
-
-            // Particule animée le long de l'arc
-            const particleGeometry = new THREE.SphereGeometry(0.02, 8, 8);
-            const particleMaterial = new THREE.MeshBasicMaterial({
-                color: 0x5DADE2,
-                transparent: true,
-                opacity: 1,
-            });
-            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
-            globeGroup.add(particle);
-
-            arcParticlesRef.current.push({
-                mesh: particle,
-                curve: arc,
-                progress: Math.random(), // Décalage aléatoire
-                speed: 0.003 + Math.random() * 0.002,
-            });
-        });
-
-        // ========================================
-        // Particules de fond (étoiles)
-        // ========================================
-        const starsGeometry = new THREE.BufferGeometry();
-        const starsCount = 500;
-        const starsPositions = new Float32Array(starsCount * 3);
-
-        for (let i = 0; i < starsCount; i++) {
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            const radius = 3 + Math.random() * 3;
-
-            starsPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-            starsPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-            starsPositions[i * 3 + 2] = radius * Math.cos(phi);
-        }
-
-        starsGeometry.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
-
-        const starsMaterial = new THREE.PointsMaterial({
-            color: 0x5DADE2,
-            size: 0.015,
-            transparent: true,
-            opacity: 0.6,
-        });
-
-        const stars = new THREE.Points(starsGeometry, starsMaterial);
-        scene.add(stars);
-        particlesRef.current = stars;
-
-        // ========================================
-        // Animation Loop
-        // ========================================
-        const animate = () => {
-            animationIdRef.current = requestAnimationFrame(animate);
-            timeRef.current += 0.016;
-
-            // Rotation du globe - DÉSACTIVÉE POUR DEBUG
-            // if (globeGroupRef.current) {
-            //     globeGroupRef.current.rotation.y += 0.002;
-            // }
-
-            // Animation des particules sur les arcs
-            arcParticlesRef.current.forEach((arcParticle) => {
-                arcParticle.progress += arcParticle.speed;
-                if (arcParticle.progress > 1) {
-                    arcParticle.progress = 0;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const point = arcParticle.curve.getPoint(arcParticle.progress);
-                arcParticle.mesh.position.copy(point);
+                const topoData = await response.json();
 
-                // Pulse d'opacité
-                const mat = arcParticle.mesh.material as THREE.MeshBasicMaterial;
-                mat.opacity = 0.5 + Math.sin(arcParticle.progress * Math.PI) * 0.5;
-            });
+                // Vérifier que le fichier TopoJSON a la structure attendue
+                if (!topoData || !topoData.objects) {
+                    console.error('Format TopoJSON invalide: objects manquant', topoData);
+                    throw new Error('Format TopoJSON invalide: la propriété objects est manquante');
+                }
 
-            // Animation des étoiles
-            if (particlesRef.current) {
-                particlesRef.current.rotation.y += 0.0002;
-                particlesRef.current.rotation.x += 0.0001;
-            }
+                // Trouver la clé correcte dans objects
+                const objectKey = topoData.objects.ne_50m_admin_0_countries_lakes
+                    ? 'ne_50m_admin_0_countries_lakes'
+                    : Object.keys(topoData.objects)[0];
 
-            // Rendu
-            if (rendererRef.current && sceneRef.current && cameraRef.current) {
-                rendererRef.current.render(sceneRef.current, cameraRef.current);
+                if (!objectKey || !topoData.objects[objectKey]) {
+                    console.error('Aucun objet pays trouvé dans le TopoJSON', topoData.objects);
+                    throw new Error('Aucun objet pays trouvé dans le fichier TopoJSON');
+                }
+
+
+                // Convertir en GeoJSON
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const countriesFeature = feature(topoData, topoData.objects[objectKey]) as any;
+
+                // S'assurer que nous avons un tableau de features
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const features: any[] = countriesFeature.type === 'FeatureCollection'
+                    ? countriesFeature.features
+                    : [countriesFeature];
+
+                const displayedCountries = { france: 0, partners: 0, background: 0, skipped: 0 };
+
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                features.forEach((country: any) => {
+                    const countryCode = country.properties.ISO_A3 || country.properties.ADM0_A3;
+
+                    if (!countryCode) {
+                        displayedCountries.skipped++;
+                        return;
+                    }
+
+                    let style: 'france' | 'partner' | 'background' | null = null;
+
+                    if (countryCode === MAIN_COUNTRY) {
+                        style = 'france';
+                        displayedCountries.france++;
+                    } else if (PARTNER_COUNTRIES.includes(countryCode)) {
+                        style = 'partner';
+                        displayedCountries.partners++;
+                    } else if (EUROPEAN_COUNTRIES.includes(countryCode)) {
+                        style = 'background';
+                        displayedCountries.background++;
+                    } else {
+                        displayedCountries.skipped++;
+                    }
+
+                    if (style) {
+                        createCountryMesh(country, style, globeGroup);
+                    }
+                });
+
+
+                // ============================================
+                // 4. AJOUTER LES POINTS DES UNIVERSITÉS
+                // ============================================
+                UNIVERSITIES.forEach((uni, index) => {
+                    const position = latLonToVector3(uni.lat, uni.lon, GLOBE_RADIUS);
+                    const isLaRochelle = index === LA_ROCHELLE_INDEX;
+
+                    // Point principal
+                    const radius = isLaRochelle ? 0.04 : 0.025;
+                    const geometry = new THREE.SphereGeometry(radius, 16, 16);
+                    const material = new THREE.MeshBasicMaterial({
+                        color: isLaRochelle ? COLORS.university.laRochelle : COLORS.university.partner,
+                    });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.position.copy(position);
+                    globeGroup.add(mesh);
+
+                    // Glow
+                    const glowGeometry = new THREE.SphereGeometry(radius * 2, 16, 16);
+                    const glowMaterial = new THREE.MeshBasicMaterial({
+                        color: isLaRochelle ? COLORS.university.laRochelle : COLORS.university.partner,
+                        transparent: true,
+                        opacity: isLaRochelle ? 0.4 : 0.3,
+                    });
+                    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+                    glow.position.copy(position);
+                    globeGroup.add(glow);
+
+                    const universityPoint: UniversityPoint = { position, mesh, glow };
+
+                    // Anneau pour La Rochelle
+                    if (isLaRochelle) {
+                        const ringGeometry = new THREE.RingGeometry(radius * 1.5, radius * 2, 32);
+                        const ringMaterial = new THREE.MeshBasicMaterial({
+                            color: COLORS.university.laRochelle,
+                            transparent: true,
+                            opacity: 0.6,
+                            side: THREE.DoubleSide,
+                        });
+                        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                        ring.position.copy(position);
+                        ring.lookAt(0, 0, 0);
+                        globeGroup.add(ring);
+                        universityPoint.ring = ring;
+                    }
+
+                    universityPointsRef.current.push(universityPoint);
+                });
+
+                // ============================================
+                // 5. CRÉER LES ARCS DE CONNEXION
+                // ============================================
+                const laRochellePos = universityPointsRef.current[LA_ROCHELLE_INDEX].position;
+
+                universityPointsRef.current.forEach((uni, index) => {
+                    if (index === LA_ROCHELLE_INDEX) return;
+
+                    const curve = createArcCurve(laRochellePos, uni.position, GLOBE_RADIUS);
+                    const points = curve.getPoints(50);
+                    const arcGeometry = new THREE.BufferGeometry().setFromPoints(points);
+
+                    const arcMaterial = new THREE.LineBasicMaterial({
+                        color: 0x5DADE2,
+                        transparent: true,
+                        opacity: 0.3,
+                    });
+
+                    const arcLine = new THREE.Line(arcGeometry, arcMaterial);
+                    globeGroup.add(arcLine);
+                });
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des pays:', error);
             }
         };
 
-        animate();
+        loadCountries();
 
-        // ========================================
-        // Resize Handler
-        // ========================================
+        // ============================================
+        // 6. FONCTION DE CRÉATION DE PARTICULES
+        // ============================================
+        const createDataPacket = (fromIndex: number, toIndex: number, isOutgoing: boolean) => {
+            // Vérifier que les points existent
+            if (!universityPointsRef.current[fromIndex] || !universityPointsRef.current[toIndex]) {
+                return;
+            }
+
+            const from = universityPointsRef.current[fromIndex].position;
+            const to = universityPointsRef.current[toIndex].position;
+            const curve = createArcCurve(from, to, GLOBE_RADIUS);
+
+            const geometry = new THREE.SphereGeometry(0.015, 8, 8);
+            const material = new THREE.MeshBasicMaterial({
+                color: isOutgoing ? COLORS.dataPacket.outgoing : COLORS.dataPacket.incoming,
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            globeGroup.add(mesh);
+
+            const packet: DataPacket = {
+                id: packetIdCounterRef.current++,
+                fromIndex,
+                toIndex,
+                progress: 0,
+                speed: 0.005 + Math.random() * 0.005,
+                curve,
+                mesh,
+                isOutgoing,
+            };
+
+            dataPacketsRef.current.push(packet);
+        };
+
+        // ============================================
+        // 7. ANIMATION LOOP
+        // ============================================
+        let lastPacketTime = 0;
+        const PACKET_INTERVAL = 800; // Créer un nouveau paquet toutes les 800ms
+
+        const animate = (time: number) => {
+            animationFrameRef.current = requestAnimationFrame(animate);
+
+
+            // Créer de nouveaux paquets de données seulement si les points des universités sont initialisés
+            if (universityPointsRef.current.length === UNIVERSITIES.length && time - lastPacketTime > PACKET_INTERVAL) {
+                lastPacketTime = time;
+
+                // Créer un paquet sortant (La Rochelle → université)
+                const targetIndex = 1 + Math.floor(Math.random() * (UNIVERSITIES.length - 1));
+                createDataPacket(LA_ROCHELLE_INDEX, targetIndex, true);
+
+                // Créer un paquet entrant (université → La Rochelle)
+                const sourceIndex = 1 + Math.floor(Math.random() * (UNIVERSITIES.length - 1));
+                createDataPacket(sourceIndex, LA_ROCHELLE_INDEX, false);
+            }
+
+            // Animer les particules
+            dataPacketsRef.current = dataPacketsRef.current.filter((packet) => {
+                packet.progress += packet.speed;
+
+                if (packet.progress <= 1) {
+                    const point = packet.curve.getPoint(packet.progress);
+                    packet.mesh.position.copy(point);
+                    return true;
+                } else {
+                    // Paquet arrivé à destination
+                    globeGroup.remove(packet.mesh);
+                    packet.mesh.geometry.dispose();
+                    (packet.mesh.material as THREE.Material).dispose();
+                    return false;
+                }
+            });
+
+            // Animation des points d'universités (pulse)
+            const pulseValue = Math.sin(time * 0.002) * 0.15 + 0.85;
+            universityPointsRef.current.forEach((uni, index) => {
+                if (index === LA_ROCHELLE_INDEX) {
+                    uni.mesh.scale.setScalar(pulseValue);
+                    uni.glow.scale.setScalar(pulseValue);
+                    if (uni.ring) {
+                        uni.ring.scale.setScalar(pulseValue);
+                    }
+                } else {
+                    const smallPulse = Math.sin(time * 0.003 + index) * 0.1 + 0.9;
+                    uni.mesh.scale.setScalar(smallPulse);
+                    uni.glow.scale.setScalar(smallPulse);
+                }
+            });
+
+            // Rotation désactivée - le globe reste fixe centré sur La Rochelle
+            // globeGroup.rotation.y += 0.0002;
+
+            renderer.render(scene, camera);
+        };
+
+        animate(0);
+
+        // ============================================
+        // 8. GESTION DU RESIZE
+        // ============================================
         const handleResize = () => {
-            if (!containerRef.current || !cameraRef.current || !rendererRef.current) return;
+            if (!container) return;
 
-            const newWidth = containerRef.current.clientWidth;
-            const newHeight = containerRef.current.clientHeight;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
 
-            cameraRef.current.aspect = newWidth / newHeight;
-            cameraRef.current.updateProjectionMatrix();
-            rendererRef.current.setSize(newWidth, newHeight);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
         };
 
         window.addEventListener('resize', handleResize);
 
-        // ========================================
-        // Cleanup
-        // ========================================
+        // ============================================
+        // 9. CLEANUP
+        // ============================================
         return () => {
             window.removeEventListener('resize', handleResize);
-            cancelAnimationFrame(animationIdRef.current);
+            cancelAnimationFrame(animationFrameRef.current);
 
-            // Dispose all geometries and materials
-            scene.traverse((object) => {
-                if (object instanceof THREE.Mesh) {
-                    object.geometry.dispose();
-                    if (Array.isArray(object.material)) {
-                        object.material.forEach(m => m.dispose());
-                    } else {
-                        object.material.dispose();
-                    }
+            // Nettoyer les paquets de données
+            dataPacketsRef.current.forEach((packet) => {
+                if (globeGroup) {
+                    globeGroup.remove(packet.mesh);
                 }
-                if (object instanceof THREE.Line) {
-                    object.geometry.dispose();
-                    if (Array.isArray(object.material)) {
-                        object.material.forEach(m => m.dispose());
-                    } else {
-                        object.material.dispose();
-                    }
-                }
-                if (object instanceof THREE.Points) {
-                    object.geometry.dispose();
-                    if (Array.isArray(object.material)) {
-                        object.material.forEach(m => m.dispose());
-                    } else {
-                        object.material.dispose();
-                    }
-                }
+                packet.mesh.geometry.dispose();
+                (packet.mesh.material as THREE.Material).dispose();
             });
 
-            renderer.dispose();
-
-            if (container.contains(renderer.domElement)) {
+            // Nettoyer le renderer et retirer le canvas
+            if (renderer && container && renderer.domElement.parentElement === container) {
+                renderer.dispose();
                 container.removeChild(renderer.domElement);
             }
 
-            arcParticlesRef.current = [];
+            // Réinitialiser les refs
+            universityPointsRef.current = [];
+            dataPacketsRef.current = [];
         };
     }, []);
 
-    return (
-        <div
-            ref={containerRef}
-            className="w-full h-full"
-            style={{ background: 'linear-gradient(to bottom, #0A1628, #152A45)' }}
-        >
-            {/* Label EU-CONEXUS */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-center pointer-events-none">
-                <p className="text-primary-light text-lg font-medium opacity-70">
-                    Réseau EU-CONEXUS
-                </p>
-                <p className="text-text-muted text-sm opacity-50">
-                    9 universités européennes côtières
-                </p>
-            </div>
+    return <div ref={containerRef} className="w-full h-full" />;
+}
 
-            {/* Légende des pays */}
-            <div className="absolute top-8 right-8 bg-surface/60 backdrop-blur-md rounded-lg px-4 py-3 pointer-events-none">
-                <h3 className="text-primary-light text-sm font-semibold mb-2 opacity-80">
-                    Réseau EU-CONEXUS
-                </h3>
-                <div className="space-y-1.5 text-xs">
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#E74C3C', boxShadow: '0 0 8px #E74C3C' }}></div>
-                        <span className="text-text-muted opacity-70">France (La Rochelle)</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F39C12', boxShadow: '0 0 6px #F39C12' }}></div>
-                        <span className="text-text-muted opacity-70">8 autres pays partenaires</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+// ============================================
+// FONCTION HELPER POUR CRÉER LES PAYS
+// ============================================
+
+function createCountryMesh(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    country: any,
+    style: 'france' | 'partner' | 'background',
+    group: THREE.Group
+) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const coordinates = country.geometry.coordinates as any[];
+    const styleConfig = COLORS[style];
+
+    // Créer les lignes (contours)
+    const geometry = createCountryGeometry(coordinates, GLOBE_RADIUS);
+
+    const material = new THREE.LineBasicMaterial({
+        color: styleConfig.border,
+        transparent: true,
+        opacity: style === 'france' ? 1.0 : style === 'partner' ? 0.9 : 0.5, // Augmenter l'opacité
+        // linewidth n'est PAS supporté dans WebGL!
+    });
+
+    const lines = new THREE.LineSegments(geometry, material);
+    group.add(lines);
+
+
+    // Animation pulse pour les pays partenaires
+    if (style === 'france' || style === 'partner') {
+        lines.userData.pulseSpeed = Math.random() * 0.001 + 0.001;
+        lines.userData.baseOpacity = styleConfig.borderOpacity;
+    }
 }
 
 export default IdleMode;

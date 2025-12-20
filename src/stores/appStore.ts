@@ -34,9 +34,9 @@ const initialState: AppState = {
   previousMode: null,
   
   // Idle
-  currentIdleEffect: 'matrix',
-  idleEffectIndex: 0,
-  
+  currentIdleEffect: 'globe',
+  idleEffectIndex: 3, // Index de 'globe' dans IDLE_EFFECTS
+
   // Presenter
   currentUniverse: 'formation',
   currentSectionIndex: 0,
