@@ -454,10 +454,18 @@ export const TARIFS_SPORT = {
 // CULTURE - MAISON DE L'ÉTUDIANT
 // ============================================================================
 export const ESPACE_CULTURE_INFO = {
-    localisation: 'Quartier BU/FLASH, 3 passage Jacqueline de Romilly',
+    localisation: 'Maison de l\'Étudiant (MDE) - Site FLLASH, 3 passage Jacqueline de Romilly',
     contact: '05 16 49 67 76',
     email: 'culture@univ-lr.fr',
-    reseau: 'Art+Université+Culture'
+    reseau: 'Art+Université+Culture',
+    role: 'Cœur battant de la vie associative',
+    accompagnement: [
+        'Conseil et structuration de projets',
+        'Aide à la rédaction de demandes de subvention',
+        'Respect des cadres légaux (sécurité, droits d\'auteur)',
+        'Domiciliation d\'associations',
+        'Studios de répétition musicale (créneaux étendus, soirs et samedis)'
+    ]
 };
 
 export const EQUIPEMENTS_CULTURELS: ServiceInfo[] = [
@@ -508,17 +516,18 @@ export const ATELIERS_ARTISTIQUES = [
 export const EVENEMENTS_CULTURELS: EvenementSportif[] = [
     {
         nom: 'Festival "Les Étudiants à l\'Affiche"',
-        description: 'LE rendez-vous culturel étudiant de l\'année - Plus de 25 ans de tradition',
-        periode: 'Printemps (Mai-Juin)',
+        description: 'LE rendez-vous culturel étudiant de l\'année - 25ème édition - Point d\'orgue de la saison culturelle',
+        periode: 'Printemps (Fin mars - Début avril)',
         icon: '🎭',
         details: [
             'Restitutions publiques de TOUS les ateliers artistiques de l\'année',
             'Spectacles de théâtre, danse, concerts, expositions photos',
+            'Projets autonomes lauréats du FSDIE',
             'Scène ouverte pour tous les artistes étudiants',
-            'Plusieurs soirées de programmation sur 2-3 semaines',
+            'Programmation dense à la Maison de l\'Étudiant et dans les lieux culturels partenaires de la ville',
             'Gratuit et ouvert à tous (étudiants, personnels, grand public)',
             'Plus de 200 artistes étudiants sur scène',
-            'Moment fort de cohésion et de fierté pour la communauté étudiante'
+            'Brise la tour d\'ivoire universitaire : permet aux citadins de découvrir la vitalité artistique du campus'
         ]
     },
     {
@@ -619,79 +628,111 @@ export const SUPER_PASS_INFO = {
 // ============================================================================
 export const BDE_PAR_COMPOSANTE: Association[] = [
     {
-        nom: 'BDE Informatique IUT',
+        nom: 'BDE IAE La Rochelle',
         type: 'BDE',
-        description: 'Bureau des étudiants du département Informatique',
+        description: 'Organisation du Gala, WEI, participation à la Coupe de France des IAE. Modèle "École de Commerce" avec budget important et partenariats commerciaux',
+        icon: '💼'
+    },
+    {
+        nom: 'Alumni IAE',
+        type: 'Réseau',
+        description: 'Réseau des diplômés : insertion professionnelle, mentorat, annuaire des freelances, afterworks réseau',
+        icon: '🎓'
+    },
+    {
+        nom: 'BDE TC (IUT)',
+        type: 'BDE',
+        description: 'Bureau des Étudiants Techniques de Commercialisation. Reconnu pour son dynamisme, anime la filière commerciale',
         icon: '💻'
     },
     {
-        nom: 'BDE Sciences',
-        type: 'BDE',
-        description: 'Maison des Sciences de l\'Ingénieur',
-        icon: '🔬'
+        nom: 'AS IUT',
+        type: 'Sport & BDE',
+        description: 'Association Sportive de l\'IUT : séjours sportifs (ski, surf), tournois inter-départements, Nuit du Hand',
+        icon: '⚽'
     },
     {
         nom: 'BDE Droit',
         type: 'BDE',
-        description: 'Faculté de Droit et Sciences Politiques',
+        description: 'Fédère les étudiants juristes : soirées, intégration, boutique de produits dérivés (sweats de promo)',
         icon: '⚖️'
     },
     {
-        nom: 'BDE IAE',
+        nom: 'BDE Sciences',
         type: 'BDE',
-        description: 'Institut d\'Administration des Entreprises',
-        icon: '💼'
+        description: 'Crée une identité commune pour les étudiants du pôle Sciences et Technologies, animation du campus sciences',
+        icon: '🔬'
     },
     {
-        nom: 'BEER',
+        nom: 'BDE FLLASH BACK',
         type: 'BDE',
-        description: 'Bureau de l\'Ensemble des Étudiants Rochelais',
-        icon: '🎉'
+        description: 'Représente les étudiants en Lettres, Langues, Arts et Sciences Humaines. Animation culturelle du site centre-ville',
+        icon: '📚'
     },
 ];
 
 export const ASSOCIATIONS_THEMATIQUES: Association[] = [
     {
-        nom: 'AGIR',
-        type: 'Technique',
-        description: 'Association du Génie Informatique Rochelais',
-        icon: '⚙️'
-    },
-    {
-        nom: 'Uni\'Vert',
-        type: 'Écologie',
-        description: 'Développement durable et sensibilisation environnement',
-        icon: '🌱'
-    },
-    {
         nom: 'Efficience',
         type: 'Représentation',
-        description: 'Représentation étudiante et politique universitaire',
+        description: 'Acteur majeur local, apolitique et pragmatique. Représentation dans les conseils centraux (CA, CFVU), défense des intérêts étudiants sur des problématiques concrètes (restauration, transports)',
         icon: '🗳️'
     },
     {
-        nom: 'La Voix Étudiante',
+        nom: 'FAGE (Bouge ta fac)',
         type: 'Représentation',
-        description: 'Organisation étudiante locale',
+        description: 'Fédération d\'associations de filières, historiquement puissante. S\'appuie sur le réseau des BDE pour mobiliser les étudiants',
         icon: '📢'
     },
     {
-        nom: 'AROBAS',
-        type: 'Technique',
-        description: 'Association Robotique IUT',
-        icon: '🤖'
+        nom: 'La Sauce Culturelle',
+        type: 'Culture',
+        description: 'Portée par les étudiants des masters culture. Montage de festivals, expositions, programmation artistique en lien avec l\'Espace Culture. Acteur majeur de la vie culturelle du campus',
+        icon: '🎭'
+    },
+    {
+        nom: 'Univert LR',
+        type: 'Écologie',
+        description: 'Sensibilisation au développement durable en cohérence avec la stratégie LUDI. Projets concrets : Jardins d\'Orbigny (permaculture sur les toits), recyclage, économie circulaire',
+        icon: '🌱'
+    },
+    {
+        nom: 'AFEV',
+        type: 'Solidarité',
+        description: 'Association de la Fondation Étudiante pour la Ville. Mentorat éducatif dans les quartiers, Kolocations à Projets Solidaires (KAPS). Engagement citoyen fortement valorisé',
+        icon: '🤝'
+    },
+    {
+        nom: 'ESN La Rochelle',
+        type: 'International',
+        description: 'Erasmus Student Network. Accueil des étudiants internationaux, Buddy System (parrainage), cafés linguistiques, voyages et événements d\'intégration',
+        icon: '🌍'
     },
 ];
 
 export const ENGAGEMENT_INFO = {
     fdsie: {
-        nom: 'FDSIE',
-        description: 'Fonds de Soutien aux Initiatives Étudiantes',
-        frequence: '3 commissions par an'
+        nom: 'FSDIE - Fonds de Solidarité et de Développement des Initiatives Étudiantes',
+        description: 'Commission mixte Université + CROUS. Financement de projets culturels, humanitaires, scientifiques, environnementaux et sportifs',
+        frequence: '4 à 5 commissions par an (novembre, janvier, février, mai)',
+        criteres: [
+            'Intérêt général pour la communauté étudiante',
+            'Transversalité entre filières',
+            'Projets culturels, humanitaires, scientifiques, environnementaux, sportifs',
+            'Consultation obligatoire d\'un référent Vie Associative en amont',
+            'Dossier à déposer 7 jours avant la commission + soutenance orale'
+        ]
     },
-    bonus: {
-        nom: 'Bonus Engagement Étudiant',
-        description: 'Valorisation de l\'engagement dans le cursus'
+    b2e: {
+        nom: 'B2E - Bonus Engagement Étudiant',
+        description: 'Validation des compétences acquises lors d\'activités bénévoles : crédits ECTS ou bonification de la moyenne',
+        activitesEligibles: [
+            'Mandats électifs (conseils centraux, conseils de composante)',
+            'Fonctions de bureau dans une association agréée (Président, Trésorier, Secrétaire)',
+            'Engagement en tant que mentor (AFEV)',
+            'Accompagnement d\'étudiants en situation de handicap'
+        ],
+        contact: 'b2e@univ-lr.fr'
     }
 };
 
