@@ -22,6 +22,8 @@ import {
   FORMATION_STATS,
   PROGRAM_BY_YEAR,
   CMI_INFO,
+  LABORATOIRE_L3I,
+  LABORATOIRE_MIA,
   POURSUITES,
   METIERS,
   FORMATION_SECTIONS,
@@ -525,36 +527,36 @@ function CMISection() {
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-primary-light mb-1">
-                {CMI_INFO.laboratory.name}
+                {LABORATOIRE_L3I.nom}
               </h3>
               <p className="text-text-muted text-xs mb-3">
-                {CMI_INFO.laboratory.fullName}
+                {LABORATOIRE_L3I.nomComplet}
               </p>
 
               {/* Stats labo */}
               <div className="flex gap-4 mb-3">
                 <div>
                   <div className="text-2xl font-bold text-secondary-light">
-                    {CMI_INFO.laboratory.members}+
+                    {LABORATOIRE_L3I.effectif.total}+
                   </div>
                   <div className="text-xs text-text-muted">Membres</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-secondary-light">
-                    {CMI_INFO.laboratory.researchers}
+                    {LABORATOIRE_L3I.effectif.permanents}
                   </div>
                   <div className="text-xs text-text-muted">Chercheurs</div>
                 </div>
               </div>
 
               <p className="text-text-muted text-xs mb-3">
-                {CMI_INFO.laboratory.description}
+                {LABORATOIRE_L3I.effectif.description}
               </p>
 
               {/* Axes de recherche */}
               <div className="flex flex-wrap gap-1">
-                {CMI_INFO.laboratory.axes.map((axe, idx) => (
-                  <Badge key={idx} text={axe} color="#5DADE2" />
+                {LABORATOIRE_L3I.axes.map((axe, idx) => (
+                  <Badge key={idx} text={axe.nom} color="#5DADE2" />
                 ))}
               </div>
             </div>
@@ -574,13 +576,13 @@ function CMISection() {
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-green-400 mb-1">
-                {CMI_INFO.secondLab.name}
+                {LABORATOIRE_MIA.nom}
               </h3>
               <p className="text-text-muted text-xs mb-3">
-                {CMI_INFO.secondLab.fullName}
+                {LABORATOIRE_MIA.nomComplet}
               </p>
               <p className="text-text-muted text-sm">
-                {CMI_INFO.secondLab.description}
+                {LABORATOIRE_MIA.identite.approche}
               </p>
             </div>
           </div>

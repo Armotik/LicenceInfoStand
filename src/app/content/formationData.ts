@@ -1444,13 +1444,229 @@ export const PROGRAM_BY_YEAR: YearProgram[] = [
 ];
 
 // ============================================================================
-// INFORMATIONS CMI
+// INFORMATIONS CMI & ÉCOSYSTÈME RECHERCHE
 // ============================================================================
+
+// ============================================
+// Institut LUDI - Signature Recherche
+// ============================================
+export const INSTITUT_LUDI = {
+    nom: 'LUDI - Littoral Urbain Durable Intelligent',
+    description: 'Signature de recherche unique de La Rochelle Université, matrice d\'une stratégie scientifique intégrée autour des enjeux du littoral.',
+    vision: 'Transformer le campus en laboratoire à ciel ouvert où l\'informatique devient un levier transversal aux transitions énergétique, environnementale et numérique.',
+
+    genese: {
+        titre: 'Une Spécialisation Stratégique',
+        contexte: 'Face aux défis globaux (changement climatique, montée des eaux, densification urbaine), l\'établissement a fait le pari de l\'interdisciplinarité radicale.',
+        approche: 'Décloisonnement des savoirs : informaticiens, géographes, biologistes, juristes et mathématiciens collaborent autour d\'objets de recherche communs.',
+        impact: 'Le numérique enseigné comme outil de compréhension et d\'action sur le monde réel : Smart City, gestion des ressources, résilience des territoires.'
+    },
+
+    continuum: {
+        titre: 'Formation-Recherche-Innovation',
+        principe: 'Abolition des frontières entre pédagogie et recherche : formation "par la recherche et pour la recherche"',
+        manifestations: [
+            'Enseignants-chercheurs injectant en temps réel leurs résultats dans les cours',
+            'Smart Rooms : espaces d\'apprentissage connectés et collaboratifs',
+            'Reproduction des conditions de travail R&D en salle de cours',
+            'Confrontation précoce aux méthodes scientifiques (dès la L1)'
+        ]
+    },
+
+    europeen: {
+        titre: 'Dimension Européenne : EU-CONEXUS',
+        alliance: 'EU-CONEXUS (European University for Smart Urban Coastal Sustainability)',
+        role: 'La Rochelle Université est membre fondateur et coordinatrice',
+        portee: 'Les compétences acquises sont directement transposables à l\'échelle européenne',
+        benefice: 'Standard académique européen pour les sciences du littoral'
+    }
+};
+
+// ============================================
+// Laboratoire L3i - Pôle d'Excellence
+// ============================================
+export const LABORATOIRE_L3I = {
+    nom: 'L3i',
+    nomComplet: 'Laboratoire Informatique, Image et Interaction',
+    statut: 'Unité de Recherche (EA 2118)',
+    fondation: 1993,
+    effectif: {
+        total: 80,
+        permanents: 34,
+        description: 'Force de frappe scientifique considérable pour un établissement de cette taille'
+    },
+
+    identite: {
+        structure: 'Fédère IUT et Pôle Sciences : passerelle unique entre recherche technologique appliquée et recherche fondamentale',
+        gouvernance: 'Jean-Marc Ogier et Jean-Christophe Burie',
+        alignement: 'Exploitation intelligente des contenus numériques dans des contextes complexes'
+    },
+
+    axes: [
+        {
+            nom: 'Analyse de Documents (Document Analysis)',
+            expertise: 'Leadership mondial en Document Analysis and Recognition',
+            enjeu: 'Comprendre sémantiquement des flux documentaires massifs, hétérogènes et dégradés',
+            projets: [
+                {
+                    nom: 'SmartDoc',
+                    description: 'Capture de documents via smartphones dans conditions non contrôlées',
+                    technologies: ['Géométrie projective', 'Traitement du signal', 'Rectification temps réel'],
+                    impact: 'Algorithmes de rectification, rehaussement et extraction en temps réel'
+                }
+            ]
+        },
+        {
+            nom: 'Intelligence Artificielle et Contenus (Équipe IC)',
+            responsable: 'Petra Gomez-Krämer',
+            frontiere: 'Vision par ordinateur et IA',
+            technologies: ['Deep Learning', 'Réseaux de neurones', 'Computer Vision'],
+            projets: [
+                {
+                    nom: 'IDECYS+',
+                    periode: '2018-2022',
+                    partenaire: 'Ariadnext',
+                    financement: 'FUI (Fonds Unique Interministériel)',
+                    objectif: 'Sécuriser l\'identité numérique des TPE-PME',
+                    role: 'Authentification automatique de documents d\'identité et détection de falsifications',
+                    pertinence: 'Démonstration de la pertinence économique directe des études'
+                }
+            ]
+        },
+        {
+            nom: 'Humanités Numériques',
+            lien: 'Axe "Sociétés" de l\'Institut LUDI',
+            objectif: 'Mettre la puissance de calcul au service du patrimoine culturel et historique',
+            realisations: [
+                'Interfaces de réalité virtuelle pour archives numériques',
+                'Reconnaissance gestuelle pour exploration immersive',
+                'Dispositifs grand public (Fête de la Science)',
+                'Interaction Homme-Machine : ergonomie cognitive et design'
+            ],
+            projets: [
+                {
+                    nom: 'TOURINFLUX',
+                    domaine: 'Tourisme durable',
+                    technologies: ['Big Data', 'Analyse comportementale'],
+                    objectif: 'Analyse des flux touristiques pour optimiser sites et améliorer expérience visiteur',
+                    application: 'Gestion territoriale durable'
+                }
+            ]
+        }
+    ],
+
+    integration: {
+        titre: 'Symbiose L3i ↔ Licence Informatique',
+        principe: 'Quasi-totalité des enseignants de spécialisation L3 sont chercheurs actifs',
+        exemples: [
+            {
+                module: 'Programmation Orientée Objet',
+                lien: 'Architecture logicielle des plateformes de dématérialisation'
+            },
+            {
+                module: 'Bases de Données',
+                lien: 'Gestion de corpus documentaires massifs (Big Data)'
+            },
+            {
+                module: 'Intelligence Artificielle (L3)',
+                lien: 'Algorithmes de classification et réseaux de neurones (équipe Images et Contenus)'
+            },
+            {
+                module: 'Projet Tuteuré',
+                lien: 'Sujets proposés par doctorants/chercheurs sur problématiques exploratoires'
+            }
+        ],
+        veille: 'Intégration rapide des avancées récentes (LLM, IA générative) grâce à la veille scientifique'
+    }
+};
+
+// ============================================
+// Laboratoire MIA - Mathématiques & Numérique
+// ============================================
+export const LABORATOIRE_MIA = {
+    nom: 'MIA',
+    nomComplet: 'Mathématiques, Image et Applications',
+    statut: 'EA 3165',
+
+    identite: {
+        approche: 'Socle de rigueur théorique indispensable aux technologies avancées',
+        pluridisciplinarite: 'Mathématiciens purs, mathématiciens appliqués et informaticiens',
+        conviction: 'Les verrous technologiques (IA, cryptographie, modélisation climatique) nécessitent de nouveaux outils mathématiques'
+    },
+
+    chercheurs: [
+        {
+            nom: 'Thierry Bouwmans',
+            specialite: 'Détection d\'objets'
+        },
+        {
+            nom: 'Renaud Peteri',
+            specialite: 'Vision par ordinateur'
+        }
+    ],
+
+    axes: [
+        {
+            domaine: 'Traitement de l\'Image et Vision par Ordinateur',
+            approche: 'Algorithmes appuyés sur fondements géométriques et statistiques solides',
+            innovations: [
+                {
+                    nom: 'GraphBGS (Background Subtraction)',
+                    description: 'Théorie des graphes pour séparer objets en mouvement du fond statique',
+                    applications: ['Surveillance automatisée', 'Comptage de biodiversité', 'Smart City durable']
+                },
+                {
+                    nom: 'Réseaux de Neurones Hypersphériques',
+                    these: 'Julien de Saint Angel (2025)',
+                    innovation: 'Repenser les fondements géométriques du Deep Learning',
+                    objectif: 'Améliorer la détection d\'anomalies',
+                    niveau: 'Travaux de pointe présentés aux étudiants'
+                },
+                {
+                    nom: 'Fine-Grained Sport Action Recognition',
+                    description: 'Reconnaissance fine d\'actions sportives',
+                    technologies: ['Réseaux convolutionnels spatio-temporels'],
+                    expertise: 'Traitement de la dimension temporelle des données vidéo'
+                }
+            ]
+        },
+        {
+            domaine: 'Modélisation Environnementale et Systèmes Dynamiques',
+            role: 'Apport fondamental pour modéliser phénomènes physiques du littoral',
+            specialite: 'Étude théorique et numérique des Équations aux Dérivées Partielles (EDP)',
+            travaux: [
+                {
+                    sujet: 'Équations de Navier-Stokes',
+                    importance: 'Modélisation dynamique des fluides (courants marins, pollution, inondations)',
+                    statut: 'Problème du millénaire',
+                    contribution: 'Compréhension des systèmes complexes'
+                },
+                {
+                    sujet: 'Optimisation des Réseaux de Capteurs',
+                    contexte: 'Ville intelligente avec milliers de capteurs IoT',
+                    methode: 'Homogénéisation pour optimisation du routage WiFi',
+                    benefice: 'Réseaux plus économes en énergie et plus fiables'
+                }
+            ]
+        }
+    ],
+
+    valeurAjoutee: {
+        justification: 'Justifie l\'importance des mathématiques (algèbre linéaire, probabilités, graphes) dès la L1',
+        comprehension: 'L\'informatique n\'est pas que du code, mais aussi science de la modélisation',
+        concepts: 'Topologie et géométrie différentielle trouvent applications concrètes (imagerie médicale, simulation environnementale)',
+        marche: 'Double compétence Maths-Info extrêmement recherchée (Data Scientist, ingénieur simulation)'
+    }
+};
+
+// ============================================
+// CMI - Cursus Master en Ingénierie
+// ============================================
 export const CMI_INFO = {
     // Propriétés pour l'affichage UI
-    title: 'CMI Informatique',
+    title: 'CMI Informatique - Ingénierie des Contenus Numériques',
     subtitle: 'Cursus Master en Ingénierie',
-    description: 'Formation d\'excellence sur 5 ans (Licence + Master) avec label FIGURE. Programme renforcé (+20% enseignements), stages dès la L1, et immersion en laboratoire de recherche.',
+    description: 'Formation d\'excellence en 5 ans adossée à la Licence et au Master. Parcours renforcé avec immersion recherche dès la L1 dans les laboratoires L3i et MIA.',
 
     stats: [
         { label: 'Places', value: '20', icon: '🎯' },
@@ -1459,32 +1675,74 @@ export const CMI_INFO = {
         { label: 'Label', value: 'FIGURE', icon: '🏅' },
     ],
 
-    laboratory: {
-        name: 'L3i',
-        fullName: 'Laboratoire Informatique, Image et Interaction',
-        members: 100,
-        researchers: 38,
-        description: 'Laboratoire de recherche en informatique de La Rochelle Université, spécialisé dans l\'IA, le traitement d\'images et les interactions homme-machine.',
-        axes: [
-            'IA et apprentissage automatique',
-            'Image et contenus numériques',
-            'Supervision du littoral',
-            'Humanités numériques',
-        ],
-    },
-
-    secondLab: {
-        name: 'MIA',
-        fullName: 'Mathématiques, Image et Applications',
-        description: 'Laboratoire axé sur l\'analyse numérique, l\'optimisation et la modélisation mathématique appliquée.',
-    },
-
     // Le CMI est un DU suivi EN PARALLÈLE de la licence
     nature: 'Diplôme Universitaire (DU) complémentaire',
     duree: '5 ans (10 semestres)',
     ects: 300,
     label: 'Réseau FIGURE',
     plusValue: '+20% d\'enseignements supplémentaires',
+
+    exigence: {
+        titre: 'Formation Sélective et Exigeante',
+        structure: 'Parcours renforcé non diplôme distinct',
+        volume: 'Licence Informatique complète + 20% enseignements (300 ECTS sur 5 ans)',
+        composantes: [
+            'Ouverture sociétale et économique (management, éthique, connaissance entreprise)',
+            'Compléments scientifiques disciplinaires',
+            'Projets intégrateurs',
+            'Stages en laboratoire'
+        ],
+        diplomes: [
+            'Licence Informatique',
+            'Master Informatique',
+            'DU "Honor Program CMI"',
+            'Label national réseau FIGURE'
+        ]
+    },
+
+    immersionRecherche: {
+        titre: 'Apprendre en Faisant',
+        philosophie: 'Apprentissage par l\'action et immersion précoce dans le monde de la recherche',
+        statut: 'Étudiants = apprentis chercheurs dès la première année',
+        dispositifs: [
+            {
+                niveau: 'L1',
+                activite: 'Séminaires et Conférences',
+                description: 'Cycles de conférences métiers et recherche pour découvrir thématiques L3i et MIA'
+            },
+            {
+                niveau: 'L1/L2',
+                activite: 'Stages en Laboratoire',
+                duree: 'Minimum 5 semaines',
+                immersion: 'Intégration dans équipe, réunions scientifiques, découverte quotidien recherche (biblio, expérimentation, publication)'
+            },
+            {
+                niveau: 'Master',
+                activite: 'Projets LUDI',
+                nature: 'Projets transversaux sur problématiques Littoral Urbain Durable Intelligent',
+                collaboration: 'Avec étudiants d\'autres disciplines (biologie, géographie)',
+                competences: 'Mobilisation des compétences techniques pour défis complexes'
+            }
+        ]
+    },
+
+    innovation: {
+        titre: 'Innovation Pédagogique',
+        reseau: 'CMInnov en Nouvelle-Aquitaine',
+        partenaires: ['La Rochelle', 'Poitiers', 'Bordeaux', 'Pau'],
+        mutualisation: 'Partage de pratiques d\'excellence entre universités',
+        benefices: [
+            'Accès à ateliers innovants',
+            'Outils pédagogiques partagés',
+            'Visibilité accrue auprès des entreprises régionales'
+        ],
+        exemples: [
+            'Valorisation de biomasse algale (laboratoire LIENSs)',
+            'Modélisation des tsunamis au Costa Rica',
+            'Compétences informatiques au service de causes environnementales majeures'
+        ],
+        associatif: 'Association des étudiants CMI pour entraide et montage de projets d\'envergure'
+    },
 
     responsable: {
         nom: 'Hélène Thomas',
@@ -1518,13 +1776,15 @@ export const CMI_INFO = {
     ],
 
     highlights: [
-        'Formation sélective et renforcée',
+        'Formation sélective et renforcée (+20%)',
         'Encadrement personnalisé en petit groupe',
+        'Immersion recherche dès la L1 (laboratoires L3i/MIA)',
         'Stages en laboratoires reconnus internationalement',
         'Mobilité internationale obligatoire (3 mois)',
-        'Possibilité d\'alternance dès la L1',
         'Double compétence scientifique/managériale',
-        'Réseau national et international (Fédération CMI France)'
+        'Réseau CMInnov Nouvelle-Aquitaine',
+        'Label national réseau FIGURE',
+        'Projets LUDI interdisciplinaires'
     ],
 
     candidature: {
@@ -1532,6 +1792,101 @@ export const CMI_INFO = {
         voeu: 'Cursus Master en Ingénierie',
         selection: 'Dossier + lettre motivation + entretien',
         important: 'Inscription simultanée OBLIGATOIRE en Licence Informatique'
+    }
+};
+
+// ============================================
+// EU-CONEXUS - Alliance Européenne
+// ============================================
+export const EU_CONEXUS = {
+    nom: 'EU-CONEXUS',
+    nomComplet: 'European University for Smart Urban Coastal Sustainability',
+    role: 'La Rochelle Université est membre fondateur et coordinatrice',
+
+    vision: {
+        campus: 'Campus interuniversitaire européen dédié aux problématiques du littoral',
+        portee: 'Campus étudiant étendu à Athènes, Bucarest, Klaipeda, Valence, Zadar, etc.',
+        recherche: 'Collaboration laboratoires sur économie bleue et tourisme maritime durable'
+    },
+
+    opportunites: [
+        {
+            type: 'Mineures Internationales',
+            description: 'Mineures thématiques en anglais par universités partenaires',
+            exemples: [
+                {
+                    nom: 'Blue Economy and Growth',
+                    possibilite: 'Cours de SIG par Université Technique de Bucarest'
+                },
+                {
+                    nom: 'Coastal Development and Sustainable Maritime Tourism',
+                    possibilite: 'Module aquaculture durable par Université Agricole d\'Athènes'
+                }
+            ],
+            valeur: 'Double compétence rare pour informaticien'
+        },
+        {
+            type: 'Mobilité Physique et Virtuelle',
+            duree: 'Semestre d\'études ou stages courts en laboratoire',
+            importance: 'Formation chercheurs ouverts, capables de collaborer en environnements multiculturels'
+        },
+        {
+            type: 'Micro-certifications',
+            description: 'Modules courts certifiants',
+            domaines: ['Compétences vertes', 'Soft skills interculturelles'],
+            benefice: 'Enrichissement du CV étudiant'
+        }
+    ]
+};
+
+// ============================================
+// Perspectives Post-Licence
+// ============================================
+export const PERSPECTIVES_RECHERCHE = {
+    master: {
+        nom: 'Master Informatique - Ingénierie des Données',
+        lien: 'Poursuite naturelle de la Licence',
+        approfondissement: ['Big Data', 'IA', 'Architecture distribuée'],
+        renforcement: 'Lien accru avec laboratoires L3i et MIA'
+    },
+
+    doctorat: {
+        structure: 'École Doctorale',
+        laboratoires: ['L3i', 'MIA'],
+        sujets: [
+            'Réseaux neuronaux hypersphériques',
+            'Analyse de documents historiques',
+            'Vision par ordinateur embarquée',
+            'Modélisation environnementale'
+        ],
+        debouches: [
+            'Monde académique',
+            'Départements R&D grandes entreprises technologiques'
+        ],
+        niveau: 'Pointe de l\'innovation mondiale'
+    },
+
+    profils: [
+        {
+            type: 'Ingénieur-Chercheur',
+            capacite: 'Transformer avancée scientifique en produit innovant'
+        },
+        {
+            type: 'Data Scientist LUDI',
+            competences: 'Expert donnée + conscience enjeux environnementaux + travail avec non-spécialistes'
+        },
+        {
+            type: 'Chef de Projet Numérique Responsable',
+            formation: 'Éthique et impact sociétal du numérique'
+        }
+    ],
+
+    employabilite: {
+        taux: 'Excellents taux d\'insertion professionnelle',
+        facteurs: [
+            'Dynamisme secteur numérique à La Rochelle',
+            'Reconnaissance qualité formation par partenaires industriels (Ariadnext, EIGSI)'
+        ]
     }
 };
 
