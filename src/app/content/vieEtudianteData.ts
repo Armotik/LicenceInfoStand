@@ -96,7 +96,7 @@ export const VIE_ETUDIANTE_STATS: VieEtudianteStat[] = [
 export const ATOUTS_ROCHELLE = [
     { icon: '🌊', titre: 'Campus en bord de mer', description: 'Situé entre océan et centre historique' },
     { icon: '🚴', titre: 'Ville à taille humaine', description: 'Tout accessible à pied ou vélo' },
-    { icon: '🌱', titre: 'Pionnière écologique', description: 'Laboratoire de l\'écologie urbaine' },
+    { icon: '🔬', titre: 'LUDI - Innovation urbaine', description: 'Laboratoire du Littoral Urbain, Durable et Intelligent' },
     { icon: '🏰', titre: 'Patrimoine exceptionnel', description: 'Vieux-Port, tours médiévales, Fort Boyard' },
     { icon: '🎭', titre: 'Événements culturels', description: 'Francofolies, festivals, vie nocturne' },
     { icon: '☀️', titre: 'Climat océanique doux', description: 'Airs de vacances toute l\'année' },
@@ -307,8 +307,7 @@ export const EVENEMENTS_SPORTIFS: EvenementSportif[] = [
             'Journée d\'intégration et de convivialité',
             'Ouvert à tous les niveaux, débutants bienvenus',
             'Remise de prix et goodies'
-        ],
-        participants: '200+ étudiants'
+        ]
     },
     {
         nom: 'Mille Sabords',
@@ -321,8 +320,7 @@ export const EVENEMENTS_SPORTIFS: EvenementSportif[] = [
             'Combinaison course à pied, kayak, et défis aquatiques',
             'Ambiance festive garantie, costumes de pirates encouragés',
             'Plus de 30 ans d\'histoire'
-        ],
-        participants: '150+ équipes'
+        ]
     },
     {
         nom: 'Croisière de fin d\'année',
@@ -336,8 +334,7 @@ export const EVENEMENTS_SPORTIFS: EvenementSportif[] = [
             'Accessible aux débutants, initiation à la voile',
             'Moment privilégié de cohésion entre étudiants',
             'Apéritif en mer et pique-nique'
-        ],
-        participants: '100+ étudiants par session'
+        ]
     },
     {
         nom: 'Les Nuits',
@@ -350,8 +347,7 @@ export const EVENEMENTS_SPORTIFS: EvenementSportif[] = [
             'Éclairage spécial, musique, ambiance festive',
             'Mix étudiants/personnels/anciens',
             'Buvette et restauration sur place'
-        ],
-        participants: '80-120 par nuit'
+        ]
     },
     {
         nom: 'IUT Beach Tour',
@@ -364,8 +360,7 @@ export const EVENEMENTS_SPORTIFS: EvenementSportif[] = [
             'Tournoi par équipes mixtes',
             'Journée complète : compétition + détente plage',
             'Transport organisé depuis le campus'
-        ],
-        participants: '30+ équipes'
+        ]
     },
     {
         nom: 'Challenge nautique',
@@ -378,8 +373,7 @@ export const EVENEMENTS_SPORTIFS: EvenementSportif[] = [
             'Championnats universitaires de voile',
             'Possibilité de passer des certifications (permis mer)',
             'Matériel fourni : dériveurs, catamarans'
-        ],
-        participants: 'Variable'
+        ]
     },
 ];
 
@@ -434,6 +428,25 @@ export const SUAPSE_INFO = {
         labelHQE: 'Démarche Haute Qualité Environnementale'
     },
     formations: ['BNSSA', 'PSC 1', 'PSE 1 et PSE 2', 'Recyclage secourisme']
+};
+
+export const TARIFS_SPORT = {
+    voile: {
+        annuel: '95€',
+        boursier: '50€',
+        semestriel: '50€',
+        description: 'Cotisation annuelle pour la pratique de la voile'
+    },
+    musculation: {
+        annuel: '55€',
+        boursier: '40€',
+        description: 'Cotisation annuelle - Serviette fournie et obligatoire'
+    },
+    passportInfo: {
+        titre: 'Pass\'sport',
+        description: 'La plupart des autres activités sont gratuites grâce au Pass\'sport',
+        montantBoursier: 'Tarifs réduits pour les étudiants boursiers'
+    }
 };
 
 // ============================================================================
@@ -505,8 +518,7 @@ export const EVENEMENTS_CULTURELS: EvenementSportif[] = [
             'Gratuit et ouvert à tous (étudiants, personnels, grand public)',
             'Plus de 200 artistes étudiants sur scène',
             'Moment fort de cohésion et de fierté pour la communauté étudiante'
-        ],
-        participants: '1000+ spectateurs'
+        ]
     },
     {
         nom: 'Ma Thèse en 180 secondes (MT180)',
@@ -521,8 +533,7 @@ export const EVENEMENTS_CULTURELS: EvenementSportif[] = [
             'Développe des compétences en communication scientifique',
             'Événement festif et pédagogique',
             'Retransmis en live'
-        ],
-        participants: '15-20 candidats'
+        ]
     },
     {
         nom: 'Fête de la Science',
@@ -537,8 +548,7 @@ export const EVENEMENTS_CULTURELS: EvenementSportif[] = [
             'Ouvert aux scolaires et au grand public',
             'Les étudiants peuvent animer des stands',
             'Découverte des métiers de la recherche'
-        ],
-        participants: '2000+ visiteurs'
+        ]
     },
     {
         nom: 'Festival "Ici en Corée"',
@@ -553,8 +563,7 @@ export const EVENEMENTS_CULTURELS: EvenementSportif[] = [
             'Démonstrations d\'arts martiaux (Taekwondo)',
             'Concert K-pop par des étudiants',
             'Liens avec les partenariats universitaires en Corée du Sud'
-        ],
-        participants: '500+ personnes'
+        ]
     },
     {
         nom: 'Ciné-Club étudiant',
@@ -568,8 +577,7 @@ export const EVENEMENTS_CULTURELS: EvenementSportif[] = [
             'Tarif préférentiel ou gratuit pour les étudiants',
             'Parfois en présence de réalisateurs ou acteurs',
             'Thématiques mensuelles (cinéma coréen, SF, écologie...)'
-        ],
-        participants: '50-150 par séance'
+        ]
     },
     {
         nom: 'Rencontres LUDI',
@@ -583,8 +591,7 @@ export const EVENEMENTS_CULTURELS: EvenementSportif[] = [
             'Échanges entre sciences "dures" et sciences humaines',
             'Ouvert à tous, gratuit',
             'Buffet convivial après la rencontre'
-        ],
-        participants: '80-120 par rencontre'
+        ]
     },
 ];
 

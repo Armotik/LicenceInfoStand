@@ -26,6 +26,7 @@ import {
   EVENEMENTS_SPORTIFS,
   SPORTS_MER_SPECIFICITY,
   SUAPSE_INFO,
+  TARIFS_SPORT,
   ESPACE_CULTURE_INFO,
   EQUIPEMENTS_CULTURELS,
   ATELIERS_ARTISTIQUES,
@@ -572,6 +573,65 @@ function SportSection() {
         </div>
       </motion.div>
 
+      {/* Tarifs sportifs */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-orange-900/30 to-yellow-900/20 rounded-2xl p-6 border border-orange-500/30"
+      >
+        <h3 className="text-xl font-bold text-orange-400 mb-4 flex items-center gap-2">
+          <span>💰</span> Tarifs et accès
+        </h3>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-4">
+          {/* Tarifs Voile */}
+          <div className="bg-blue-900/20 rounded-xl p-5 border border-blue-500/30">
+            <h4 className="font-bold text-blue-400 mb-3 flex items-center gap-2">
+              <span>⛵</span> Activités nautiques (Voile)
+            </h4>
+            <p className="text-sm text-text-muted mb-3">{TARIFS_SPORT.voile.description}</p>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-text">Tarif annuel</span>
+                <span className="font-bold text-blue-400">{TARIFS_SPORT.voile.annuel}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-text">Tarif boursier (annuel ou semestre)</span>
+                <span className="font-bold text-green-400">{TARIFS_SPORT.voile.boursier}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tarifs Musculation */}
+          <div className="bg-purple-900/20 rounded-xl p-5 border border-purple-500/30">
+            <h4 className="font-bold text-purple-400 mb-3 flex items-center gap-2">
+              <span>💪</span> Salle de musculation
+            </h4>
+            <p className="text-sm text-text-muted mb-3">{TARIFS_SPORT.musculation.description}</p>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-text">Tarif annuel</span>
+                <span className="font-bold text-purple-400">{TARIFS_SPORT.musculation.annuel}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-text">Tarif boursier</span>
+                <span className="font-bold text-green-400">{TARIFS_SPORT.musculation.boursier}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Pass'sport info */}
+        <div className="bg-green-900/20 rounded-lg p-4 border border-green-500/30">
+          <p className="text-green-300 font-medium">
+            ✓ <span className="font-bold">{TARIFS_SPORT.passportInfo.titre} :</span> {TARIFS_SPORT.passportInfo.description}
+          </p>
+          <p className="text-sm text-green-400/70 mt-1">
+            {TARIFS_SPORT.passportInfo.montantBoursier}
+          </p>
+        </div>
+      </motion.div>
+
       {/* Activités sportives */}
       <div>
         <h3 className="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">
@@ -622,9 +682,6 @@ function SportSection() {
                   <p className="text-sm text-text-muted mb-3">{event.description}</p>
                   {event.periode && (
                     <Badge text={event.periode} icon="📅" color="#F39C12" />
-                  )}
-                  {event.participants && (
-                    <Badge text={event.participants} icon="👥" color="#27AE60" />
                   )}
                 </div>
               </div>
@@ -800,9 +857,6 @@ function CultureSection() {
                   <p className="text-sm text-text-muted mb-3">{event.description}</p>
                   {event.periode && (
                     <Badge text={event.periode} icon="📅" color="#9B59B6" />
-                  )}
-                  {event.participants && (
-                    <Badge text={event.participants} icon="👥" color="#27AE60" />
                   )}
                 </div>
               </div>
