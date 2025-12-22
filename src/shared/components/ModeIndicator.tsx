@@ -16,7 +16,6 @@ const EFFECT_LABELS: Record<string, string> = {
   matrix: 'Matrix Rain',
   boids: 'Simulation Boids',
   neural: 'Réseau Neural',
-  globe: 'Globe Connecté',
 };
 
 const UNIVERSE_LABELS: Record<string, string> = {
@@ -47,7 +46,11 @@ export function ModeIndicator() {
     currentUniverse, 
     currentDemo,
     idleEffectIndex,
+    showIdleTitle,
   } = useAppStore();
+
+  // Masquer le HUD si showIdleTitle est false (en mode idle ou presenter)
+  const shouldShow = (mode !== 'idle' && mode !== 'presenter') || showIdleTitle;
 
   // Sous-label selon le mode
   const getSubLabel = () => {
@@ -62,6 +65,8 @@ export function ModeIndicator() {
         return '';
     }
   };
+
+  if (!shouldShow) return null;
 
   return (
     <motion.div
@@ -137,8 +142,8 @@ export function ModeIndicator() {
 export function NavigationHint() {
   const { mode, showIdleTitle } = useAppStore();
 
-  // En mode idle, ne pas afficher si showIdleTitle est false
-  const shouldShow = mode !== 'idle' || showIdleTitle;
+  // Masquer le HUD si showIdleTitle est false (en mode idle ou presenter)
+  const shouldShow = (mode !== 'idle' && mode !== 'presenter') || showIdleTitle;
 
   const hints = {
     idle: [

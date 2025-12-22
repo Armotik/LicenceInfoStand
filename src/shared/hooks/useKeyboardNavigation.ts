@@ -130,6 +130,13 @@ export function useKeyboardNavigation() {
     // ========================================
     
     if (mode === 'presenter') {
+      // I : afficher/masquer le HUD
+      if (key.toLowerCase() === 'i') {
+        event.preventDefault();
+        toggleIdleTitle();
+        return;
+      }
+
       // Flèches gauche/droite : changer univers
       if (key === 'ArrowRight') {
         event.preventDefault();

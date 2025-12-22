@@ -13,7 +13,7 @@ import type {
 // Configuration
 // ============================================
 
-const IDLE_EFFECTS: IdleEffect[] = ['matrix', 'boids', 'neural', 'globe'];
+const IDLE_EFFECTS: IdleEffect[] = ['matrix', 'boids', 'neural'];
 const UNIVERSES: ThemeUniverse[] = [
   'formation',
   'vie-etudiante', 
@@ -34,8 +34,8 @@ const initialState: AppState = {
   previousMode: null,
   
   // Idle
-  currentIdleEffect: 'globe',
-  idleEffectIndex: 3, // Index de 'globe' dans IDLE_EFFECTS
+  currentIdleEffect: 'matrix',
+  idleEffectIndex: 0, // Index de 'matrix' dans IDLE_EFFECTS
 
   // Presenter
   currentUniverse: 'formation',

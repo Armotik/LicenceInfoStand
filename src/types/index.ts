@@ -17,8 +17,7 @@ export type ThemeUniverse =
 export type IdleEffect = 
   | 'matrix'
   | 'boids'
-  | 'neural'
-  | 'globe';
+  | 'neural';
 
 // Démonstrations disponibles
 export type DemoType = 
