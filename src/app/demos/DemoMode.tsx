@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useAppStore } from '../../stores/appStore';
 import type { DemoType } from '../../types';
 import clsx from 'clsx';
+import { SortingVisualizer } from './components/SortingVisualizer';
 
 // ============================================
 // Configuration des démos
@@ -201,7 +202,7 @@ function BodyTrackingDemo() {
 }
 
 function SortingDemo() {
-  return <PlaceholderDemo name="Tri Visuel" />;
+  return <SortingVisualizer />;
 }
 
 function PathfindingDemo() {
