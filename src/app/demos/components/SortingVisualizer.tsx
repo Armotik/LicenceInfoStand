@@ -28,6 +28,11 @@ interface AlgorithmInfo {
   };
   description: string;
   color: string;
+  howItWorks: string[];
+  whyUseIt: string;
+  realWorldUses: string[];
+  pros: string[];
+  cons: string[];
 }
 
 // ============================================
@@ -44,6 +49,28 @@ const ALGORITHMS: Record<SortAlgorithm, AlgorithmInfo> = {
     },
     description: 'Compare et échange les éléments adjacents. Simple mais inefficace pour de grandes listes.',
     color: '#3498DB',
+    howItWorks: [
+      '1. Comparer chaque paire d\'éléments adjacents',
+      '2. Échanger si dans le mauvais ordre',
+      '3. Répéter jusqu\'à ce que le tableau soit trié',
+      '4. À chaque passage, le plus grand élément "remonte" à la fin',
+    ],
+    whyUseIt: 'Algorithme simple à comprendre, idéal pour l\'apprentissage. Détecte si un tableau est déjà trié (O(n)). Rarement utilisé en production à cause de sa lenteur.',
+    realWorldUses: [
+      'Enseignement et démonstration des concepts de tri',
+      'Tri de très petits tableaux (< 10 éléments)',
+      'Vérification rapide si un tableau est presque trié',
+    ],
+    pros: [
+      'Très simple à implémenter et comprendre',
+      'Tri en place (pas de mémoire supplémentaire)',
+      'Stable (conserve l\'ordre des éléments égaux)',
+    ],
+    cons: [
+      'Extrêmement lent sur grandes listes (O(n²))',
+      'Beaucoup de comparaisons et d\'échanges inutiles',
+      'Jamais utilisé en production',
+    ],
   },
   quick: {
     name: 'Tri rapide (Quick Sort)',
@@ -54,6 +81,29 @@ const ALGORITHMS: Record<SortAlgorithm, AlgorithmInfo> = {
     },
     description: 'Divise le tableau autour d\'un pivot. Très efficace en pratique, utilisé dans les bibliothèques standards.',
     color: '#E74C3C',
+    howItWorks: [
+      '1. Choisir un élément comme pivot (ici : dernier élément)',
+      '2. Partitionner : éléments < pivot à gauche, > pivot à droite',
+      '3. Placer le pivot à sa position finale',
+      '4. Appliquer récursivement sur les sous-tableaux',
+    ],
+    whyUseIt: 'LE tri le plus utilisé en pratique ! Très rapide en moyenne (O(n log n)) avec faible overhead. C\'est le tri par défaut de JavaScript, Python, Java...',
+    realWorldUses: [
+      'sort() dans JavaScript, Java, Python',
+      'Bases de données pour trier les résultats',
+      'Systèmes d\'exploitation pour ordonnancer les tâches',
+      'Traitement de grandes quantités de données',
+    ],
+    pros: [
+      'Très rapide en pratique (meilleur cas constant)',
+      'Tri en place (peu de mémoire)',
+      'Bon pour parallélisation (GPU)',
+    ],
+    cons: [
+      'Pire cas O(n²) si mauvais pivot',
+      'Pas stable par défaut',
+      'Récursif → risque de stack overflow',
+    ],
   },
   merge: {
     name: 'Tri fusion (Merge Sort)',
@@ -64,6 +114,29 @@ const ALGORITHMS: Record<SortAlgorithm, AlgorithmInfo> = {
     },
     description: 'Divise récursivement puis fusionne. Complexité garantie, enseigné en L2.',
     color: '#9B59B6',
+    howItWorks: [
+      '1. Diviser le tableau en deux moitiés',
+      '2. Trier récursivement chaque moitié',
+      '3. Fusionner les deux moitiés triées',
+      '4. La fusion compare les têtes et prend le plus petit',
+    ],
+    whyUseIt: 'Garantie de performance O(n log n) même dans le pire cas. Stable et prédictible. Parfait quand la stabilité et la complexité garantie sont critiques.',
+    realWorldUses: [
+      'Tri de fichiers très volumineux (tri externe)',
+      'Tri de listes chaînées',
+      'Systèmes temps réel (performance prédictible)',
+      'Fusion de plusieurs sources de données triées',
+    ],
+    pros: [
+      'Complexité GARANTIE O(n log n) (même pire cas)',
+      'Stable (conserve l\'ordre)',
+      'Excellente parallélisation',
+    ],
+    cons: [
+      'Nécessite O(n) mémoire supplémentaire',
+      'Plus lent que Quick Sort en pratique',
+      'Overhead de la récursion',
+    ],
   },
   insertion: {
     name: 'Tri par insertion (Insertion Sort)',
@@ -74,6 +147,29 @@ const ALGORITHMS: Record<SortAlgorithm, AlgorithmInfo> = {
     },
     description: 'Insère chaque élément à sa place dans la partie triée. Efficace sur petits tableaux.',
     color: '#27AE60',
+    howItWorks: [
+      '1. Commencer avec le premier élément (déjà "trié")',
+      '2. Prendre l\'élément suivant',
+      '3. L\'insérer à sa place dans la partie triée',
+      '4. Répéter jusqu\'à la fin',
+    ],
+    whyUseIt: 'Excellent pour petits tableaux ou tableaux presque triés. Très rapide si données déjà ordonnées (O(n)). Utilisé en combinaison avec Quick Sort.',
+    realWorldUses: [
+      'Tri de petits tableaux (< 20 éléments)',
+      'Optimisation de Quick/Merge Sort (sous-tableaux)',
+      'Tri incrémental (données qui arrivent une par une)',
+      'Jeux de cartes (tri en temps réel)',
+    ],
+    pros: [
+      'Simple et intuitif',
+      'Très rapide sur petits tableaux',
+      'Excellent sur données presque triées',
+      'Stable et en place',
+    ],
+    cons: [
+      'Lent sur grandes listes (O(n²))',
+      'Beaucoup de déplacements d\'éléments',
+    ],
   },
   heap: {
     name: 'Tri par tas (Heap Sort)',
@@ -84,6 +180,29 @@ const ALGORITHMS: Record<SortAlgorithm, AlgorithmInfo> = {
     },
     description: 'Utilise une structure de tas binaire. Complexité garantie sans espace supplémentaire.',
     color: '#F39C12',
+    howItWorks: [
+      '1. Construire un tas max (arbre binaire où parent > enfants)',
+      '2. Échanger la racine (max) avec le dernier élément',
+      '3. Réduire la taille du tas et ré-organiser',
+      '4. Répéter jusqu\'à ce que le tas soit vide',
+    ],
+    whyUseIt: 'Combine les avantages de Quick (en place) et Merge (O(n log n) garanti). Parfait quand mémoire limitée et performance garantie nécessaire.',
+    realWorldUses: [
+      'Systèmes embarqués (mémoire limitée)',
+      'Files de priorité (ordonnancement OS)',
+      'Algorithme de Dijkstra (plus court chemin)',
+      'Top K éléments d\'un flux de données',
+    ],
+    pros: [
+      'Complexité GARANTIE O(n log n)',
+      'Tri en place (pas de mémoire extra)',
+      'Pas de récursion profonde',
+    ],
+    cons: [
+      'Plus lent que Quick Sort en pratique',
+      'Pas stable',
+      'Mauvaise localité de cache (accès mémoire dispersés)',
+    ],
   },
 };
 
@@ -100,6 +219,7 @@ export function SortingVisualizer() {
   const [bars, setBars] = useState<ArrayBar[]>([]);
   const [state, setState] = useState<SortingState>('idle');
   const [stats, setStats] = useState({ comparisons: 0, swaps: 0 });
+  const [showExplanation, setShowExplanation] = useState(false);
 
   // Refs
   const sortingRef = useRef(false);
@@ -544,6 +664,119 @@ export function SortingVisualizer() {
           {' : '}
           {algoInfo.description}
         </p>
+      </div>
+
+      {/* Section explicative */}
+      <div className="bg-surface-light rounded-xl border border-primary-light/20 overflow-hidden">
+        <button
+          onClick={() => setShowExplanation(!showExplanation)}
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🧮</span>
+            <span className="font-bold text-text">Comprendre l'algorithme</span>
+          </div>
+          <motion.span
+            animate={{ rotate: showExplanation ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-text-muted"
+          >
+            ▼
+          </motion.span>
+        </button>
+
+        <AnimatePresence>
+          {showExplanation && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 pb-4 space-y-4 border-t border-primary-light/10">
+                {/* Comment ça marche */}
+                <div>
+                  <h3 className="font-bold text-primary-light mb-2 mt-4">
+                    🔍 Comment ça marche ?
+                  </h3>
+                  <ol className="space-y-1 text-sm text-text-muted">
+                    {algoInfo.howItWorks.map((step, idx) => (
+                      <li key={idx} className="ml-4">
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                {/* Pourquoi l'utiliser */}
+                <div>
+                  <h3 className="font-bold text-primary-light mb-2">
+                    💡 Pourquoi utiliser cet algorithme ?
+                  </h3>
+                  <p className="text-sm text-text-muted">
+                    {algoInfo.whyUseIt}
+                  </p>
+                </div>
+
+                {/* Avantages et Inconvénients */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-bold text-green-400 mb-2">
+                      ✅ Avantages
+                    </h3>
+                    <ul className="space-y-1 text-sm text-text-muted">
+                      {algoInfo.pros.map((pro, idx) => (
+                        <li key={idx} className="ml-4">• {pro}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-red-400 mb-2">
+                      ❌ Inconvénients
+                    </h3>
+                    <ul className="space-y-1 text-sm text-text-muted">
+                      {algoInfo.cons.map((con, idx) => (
+                        <li key={idx} className="ml-4">• {con}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Applications réelles */}
+                <div>
+                  <h3 className="font-bold text-primary-light mb-2">
+                    🌍 Applications dans le monde réel
+                  </h3>
+                  <ul className="space-y-1 text-sm text-text-muted">
+                    {algoInfo.realWorldUses.map((use, idx) => (
+                      <li key={idx} className="ml-4">• {use}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Lien avec la Licence */}
+                <div
+                  className="rounded-lg p-3 border-l-4"
+                  style={{
+                    backgroundColor: `${algoInfo.color}10`,
+                    borderColor: algoInfo.color
+                  }}
+                >
+                  <h3 className="font-bold mb-2" style={{ color: algoInfo.color }}>
+                    🎓 Dans la Licence Informatique
+                  </h3>
+                  <p className="text-sm text-text-muted">
+                    Les algorithmes de tri sont enseignés en <strong>L2</strong> dans l'UE "Algorithmique & Structures de données".
+                    Vous apprendrez à analyser leur complexité avec la notation Big O, à comprendre quand utiliser
+                    chaque algorithme, et à les implémenter en C et Java. Ces concepts sont essentiels pour
+                    devenir un bon développeur et réussir les entretiens techniques !
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Visualisation */}

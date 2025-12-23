@@ -3,6 +3,7 @@ import { useAppStore } from '../../stores/appStore';
 import type { DemoType } from '../../types';
 import clsx from 'clsx';
 import { SortingVisualizer } from './components/SortingVisualizer';
+import { MandelbrotVisualizer } from './components/MandelbrotVisualizer';
 
 // ============================================
 // Configuration des démos
@@ -210,7 +211,7 @@ function PathfindingDemo() {
 }
 
 function MandelbrotDemo() {
-  return <PlaceholderDemo name="Fractales Mandelbrot" />;
+  return <MandelbrotVisualizer />;
 }
 
 function BoidsDemo() {
