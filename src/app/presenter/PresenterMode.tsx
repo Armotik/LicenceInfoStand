@@ -7,6 +7,7 @@ import { useAppStore, UNIVERSES } from '../../stores/appStore';
 import { FormationUniverse } from './universes/FormationUniverse';
 import { VieEtudianteUniverse } from './universes/VieEtudianteUniverse';
 import { LaRochelleUniverse } from './universes/LaRochelleUniverse';
+import { SystemeUniversitaireUniverse } from './universes/SystemeUniversitaireUniverse';
 import type { ThemeUniverse } from '../../types';
 import clsx from 'clsx';
 
@@ -129,7 +130,7 @@ function UniverseRenderer({ universe }: { universe: ThemeUniverse }) {
     case 'la-rochelle':
       return <LaRochelleUniverse />;
     case 'systeme-universitaire':
-      return <SystemeUniversitairePlaceholder />;
+      return <SystemeUniversitaireUniverse />;
     case 'demos':
       return <DemosUniverse />;
     default:
@@ -138,24 +139,8 @@ function UniverseRenderer({ universe }: { universe: ThemeUniverse }) {
 }
 
 // ============================================
-// Placeholders pour les autres univers
+// Univers Démos
 // ============================================
-
-function SystemeUniversitairePlaceholder() {
-  return (
-    <PlaceholderUniverse
-      icon="📚"
-      title="Système Universitaire"
-      color="#9B59B6"
-      items={[
-        { icon: '📊', title: 'ECTS', desc: '30 crédits/semestre, 180 pour la Licence' },
-        { icon: '👨‍🏫', title: 'CM', desc: 'Cours Magistral en amphi' },
-        { icon: '👥', title: 'TD', desc: 'Travaux Dirigés (20-30 étudiants)' },
-        { icon: '💻', title: 'TP', desc: 'Travaux Pratiques (10-15 étudiants)' },
-      ]}
-    />
-  );
-}
 
 function DemosUniverse() {
   const { startDemo } = useAppStore();
@@ -204,70 +189,6 @@ function DemosUniverse() {
               </h3>
               <p className="text-text-muted text-sm">{demo.desc}</p>
             </motion.button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================
-// Placeholder générique
-// ============================================
-
-interface PlaceholderItem {
-  icon: string;
-  title: string;
-  desc: string;
-}
-
-function PlaceholderUniverse({
-  icon,
-  title,
-  color,
-  items,
-}: {
-  icon: string;
-  title: string;
-  color: string;
-  items: PlaceholderItem[];
-}) {
-  return (
-    <div className="w-full h-full p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-8">
-          <motion.span
-            className="text-6xl block mb-4"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            {icon}
-          </motion.span>
-          <h2 className="text-4xl font-display font-bold mb-2" style={{ color }}>
-            {title}
-          </h2>
-          <p className="text-text-muted">
-            Contenu détaillé à venir (Phase 3)
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6">
-          {items.map((item, index) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-surface-light rounded-xl p-6 border border-primary-light/20 flex items-start gap-4"
-            >
-              <span className="text-4xl">{item.icon}</span>
-              <div>
-                <h3 className="text-xl font-bold mb-1" style={{ color }}>
-                  {item.title}
-                </h3>
-                <p className="text-text-muted">{item.desc}</p>
-              </div>
-            </motion.div>
           ))}
         </div>
       </div>
