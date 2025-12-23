@@ -26,7 +26,6 @@ import {
   LABORATOIRE_MIA,
   INSTITUT_LUDI,
   EU_CONEXUS,
-  PERSPECTIVES_RECHERCHE,
   POURSUITES,
   METIERS,
   FORMATION_SECTIONS,
@@ -700,7 +699,7 @@ function L3iSubSection() {
                       <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs font-bold rounded">{projet.nom}</span>
                       {'periode' in projet && <span className="text-xs text-text-muted">{projet.periode}</span>}
                     </div>
-                    <p className="text-sm text-text-muted">{projet.description || projet.objectif}</p>
+                    <p className="text-sm text-text-muted">{'description' in projet ? projet.description : 'objectif' in projet ? projet.objectif : ''}</p>
                     {'technologies' in projet && projet.technologies && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {projet.technologies.map((tech: string, tIdx: number) => (
