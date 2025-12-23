@@ -174,6 +174,13 @@ export function useKeyboardNavigation() {
     // ========================================
     
     if (mode === 'demo') {
+      // I : afficher/masquer le HUD
+      if (key.toLowerCase() === 'i') {
+        event.preventDefault();
+        toggleIdleTitle();
+        return;
+      }
+      
       // Les démos peuvent avoir leurs propres raccourcis
       // gérés dans leurs composants respectifs
     }

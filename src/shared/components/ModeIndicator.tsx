@@ -50,7 +50,7 @@ export function ModeIndicator() {
   } = useAppStore();
 
   // Masquer le HUD si showIdleTitle est false (en mode idle ou presenter)
-  const shouldShow = (mode !== 'idle' && mode !== 'presenter') || showIdleTitle;
+  const shouldShow = (mode !== 'idle' && mode !== 'presenter' && mode !== 'demo') || showIdleTitle;
 
   // Sous-label selon le mode
   const getSubLabel = () => {
