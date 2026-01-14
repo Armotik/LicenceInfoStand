@@ -4,6 +4,7 @@ import type { DemoType } from '../../types';
 import clsx from 'clsx';
 import { SortingVisualizer } from './components/SortingVisualizer';
 import { MandelbrotVisualizer } from './components/MandelbrotVisualizer';
+import { PathfindingVisualizer } from './components/PathfindingVisualizer';
 
 // ============================================
 // Configuration des démos
@@ -207,7 +208,7 @@ function SortingDemo() {
 }
 
 function PathfindingDemo() {
-  return <PlaceholderDemo name="Pathfinding A*" />;
+  return <PathfindingVisualizer />;
 }
 
 function MandelbrotDemo() {
