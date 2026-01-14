@@ -58,6 +58,7 @@ const MAP_SIZE = 2000; // 2000px = 5km (1px = 2.5m)
 const SCALE = 0.0025; // 1px = 2.5m
 
 // Routes du quartier avec virages et intersections variées
+// IMPORTANT: Les routes partagent des points communs pour créer des intersections
 const ROADS: Road[] = [
   // Autoroute périphérique (130 km/h)
   {
@@ -65,10 +66,10 @@ const ROADS: Road[] = [
     name: 'Périphérique Ouest',
     points: [
       { x: 100, y: 100, id: 'p1' },
-      { x: 120, y: 400, id: 'p2' },
+      { x: 200, y: 400, id: 'p2' },      // Connecté à r3
       { x: 150, y: 800, id: 'p3' },
-      { x: 180, y: 1200, id: 'p4' },
-      { x: 200, y: 1600, id: 'p5' },
+      { x: 180, y: 1000, id: 'p4' },     // Connecté à r4
+      { x: 200, y: 1600, id: 'p5' },     // Connecté à r5
       { x: 220, y: 1900, id: 'p6' },
     ],
     type: 'highway',
@@ -79,10 +80,10 @@ const ROADS: Road[] = [
     name: 'Périphérique Est',
     points: [
       { x: 1800, y: 150, id: 'p7' },
-      { x: 1820, y: 500, id: 'p8' },
-      { x: 1850, y: 900, id: 'p9' },
+      { x: 1800, y: 500, id: 'p8' },     // Connecté à r3
+      { x: 1800, y: 980, id: 'p9' },     // Connecté à r4
       { x: 1870, y: 1300, id: 'p10' },
-      { x: 1880, y: 1700, id: 'p11' },
+      { x: 1800, y: 1640, id: 'p11' },   // Connecté à r5
       { x: 1900, y: 1950, id: 'p12' },
     ],
     type: 'highway',
@@ -94,12 +95,12 @@ const ROADS: Road[] = [
     id: 'r3',
     name: 'Avenue de l\'Université',
     points: [
-      { x: 200, y: 400, id: 'p13' },
-      { x: 500, y: 380, id: 'p14' },
-      { x: 900, y: 400, id: 'p15' },
+      { x: 200, y: 400, id: 'p13' },     // Connecté à r1
+      { x: 500, y: 380, id: 'p14' },     // Connecté à r6
+      { x: 1000, y: 400, id: 'p15' },    // Connecté à r7
       { x: 1300, y: 420, id: 'p16' },
-      { x: 1700, y: 450, id: 'p17' },
-      { x: 1800, y: 500, id: 'p18' },
+      { x: 1500, y: 450, id: 'p17' },    // Connecté à r8
+      { x: 1800, y: 500, id: 'p18' },    // Connecté à r2
     ],
     type: 'main',
     speedLimit: 50,
@@ -108,12 +109,12 @@ const ROADS: Road[] = [
     id: 'r4',
     name: 'Boulevard des Sciences',
     points: [
-      { x: 180, y: 1000, id: 'p19' },
+      { x: 180, y: 1000, id: 'p19' },    // Connecté à r1
       { x: 400, y: 980, id: 'p20' },
-      { x: 700, y: 1000, id: 'p21' },
-      { x: 1000, y: 1020, id: 'p22' },
+      { x: 700, y: 1000, id: 'p21' },    // Connecté à r10
+      { x: 1000, y: 1020, id: 'p22' },   // Connecté à r7
       { x: 1400, y: 1000, id: 'p23' },
-      { x: 1800, y: 980, id: 'p24' },
+      { x: 1800, y: 980, id: 'p24' },    // Connecté à r2
     ],
     type: 'main',
     speedLimit: 50,
@@ -122,11 +123,11 @@ const ROADS: Road[] = [
     id: 'r5',
     name: 'Avenue Jean Jaurès',
     points: [
-      { x: 200, y: 1600, id: 'p25' },
+      { x: 200, y: 1600, id: 'p25' },    // Connecté à r1
       { x: 600, y: 1580, id: 'p26' },
-      { x: 1000, y: 1600, id: 'p27' },
+      { x: 1000, y: 1600, id: 'p27' },   // Connecté à r7
       { x: 1400, y: 1620, id: 'p28' },
-      { x: 1800, y: 1640, id: 'p29' },
+      { x: 1800, y: 1640, id: 'p29' },   // Connecté à r2
     ],
     type: 'main',
     speedLimit: 50,
@@ -138,8 +139,8 @@ const ROADS: Road[] = [
     name: 'Rue Victor Hugo',
     points: [
       { x: 500, y: 200, id: 'p30' },
-      { x: 500, y: 380, id: 'p31' },
-      { x: 520, y: 700, id: 'p32' },
+      { x: 500, y: 380, id: 'p31' },     // Connecté à r3
+      { x: 520, y: 700, id: 'p32' },     // Connecté à r9
       { x: 500, y: 1000, id: 'p33' },
       { x: 480, y: 1400, id: 'p34' },
       { x: 500, y: 1800, id: 'p35' },
@@ -152,11 +153,11 @@ const ROADS: Road[] = [
     name: 'Rue de la République',
     points: [
       { x: 1000, y: 150, id: 'p36' },
-      { x: 1000, y: 400, id: 'p37' },
-      { x: 1020, y: 700, id: 'p38' },
-      { x: 1000, y: 1020, id: 'p39' },
+      { x: 1000, y: 400, id: 'p37' },    // Connecté à r3
+      { x: 1020, y: 700, id: 'p38' },    // Connecté à r11
+      { x: 1000, y: 1020, id: 'p39' },   // Connecté à r4
       { x: 980, y: 1400, id: 'p40' },
-      { x: 1000, y: 1850, id: 'p41' },
+      { x: 1000, y: 1600, id: 'p41' },   // Connecté à r5
     ],
     type: 'main',
     speedLimit: 50,
@@ -166,7 +167,7 @@ const ROADS: Road[] = [
     name: 'Avenue Gambetta',
     points: [
       { x: 1500, y: 200, id: 'p42' },
-      { x: 1500, y: 450, id: 'p43' },
+      { x: 1500, y: 450, id: 'p43' },    // Connecté à r3
       { x: 1480, y: 800, id: 'p44' },
       { x: 1500, y: 1100, id: 'p45' },
       { x: 1520, y: 1500, id: 'p46' },
@@ -183,8 +184,8 @@ const ROADS: Road[] = [
     points: [
       { x: 300, y: 600, id: 'p48' },
       { x: 400, y: 650, id: 'p49' },
-      { x: 600, y: 700, id: 'p50' },
-      { x: 800, y: 680, id: 'p51' },
+      { x: 520, y: 700, id: 'p50' },     // Connecté à r6
+      { x: 700, y: 700, id: 'p51' },     // Connecté à r10
     ],
     type: 'secondary',
     speedLimit: 30,
@@ -193,9 +194,9 @@ const ROADS: Road[] = [
     id: 'r10',
     name: 'Rue du Commerce',
     points: [
-      { x: 700, y: 600, id: 'p52' },
-      { x: 750, y: 750, id: 'p53' },
-      { x: 800, y: 900, id: 'p54' },
+      { x: 700, y: 700, id: 'p52' },     // Connecté à r9
+      { x: 700, y: 850, id: 'p53' },
+      { x: 700, y: 1000, id: 'p54' },    // Connecté à r4
       { x: 850, y: 1050, id: 'p55' },
     ],
     type: 'secondary',
@@ -205,10 +206,10 @@ const ROADS: Road[] = [
     id: 'r11',
     name: 'Rue des Écoles',
     points: [
-      { x: 1100, y: 600, id: 'p56' },
-      { x: 1200, y: 700, id: 'p57' },
-      { x: 1300, y: 800, id: 'p58' },
-      { x: 1400, y: 900, id: 'p59' },
+      { x: 1020, y: 700, id: 'p56' },    // Connecté à r7
+      { x: 1100, y: 750, id: 'p57' },
+      { x: 1200, y: 800, id: 'p58' },
+      { x: 1300, y: 900, id: 'p59' },
     ],
     type: 'secondary',
     speedLimit: 30,
@@ -221,6 +222,7 @@ const ROADS: Road[] = [
       { x: 700, y: 1250, id: 'p61' },
       { x: 800, y: 1300, id: 'p62' },
       { x: 900, y: 1350, id: 'p63' },
+      { x: 1000, y: 1400, id: 'p64' },   // Ajout: point de connexion
     ],
     type: 'secondary',
     speedLimit: 30,
@@ -231,9 +233,9 @@ const ROADS: Road[] = [
     id: 'r13',
     name: 'Impasse des Lilas',
     points: [
-      { x: 650, y: 500, id: 'p64' },
-      { x: 700, y: 550, id: 'p65' },
-      { x: 750, y: 600, id: 'p66' },
+      { x: 650, y: 500, id: 'p65' },
+      { x: 700, y: 550, id: 'p66' },
+      { x: 700, y: 700, id: 'p67' },     // Connecté à r9/r10
     ],
     type: 'local',
     speedLimit: 20,
@@ -242,9 +244,9 @@ const ROADS: Road[] = [
     id: 'r14',
     name: 'Allée du Parc',
     points: [
-      { x: 1150, y: 1200, id: 'p67' },
-      { x: 1200, y: 1250, id: 'p68' },
-      { x: 1250, y: 1300, id: 'p69' },
+      { x: 1150, y: 1200, id: 'p68' },
+      { x: 1200, y: 1250, id: 'p69' },
+      { x: 1250, y: 1300, id: 'p70' },
     ],
     type: 'local',
     speedLimit: 20,
@@ -334,10 +336,12 @@ export function PathfindingVisualizer() {
   });
   const [showExplanation, setShowExplanation] = useState(false);
   const [speed, setSpeed] = useState(50);
-  const [viewBox] = useState({ x: 0, y: 0, width: MAP_SIZE, height: MAP_SIZE });
+  const [viewBox, setViewBox] = useState({ x: 0, y: 0, width: MAP_SIZE, height: MAP_SIZE });
+  const [zoom, setZoom] = useState(1);
 
   const intersections = useRef(generateIntersections());
   const runningRef = useRef(false);
+  const svgRef = useRef<SVGSVGElement>(null);
 
   // Distance euclidienne
   const distance = (p1: Point, p2: Point): number => {
@@ -519,10 +523,10 @@ export function PathfindingVisualizer() {
 
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
-    const scaleX = MAP_SIZE / rect.width;
-    const scaleY = MAP_SIZE / rect.height;
-    const x = (e.clientX - rect.left) * scaleX + viewBox.x;
-    const y = (e.clientY - rect.top) * scaleY + viewBox.y;
+
+    // Coordonnées dans le viewBox
+    const x = viewBox.x + ((e.clientX - rect.left) / rect.width) * viewBox.width;
+    const y = viewBox.y + ((e.clientY - rect.top) / rect.height) * viewBox.height;
 
     // Trouver l'intersection la plus proche
     const closest = intersections.current.reduce((best, inter) => {
@@ -530,7 +534,9 @@ export function PathfindingVisualizer() {
       return dist < best.dist ? { point: inter.point, dist } : best;
     }, { point: intersections.current[0].point, dist: Infinity });
 
-    if (closest.dist > 80) return;
+    // Seuil adaptatif basé sur le zoom
+    const threshold = 80 / zoom;
+    if (closest.dist > threshold) return;
 
     if (placeMode === 'start') {
       setStartPoint(closest.point);
@@ -538,6 +544,73 @@ export function PathfindingVisualizer() {
     } else {
       setEndPoint(closest.point);
     }
+  };
+
+  // Gestion du zoom avec la molette
+  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
+    e.preventDefault();
+
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.min(Math.max(zoom * delta, 0.5), 4);
+
+    const svg = e.currentTarget;
+    const rect = svg.getBoundingClientRect();
+    const mouseX = viewBox.x + ((e.clientX - rect.left) / rect.width) * viewBox.width;
+    const mouseY = viewBox.y + ((e.clientY - rect.top) / rect.height) * viewBox.height;
+
+    const newWidth = MAP_SIZE / newZoom;
+    const newHeight = MAP_SIZE / newZoom;
+
+    const newX = mouseX - (mouseX - viewBox.x) * (newWidth / viewBox.width);
+    const newY = mouseY - (mouseY - viewBox.y) * (newHeight / viewBox.height);
+
+    setZoom(newZoom);
+    setViewBox({
+      x: Math.max(0, Math.min(newX, MAP_SIZE - newWidth)),
+      y: Math.max(0, Math.min(newY, MAP_SIZE - newHeight)),
+      width: newWidth,
+      height: newHeight,
+    });
+  };
+
+  // Zoom in/out avec boutons
+  const handleZoomIn = () => {
+    const newZoom = Math.min(zoom * 1.3, 4);
+    const newWidth = MAP_SIZE / newZoom;
+    const newHeight = MAP_SIZE / newZoom;
+
+    const centerX = viewBox.x + viewBox.width / 2;
+    const centerY = viewBox.y + viewBox.height / 2;
+
+    setZoom(newZoom);
+    setViewBox({
+      x: Math.max(0, Math.min(centerX - newWidth / 2, MAP_SIZE - newWidth)),
+      y: Math.max(0, Math.min(centerY - newHeight / 2, MAP_SIZE - newHeight)),
+      width: newWidth,
+      height: newHeight,
+    });
+  };
+
+  const handleZoomOut = () => {
+    const newZoom = Math.max(zoom / 1.3, 0.5);
+    const newWidth = MAP_SIZE / newZoom;
+    const newHeight = MAP_SIZE / newZoom;
+
+    const centerX = viewBox.x + viewBox.width / 2;
+    const centerY = viewBox.y + viewBox.height / 2;
+
+    setZoom(newZoom);
+    setViewBox({
+      x: Math.max(0, Math.min(centerX - newWidth / 2, MAP_SIZE - newWidth)),
+      y: Math.max(0, Math.min(centerY - newHeight / 2, MAP_SIZE - newHeight)),
+      width: newWidth,
+      height: newHeight,
+    });
+  };
+
+  const handleResetZoom = () => {
+    setZoom(1);
+    setViewBox({ x: 0, y: 0, width: MAP_SIZE, height: MAP_SIZE });
   };
 
   // Reset
@@ -763,16 +836,40 @@ export function PathfindingVisualizer() {
             >
               🎯 Point B
             </button>
+            <div className="border-l border-primary-light/20 mx-1" />
+            <button
+              onClick={handleZoomIn}
+              className="px-3 py-1.5 rounded-lg font-medium bg-surface text-text hover:bg-surface-lighter transition-all text-sm"
+              title="Zoom avant"
+            >
+              🔍+
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="px-3 py-1.5 rounded-lg font-medium bg-surface text-text hover:bg-surface-lighter transition-all text-sm"
+              title="Zoom arrière"
+            >
+              🔍-
+            </button>
+            <button
+              onClick={handleResetZoom}
+              className="px-3 py-1.5 rounded-lg font-medium bg-surface text-text hover:bg-surface-lighter transition-all text-sm"
+              title="Réinitialiser le zoom"
+            >
+              ⊙
+            </button>
           </div>
         </div>
 
         <div className="bg-gray-100 rounded-xl p-4 shadow-inner overflow-hidden">
           <svg
+            ref={svgRef}
             width="100%"
             height="600"
             viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
             className="w-full cursor-crosshair bg-gradient-to-br from-green-50 to-blue-50 rounded-lg shadow-lg"
             onClick={handleMapClick}
+            onWheel={handleWheel}
             preserveAspectRatio="xMidYMid meet"
           >
             {/* Bâtiments */}
