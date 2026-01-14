@@ -1,6 +1,6 @@
 // ============================================
-// PathfindingVisualizer - Visualisation des algorithmes de recherche de chemin
-// Démo pédagogique et impressionnante pour les futurs bacheliers
+// PathfindingVisualizer - Simulateur de Navigation GPS avec A*
+// Démo pédagogique style application réelle pour les futurs bacheliers
 // ============================================
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -11,184 +11,60 @@ import clsx from 'clsx';
 // Types
 // ============================================
 
-type Algorithm = 'astar' | 'dijkstra' | 'bfs' | 'dfs';
-type CellType = 'empty' | 'wall' | 'start' | 'end' | 'path' | 'visited' | 'current';
-type DrawMode = 'wall' | 'start' | 'end' | 'erase';
-type PathfindingState = 'idle' | 'running' | 'paused' | 'completed' | 'no-path';
+type CellType = 'road' | 'building' | 'park' | 'water' | 'start' | 'end' | 'path' | 'visited' | 'exploring';
+type PlaceMode = 'start' | 'end';
+type SimulationState = 'idle' | 'running' | 'completed' | 'no-path';
 
 interface Cell {
   row: number;
   col: number;
   type: CellType;
-  g: number; // Coût depuis le départ
-  h: number; // Heuristique vers l'arrivée
-  f: number; // g + h
+  g: number;
+  h: number;
+  f: number;
   parent: Cell | null;
 }
 
-interface AlgorithmInfo {
-  name: string;
-  description: string;
-  color: string;
-  complexity: {
-    time: string;
-    space: string;
-  };
-  howItWorks: string[];
-  whyUseIt: string;
-  realWorldUses: string[];
-  pros: string[];
-  cons: string[];
-}
-
 // ============================================
-// Configuration des algorithmes
+// Configuration
 // ============================================
 
-const ALGORITHMS: Record<Algorithm, AlgorithmInfo> = {
-  astar: {
-    name: 'A* (A-star)',
-    description: 'L\'algorithme optimal qui combine distance parcourue et estimation. Utilise une heuristique intelligente.',
-    color: '#E74C3C',
-    complexity: {
-      time: 'O(b^d) optimisé par heuristique',
-      space: 'O(b^d)',
-    },
-    howItWorks: [
-      '1. Maintenir deux listes : OPEN (à explorer) et CLOSED (déjà visités)',
-      '2. Pour chaque nœud, calculer f(n) = g(n) + h(n)',
-      '   • g(n) = distance réelle depuis le départ',
-      '   • h(n) = estimation (heuristique) vers l\'arrivée',
-      '3. Toujours explorer le nœud avec le plus petit f(n)',
-      '4. L\'heuristique guide vers la solution optimale',
-    ],
-    whyUseIt: 'L\'ALGORITHME DE RÉFÉRENCE pour le pathfinding ! Optimal et efficace grâce à son heuristique. Utilisé dans 99% des jeux vidéo, GPS, robots...',
-    realWorldUses: [
-      'Jeux vidéo (déplacement IA ennemis, pathfinding joueur)',
-      'GPS et applications de navigation (Google Maps, Waze)',
-      'Robotique (planification de trajectoire)',
-      'Logistique (optimisation de livraisons)',
-    ],
-    pros: [
-      'Optimal (trouve le chemin le plus court)',
-      'Efficace (heuristique réduit l\'exploration)',
-      'Flexible (différentes heuristiques possibles)',
-    ],
-    cons: [
-      'Nécessite une bonne heuristique',
-      'Plus complexe à implémenter que Dijkstra',
-      'Sensible à la qualité de l\'heuristique',
-    ],
-  },
-  dijkstra: {
-    name: 'Dijkstra',
-    description: 'Explore uniformément dans toutes les directions. Garanti le chemin optimal sans heuristique.',
-    color: '#3498DB',
-    complexity: {
-      time: 'O((V + E) log V) avec heap',
-      space: 'O(V)',
-    },
-    howItWorks: [
-      '1. Initialiser tous les nœuds avec distance infinie',
-      '2. Distance du départ = 0',
-      '3. Répéter : prendre le nœud non visité le plus proche',
-      '4. Mettre à jour les distances de ses voisins',
-      '5. L\'algorithme est "aveugle" (pas d\'heuristique)',
-    ],
-    whyUseIt: 'Garanti le chemin optimal sans heuristique. Plus simple que A*. Parfait quand on ne peut pas estimer la distance restante ou quand les coûts varient.',
-    realWorldUses: [
-      'Réseaux (protocoles de routage OSPF)',
-      'Systèmes de transport (planification de trajets)',
-      'Graphes pondérés (coûts variables)',
-      'Base pour comprendre A* et autres',
-    ],
-    pros: [
-      'Optimal (toujours le plus court chemin)',
-      'Simple à comprendre et implémenter',
-      'Fonctionne avec graphes pondérés',
-    ],
-    cons: [
-      'Lent (explore beaucoup de nœuds inutiles)',
-      'Pas d\'orientation vers le but',
-      'Moins efficace que A* en pratique',
-    ],
-  },
-  bfs: {
-    name: 'BFS (Breadth-First Search)',
-    description: 'Explore couche par couche, niveau par niveau. Optimal pour graphes non pondérés.',
-    color: '#9B59B6',
-    complexity: {
-      time: 'O(V + E)',
-      space: 'O(V)',
-    },
-    howItWorks: [
-      '1. Utiliser une file (FIFO - First In First Out)',
-      '2. Commencer par le nœud de départ',
-      '3. Explorer tous les voisins du niveau actuel',
-      '4. Puis passer au niveau suivant',
-      '5. L\'exploration forme des "vagues" concentriques',
-    ],
-    whyUseIt: 'Simple et efficace pour graphes non pondérés (tous les chemins ont le même coût). Garanti le chemin avec le moins d\'étapes.',
-    realWorldUses: [
-      'Réseaux sociaux (amis à N degrés de séparation)',
-      'Recherche sur le web (crawlers)',
-      'Résolution de puzzles (Rubik\'s cube)',
-      'Analyse de graphes (plus court chemin non pondéré)',
-    ],
-    pros: [
-      'Optimal pour graphes non pondérés',
-      'Très simple à implémenter',
-      'Exploration systématique par niveaux',
-    ],
-    cons: [
-      'Non optimal si arêtes pondérées',
-      'Explore beaucoup de nœuds inutiles',
-      'Utilise beaucoup de mémoire',
-    ],
-  },
-  dfs: {
-    name: 'DFS (Depth-First Search)',
-    description: 'Explore en profondeur d\'abord, allant au bout d\'un chemin avant de revenir.',
-    color: '#27AE60',
-    complexity: {
-      time: 'O(V + E)',
-      space: 'O(V)',
-    },
-    howItWorks: [
-      '1. Utiliser une pile (LIFO - Last In First Out)',
-      '2. Partir du départ et aller le plus loin possible',
-      '3. Si on atteint une impasse, revenir en arrière',
-      '4. Explorer les autres branches',
-      '5. L\'exploration forme des chemins profonds',
-    ],
-    whyUseIt: 'Utile pour explorer toutes les possibilités, détection de cycles, parcours de graphe. PAS optimal pour le pathfinding mais pédagogiquement intéressant.',
-    realWorldUses: [
-      'Résolution de labyrinthes',
-      'Détection de cycles dans un graphe',
-      'Topological sorting',
-      'Exploration exhaustive (puzzles, backtracking)',
-    ],
-    pros: [
-      'Très peu de mémoire (récursif)',
-      'Simple à implémenter',
-      'Rapide pour trouver UN chemin (pas le meilleur)',
-    ],
-    cons: [
-      'PAS optimal (ne trouve pas le plus court)',
-      'Peut explorer des chemins très longs inutilement',
-      'Pas adapté au pathfinding en pratique',
-    ],
-  },
-};
+const GRID_ROWS = 30;
+const GRID_COLS = 50;
 
-// ============================================
-// Constantes
-// ============================================
-
-const GRID_ROWS = 25;
-const GRID_COLS = 40;
-const DEFAULT_START = { row: 12, col: 5 };
-const DEFAULT_END = { row: 12, col: 34 };
+// Carte prédéfinie d'une ville
+const CITY_MAP = `
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BBBBBBBBBBBRRRRRBBBBBBBBBBBRRRRRBBBBBBBBBBBBBBBBB
+BBBBBBBBBBBRRRRRBBBBBBBBBBBRRRRRBBBBBBBBBBBBBBBBB
+BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBB
+BBBBBBBBBBBRRRRRBBBBBBBBBBBRRRRRBBBBBBBBBBBBBBBBB
+BBBBBBBBBBBRRRRRBBBBBBBBBBBRRRRRBBBBBBBBBBBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BBBBBBBBBBBRRRRRBBBBBBBBBBBPPPPPPPPPPPPPPPPPPPPPPP
+BBBBBBBBBBBRRRRRBBBBBBBBBBBPPPPPPPPPPPPPPPPPPPPPPP
+BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBB
+BBBBBBBBBBBRRRRRBBBBBBBBBBBRRRRRBBBBBBBBBBBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BBBBBBBBBBBRRRRRBBBBBBBBBBBWWWWWWWWWWWWWWWWWWWWWW
+BBBBBBBBBBBRRRRRBBBBBBBBBBBWWWWWWWWWWWWWWWWWWWWWW
+BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBBBBBB
+BRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBRRRRRRRRRRBBBBBBB
+BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+`;
 
 // ============================================
 // Composant principal
@@ -196,30 +72,42 @@ const DEFAULT_END = { row: 12, col: 34 };
 
 export function PathfindingVisualizer() {
   // État
-  const [algorithm, setAlgorithm] = useState<Algorithm>('astar');
   const [grid, setGrid] = useState<Cell[][]>([]);
-  const [state, setState] = useState<PathfindingState>('idle');
-  const [drawMode, setDrawMode] = useState<DrawMode>('wall');
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [speed, setSpeed] = useState(50);
-  const [stats, setStats] = useState({ visited: 0, pathLength: 0 });
-  const [startPos, setStartPos] = useState(DEFAULT_START);
-  const [endPos, setEndPos] = useState(DEFAULT_END);
+  const [state, setState] = useState<SimulationState>('idle');
+  const [placeMode, setPlaceMode] = useState<PlaceMode>('start');
+  const [speed, setSpeed] = useState(30);
+  const [stats, setStats] = useState({
+    nodesExplored: 0,
+    pathLength: 0,
+    distance: 0,
+    estimatedTime: 0
+  });
+  const [startPos, setStartPos] = useState<{ row: number; col: number } | null>(null);
+  const [endPos, setEndPos] = useState<{ row: number; col: number } | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
 
   // Refs
   const runningRef = useRef(false);
-  const pausedRef = useRef(false);
 
-  // Initialiser la grille
+  // Initialiser la grille depuis la carte
   const initGrid = useCallback(() => {
+    const lines = CITY_MAP.trim().split('\n');
     const newGrid: Cell[][] = [];
+
     for (let row = 0; row < GRID_ROWS; row++) {
       const currentRow: Cell[] = [];
+      const line = lines[row] || '';
+
       for (let col = 0; col < GRID_COLS; col++) {
-        let type: CellType = 'empty';
-        if (row === startPos.row && col === startPos.col) type = 'start';
-        else if (row === endPos.row && col === endPos.col) type = 'end';
+        const char = line[col] || 'R';
+        let type: CellType = 'road';
+
+        switch (char) {
+          case 'B': type = 'building'; break;
+          case 'P': type = 'park'; break;
+          case 'W': type = 'water'; break;
+          default: type = 'road';
+        }
 
         currentRow.push({
           row,
@@ -233,16 +121,18 @@ export function PathfindingVisualizer() {
       }
       newGrid.push(currentRow);
     }
+
     return newGrid;
-  }, [startPos, endPos]);
+  }, []);
 
   // Réinitialiser
   const reset = useCallback(() => {
     setGrid(initGrid());
     setState('idle');
-    setStats({ visited: 0, pathLength: 0 });
+    setStats({ nodesExplored: 0, pathLength: 0, distance: 0, estimatedTime: 0 });
+    setStartPos(null);
+    setEndPos(null);
     runningRef.current = false;
-    pausedRef.current = false;
   }, [initGrid]);
 
   useEffect(() => {
@@ -273,10 +163,16 @@ export function PathfindingVisualizer() {
 
       if (
         newRow >= 0 && newRow < GRID_ROWS &&
-        newCol >= 0 && newCol < GRID_COLS &&
-        grid[newRow][newCol].type !== 'wall'
+        newCol >= 0 && newCol < GRID_COLS
       ) {
-        neighbors.push(grid[newRow][newCol]);
+        const neighbor = grid[newRow][newCol];
+        const originalType = neighbor.type === 'visited' || neighbor.type === 'exploring' || neighbor.type === 'path'
+          ? 'road'
+          : neighbor.type;
+
+        if (originalType !== 'building' && originalType !== 'water') {
+          neighbors.push(neighbor);
+        }
       }
     }
 
@@ -293,24 +189,37 @@ export function PathfindingVisualizer() {
       current = current.parent;
     }
 
+    // Calculer distance et temps estimé
+    const distance = path.length * 0.1; // 100m par case
+    const estimatedTime = Math.ceil(distance / 50 * 60); // 50 km/h en minutes
+
     // Animer le chemin
-    for (const cell of path) {
+    for (let i = 0; i < path.length; i++) {
       if (!runningRef.current) return;
 
+      const cell = path[i];
       const newGrid = grid.map(row => row.map(c => ({ ...c })));
       if (newGrid[cell.row][cell.col].type !== 'start' && newGrid[cell.row][cell.col].type !== 'end') {
         newGrid[cell.row][cell.col].type = 'path';
       }
       setGrid(newGrid);
-      await delay(20);
+      setStats(prev => ({ ...prev, pathLength: i + 1, distance, estimatedTime }));
+      await delay(30);
     }
-
-    setStats(prev => ({ ...prev, pathLength: path.length }));
   };
 
-  // A* Algorithm
+  // Algorithme A*
   const runAStar = async () => {
-    const gridCopy = grid.map(row => row.map(cell => ({ ...cell })));
+    if (!startPos || !endPos) return;
+
+    const gridCopy = grid.map(row => row.map(cell => ({
+      ...cell,
+      g: Infinity,
+      h: 0,
+      f: Infinity,
+      parent: null
+    })));
+
     const startCell = gridCopy[startPos.row][startPos.col];
     const endCell = gridCopy[endPos.row][endPos.col];
 
@@ -320,13 +229,9 @@ export function PathfindingVisualizer() {
 
     const openSet: Cell[] = [startCell];
     const closedSet = new Set<string>();
-    let visitedCount = 0;
+    let nodesExplored = 0;
 
     while (openSet.length > 0 && runningRef.current) {
-      while (pausedRef.current && runningRef.current) {
-        await delay(100);
-      }
-
       // Trouver le nœud avec le plus petit f
       openSet.sort((a, b) => a.f - b.f);
       const current = openSet.shift()!;
@@ -336,12 +241,12 @@ export function PathfindingVisualizer() {
       if (closedSet.has(key)) continue;
       closedSet.add(key);
 
-      visitedCount++;
-      setStats(prev => ({ ...prev, visited: visitedCount }));
+      nodesExplored++;
+      setStats(prev => ({ ...prev, nodesExplored }));
 
-      // Visualiser
+      // Visualiser l'exploration
       if (current.type !== 'start' && current.type !== 'end') {
-        gridCopy[current.row][current.col].type = 'current';
+        gridCopy[current.row][current.col].type = 'exploring';
         setGrid(gridCopy.map(row => row.map(c => ({ ...c }))));
         await delay(101 - speed);
         gridCopy[current.row][current.col].type = 'visited';
@@ -378,425 +283,366 @@ export function PathfindingVisualizer() {
     setState('no-path');
   };
 
-  // Dijkstra Algorithm
-  const runDijkstra = async () => {
-    const gridCopy = grid.map(row => row.map(cell => ({ ...cell })));
-    const startCell = gridCopy[startPos.row][startPos.col];
-
-    startCell.g = 0;
-    startCell.f = 0;
-
-    const unvisited: Cell[] = [startCell];
-    const visited = new Set<string>();
-    let visitedCount = 0;
-
-    while (unvisited.length > 0 && runningRef.current) {
-      while (pausedRef.current && runningRef.current) {
-        await delay(100);
-      }
-
-      unvisited.sort((a, b) => a.g - b.g);
-      const current = unvisited.shift()!;
-
-      const key = `${current.row},${current.col}`;
-      if (visited.has(key)) continue;
-      visited.add(key);
-
-      visitedCount++;
-      setStats(prev => ({ ...prev, visited: visitedCount }));
-
-      if (current.type !== 'start' && current.type !== 'end') {
-        gridCopy[current.row][current.col].type = 'current';
-        setGrid(gridCopy.map(row => row.map(c => ({ ...c }))));
-        await delay(101 - speed);
-        gridCopy[current.row][current.col].type = 'visited';
-      }
-
-      if (current.row === endPos.row && current.col === endPos.col) {
-        await reconstructPath(current, gridCopy);
-        setState('completed');
-        return;
-      }
-
-      const neighbors = getNeighbors(current, gridCopy);
-      for (const neighbor of neighbors) {
-        const neighborKey = `${neighbor.row},${neighbor.col}`;
-        if (visited.has(neighborKey)) continue;
-
-        const newDistance = current.g + 1;
-        if (newDistance < neighbor.g) {
-          neighbor.g = newDistance;
-          neighbor.parent = current;
-          if (!unvisited.find(n => n.row === neighbor.row && n.col === neighbor.col)) {
-            unvisited.push(neighbor);
-          }
-        }
-      }
-    }
-
-    setState('no-path');
-  };
-
-  // BFS Algorithm
-  const runBFS = async () => {
-    const gridCopy = grid.map(row => row.map(cell => ({ ...cell })));
-    const startCell = gridCopy[startPos.row][startPos.col];
-
-    const queue: Cell[] = [startCell];
-    const visited = new Set<string>();
-    visited.add(`${startCell.row},${startCell.col}`);
-    let visitedCount = 0;
-
-    while (queue.length > 0 && runningRef.current) {
-      while (pausedRef.current && runningRef.current) {
-        await delay(100);
-      }
-
-      const current = queue.shift()!;
-      visitedCount++;
-      setStats(prev => ({ ...prev, visited: visitedCount }));
-
-      if (current.type !== 'start' && current.type !== 'end') {
-        gridCopy[current.row][current.col].type = 'current';
-        setGrid(gridCopy.map(row => row.map(c => ({ ...c }))));
-        await delay(101 - speed);
-        gridCopy[current.row][current.col].type = 'visited';
-      }
-
-      if (current.row === endPos.row && current.col === endPos.col) {
-        await reconstructPath(current, gridCopy);
-        setState('completed');
-        return;
-      }
-
-      const neighbors = getNeighbors(current, gridCopy);
-      for (const neighbor of neighbors) {
-        const key = `${neighbor.row},${neighbor.col}`;
-        if (!visited.has(key)) {
-          visited.add(key);
-          neighbor.parent = current;
-          queue.push(neighbor);
-        }
-      }
-    }
-
-    setState('no-path');
-  };
-
-  // DFS Algorithm
-  const runDFS = async () => {
-    const gridCopy = grid.map(row => row.map(cell => ({ ...cell })));
-    const startCell = gridCopy[startPos.row][startPos.col];
-
-    const stack: Cell[] = [startCell];
-    const visited = new Set<string>();
-    let visitedCount = 0;
-
-    while (stack.length > 0 && runningRef.current) {
-      while (pausedRef.current && runningRef.current) {
-        await delay(100);
-      }
-
-      const current = stack.pop()!;
-      const key = `${current.row},${current.col}`;
-
-      if (visited.has(key)) continue;
-      visited.add(key);
-
-      visitedCount++;
-      setStats(prev => ({ ...prev, visited: visitedCount }));
-
-      if (current.type !== 'start' && current.type !== 'end') {
-        gridCopy[current.row][current.col].type = 'current';
-        setGrid(gridCopy.map(row => row.map(c => ({ ...c }))));
-        await delay(101 - speed);
-        gridCopy[current.row][current.col].type = 'visited';
-      }
-
-      if (current.row === endPos.row && current.col === endPos.col) {
-        await reconstructPath(current, gridCopy);
-        setState('completed');
-        return;
-      }
-
-      const neighbors = getNeighbors(current, gridCopy);
-      for (const neighbor of neighbors) {
-        const neighborKey = `${neighbor.row},${neighbor.col}`;
-        if (!visited.has(neighborKey)) {
-          neighbor.parent = current;
-          stack.push(neighbor);
-        }
-      }
-    }
-
-    setState('no-path');
-  };
-
-  // Démarrer la visualisation
-  const startVisualization = async () => {
-    if (state === 'paused') {
-      pausedRef.current = false;
-      setState('running');
-      return;
-    }
+  // Démarrer la navigation
+  const startNavigation = async () => {
+    if (!startPos || !endPos) return;
 
     // Nettoyer la grille
     const cleanGrid = grid.map(row =>
-      row.map(cell => ({
-        ...cell,
-        type: (cell.type === 'wall' || cell.type === 'start' || cell.type === 'end'
-          ? cell.type
-          : 'empty') as CellType,
-        g: Infinity,
-        h: 0,
-        f: Infinity,
-        parent: null,
-      }))
+      row.map(cell => {
+        const isStart = cell.row === startPos.row && cell.col === startPos.col;
+        const isEnd = cell.row === endPos.row && cell.col === endPos.col;
+
+        let cleanType: CellType = cell.type;
+        if (cell.type === 'visited' || cell.type === 'exploring' || cell.type === 'path') {
+          cleanType = 'road';
+        }
+        if (isStart) cleanType = 'start';
+        if (isEnd) cleanType = 'end';
+
+        return {
+          ...cell,
+          type: cleanType,
+          g: Infinity,
+          h: 0,
+          f: Infinity,
+          parent: null,
+        };
+      })
     );
+
     setGrid(cleanGrid);
-    setStats({ visited: 0, pathLength: 0 });
+    setStats({ nodesExplored: 0, pathLength: 0, distance: 0, estimatedTime: 0 });
 
     runningRef.current = true;
-    pausedRef.current = false;
     setState('running');
 
-    switch (algorithm) {
-      case 'astar':
-        await runAStar();
-        break;
-      case 'dijkstra':
-        await runDijkstra();
-        break;
-      case 'bfs':
-        await runBFS();
-        break;
-      case 'dfs':
-        await runDFS();
-        break;
-    }
-
+    await runAStar();
     runningRef.current = false;
   };
 
-  // Gestion du dessin
-  const handleMouseDown = (row: number, col: number) => {
-    if (state !== 'idle') return;
-    setIsDrawing(true);
-    handleCellClick(row, col);
-  };
-
-  const handleMouseEnter = (row: number, col: number) => {
-    if (!isDrawing || state !== 'idle') return;
-    handleCellClick(row, col);
-  };
-
-  const handleMouseUp = () => {
-    setIsDrawing(false);
-  };
-
+  // Placer un point sur la carte
   const handleCellClick = (row: number, col: number) => {
+    if (state === 'running') return;
+
+    const cell = grid[row][col];
+    if (cell.type === 'building' || cell.type === 'water') return;
+
     const newGrid = grid.map(r => r.map(c => ({ ...c })));
-    const cell = newGrid[row][col];
 
-    if (drawMode === 'start') {
+    if (placeMode === 'start') {
       // Enlever l'ancien start
-      const oldStart = newGrid[startPos.row][startPos.col];
-      if (oldStart.type === 'start') oldStart.type = 'empty';
-      cell.type = 'start';
+      if (startPos) {
+        const oldCell = newGrid[startPos.row][startPos.col];
+        if (oldCell.type === 'start') oldCell.type = 'road';
+      }
+      newGrid[row][col].type = 'start';
       setStartPos({ row, col });
-    } else if (drawMode === 'end') {
+      setPlaceMode('end'); // Auto-switch au mode end
+    } else {
       // Enlever l'ancien end
-      const oldEnd = newGrid[endPos.row][endPos.col];
-      if (oldEnd.type === 'end') oldEnd.type = 'empty';
-      cell.type = 'end';
+      if (endPos) {
+        const oldCell = newGrid[endPos.row][endPos.col];
+        if (oldCell.type === 'end') oldCell.type = 'road';
+      }
+      newGrid[row][col].type = 'end';
       setEndPos({ row, col });
-    } else if (drawMode === 'wall') {
-      if (cell.type !== 'start' && cell.type !== 'end') {
-        cell.type = 'wall';
-      }
-    } else if (drawMode === 'erase') {
-      if (cell.type !== 'start' && cell.type !== 'end') {
-        cell.type = 'empty';
-      }
     }
 
     setGrid(newGrid);
   };
 
-  // Générer un labyrinthe
-  const generateMaze = () => {
-    if (state !== 'idle') return;
-
-    const newGrid = initGrid();
-
-    // Algorithme simple : murs aléatoires
-    for (let row = 0; row < GRID_ROWS; row++) {
-      for (let col = 0; col < GRID_COLS; col++) {
-        const cell = newGrid[row][col];
-        if (cell.type === 'empty' && Math.random() < 0.3) {
-          cell.type = 'wall';
-        }
-      }
-    }
-
-    setGrid(newGrid);
-  };
-
-  // Nettoyer
+  // Nettoyage
   useEffect(() => {
     return () => {
       runningRef.current = false;
-      pausedRef.current = false;
     };
   }, []);
-
-  const algoInfo = ALGORITHMS[algorithm];
 
   // Couleurs des cellules
   const getCellColor = (type: CellType): string => {
     switch (type) {
-      case 'start': return '#2ECC71';
+      case 'road': return '#E8E8E8';
+      case 'building': return '#95A5A6';
+      case 'park': return '#2ECC71';
+      case 'water': return '#3498DB';
+      case 'start': return '#27AE60';
       case 'end': return '#E74C3C';
-      case 'wall': return '#34495E';
       case 'path': return '#F39C12';
-      case 'visited': return algoInfo.color + '40';
-      case 'current': return algoInfo.color;
+      case 'visited': return '#BDC3C7';
+      case 'exploring': return '#E67E22';
       default: return '#ECF0F1';
     }
   };
 
+  const canNavigate = startPos && endPos && state !== 'running';
+
   return (
-    <div className="w-full h-full flex flex-col bg-surface p-6 gap-4">
-      {/* Contrôles supérieurs */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* Sélection algorithme */}
+    <div className="w-full min-h-screen bg-surface p-6 space-y-6 overflow-y-auto">
+      {/* En-tête style GPS */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">🗺️ Navigateur GPS - A* Pathfinding</h1>
+            <p className="text-blue-100">Simulateur de navigation intelligente utilisant l'algorithme A*</p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-blue-200 mb-1">Algorithme</div>
+            <div className="text-2xl font-bold">A* (A-star)</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Panneau de contrôle */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Instructions */}
         <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20">
-          <label className="text-sm font-bold text-text mb-3 block">
-            Algorithme
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(ALGORITHMS) as Algorithm[]).map((algo) => (
-              <button
-                key={algo}
-                onClick={() => {
-                  if (state === 'idle') {
-                    setAlgorithm(algo);
-                  }
-                }}
-                disabled={state !== 'idle'}
-                className={clsx(
-                  'px-3 py-2 rounded-lg text-sm font-medium transition-all',
-                  algorithm === algo
-                    ? 'text-white shadow-lg'
-                    : 'bg-surface text-text-muted hover:bg-surface-lighter',
-                  state !== 'idle' && 'opacity-50 cursor-not-allowed'
-                )}
-                style={algorithm === algo ? { backgroundColor: ALGORITHMS[algo].color } : {}}
-              >
-                {ALGORITHMS[algo].name}
-              </button>
-            ))}
+          <h3 className="font-bold text-text mb-3 flex items-center gap-2">
+            <span className="text-xl">📍</span>
+            Instructions
+          </h3>
+          <div className="space-y-2 text-sm text-text-muted">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-green-500" />
+              <span>1. Cliquez pour placer le <strong>départ</strong></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-red-500" />
+              <span>2. Cliquez pour placer l'<strong>arrivée</strong></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">▶️</span>
+              <span>3. Lancez la navigation</span>
+            </div>
+          </div>
+          <div className="mt-3 pt-3 border-t border-primary-light/10">
+            <div className="text-xs text-text-muted">
+              Mode actuel: <span className={clsx("font-bold", placeMode === 'start' ? 'text-green-400' : 'text-red-400')}>
+                {placeMode === 'start' ? '🟢 Placer départ' : '🔴 Placer arrivée'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Statistiques */}
+        {/* Statistiques de navigation */}
         <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20">
-          <label className="text-sm font-bold text-text mb-3 block">
+          <h3 className="font-bold text-text mb-3 flex items-center gap-2">
+            <span className="text-xl">📊</span>
             Statistiques
-          </label>
-          <div className="grid grid-cols-2 gap-4">
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <div className="text-3xl font-bold" style={{ color: algoInfo.color }}>
-                {stats.visited}
-              </div>
-              <div className="text-xs text-text-muted">Nœuds visités</div>
+              <div className="text-2xl font-bold text-blue-400">{stats.nodesExplored}</div>
+              <div className="text-xs text-text-muted">Nœuds explorés</div>
             </div>
             <div>
-              <div className="text-3xl font-bold" style={{ color: algoInfo.color }}>
-                {stats.pathLength}
-              </div>
-              <div className="text-xs text-text-muted">Longueur chemin</div>
+              <div className="text-2xl font-bold text-orange-400">{stats.pathLength}</div>
+              <div className="text-xs text-text-muted">Points du trajet</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-green-400">{stats.distance.toFixed(1)} km</div>
+              <div className="text-xs text-text-muted">Distance totale</div>
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-purple-400">{stats.estimatedTime} min</div>
+              <div className="text-xs text-text-muted">Temps estimé</div>
             </div>
           </div>
         </div>
 
-        {/* Complexité */}
+        {/* Contrôles */}
         <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20">
-          <label className="text-sm font-bold text-text mb-3 block">
-            Complexité
-          </label>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-text-muted">Temps:</span>
-              <code className="text-yellow-400 font-mono text-xs">{algoInfo.complexity.time}</code>
+          <h3 className="font-bold text-text mb-3 flex items-center gap-2">
+            <span className="text-xl">⚙️</span>
+            Contrôles
+          </h3>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-text-muted mb-1 block">
+                Vitesse de calcul: {speed}%
+              </label>
+              <input
+                type="range"
+                min="1"
+                max="100"
+                value={speed}
+                onChange={(e) => setSpeed(Number(e.target.value))}
+                className="w-full"
+              />
             </div>
-            <div className="flex justify-between">
-              <span className="text-text-muted">Espace:</span>
-              <code className="text-blue-400 font-mono text-xs">{algoInfo.complexity.space}</code>
-            </div>
-          </div>
-        </div>
-
-        {/* Mode de dessin */}
-        <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20">
-          <label className="text-sm font-bold text-text mb-3 block">
-            Mode de dessin
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {(['wall', 'erase', 'start', 'end'] as DrawMode[]).map((mode) => (
+            <div className="flex gap-2">
               <button
-                key={mode}
-                onClick={() => setDrawMode(mode)}
-                disabled={state !== 'idle'}
-                className={clsx(
-                  'px-3 py-2 rounded-lg text-xs font-medium transition-all',
-                  drawMode === mode
-                    ? 'bg-primary text-white'
-                    : 'bg-surface text-text-muted hover:bg-surface-lighter',
-                  state !== 'idle' && 'opacity-50 cursor-not-allowed'
-                )}
+                onClick={startNavigation}
+                disabled={!canNavigate}
+                className="flex-1 px-4 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {mode === 'wall' && '🧱 Mur'}
-                {mode === 'erase' && '🧹 Effacer'}
-                {mode === 'start' && '🟢 Départ'}
-                {mode === 'end' && '🔴 Arrivée'}
+                {state === 'running' ? '⏳ Calcul...' : '▶ Naviguer'}
               </button>
-            ))}
+              <button
+                onClick={reset}
+                disabled={state === 'running'}
+                className="px-4 py-2 rounded-lg font-bold bg-surface-lighter text-text hover:bg-surface transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🔄
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Description */}
-      <div
-        className="rounded-xl p-4 border-l-4"
-        style={{
-          backgroundColor: `${algoInfo.color}15`,
-          borderColor: algoInfo.color
-        }}
-      >
-        <p className="text-sm text-text">
-          <span className="font-bold" style={{ color: algoInfo.color }}>
-            {algoInfo.name}
-          </span>
-          {' : '}
-          {algoInfo.description}
-        </p>
+      {/* Message de résultat */}
+      <AnimatePresence>
+        {state === 'completed' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="bg-green-500/20 border border-green-500 rounded-xl p-4"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">✅</span>
+              <div>
+                <div className="font-bold text-green-400">Itinéraire calculé avec succès !</div>
+                <div className="text-sm text-text-muted">
+                  Distance: {stats.distance.toFixed(1)} km • Temps: ~{stats.estimatedTime} min • Nœuds explorés: {stats.nodesExplored}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+        {state === 'no-path' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="bg-red-500/20 border border-red-500 rounded-xl p-4"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">❌</span>
+              <div>
+                <div className="font-bold text-red-400">Aucun itinéraire trouvé</div>
+                <div className="text-sm text-text-muted">
+                  Impossible de tracer un chemin entre ces deux points. Vérifiez qu'ils sont accessibles.
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Carte de la ville */}
+      <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-text flex items-center gap-2">
+            <span className="text-xl">🏙️</span>
+            Carte de la ville
+          </h3>
+          <div className="flex gap-2 text-xs">
+            <button
+              onClick={() => setPlaceMode('start')}
+              className={clsx(
+                'px-3 py-1 rounded-lg font-medium transition-all',
+                placeMode === 'start' ? 'bg-green-500 text-white' : 'bg-surface text-text-muted'
+              )}
+            >
+              🟢 Départ
+            </button>
+            <button
+              onClick={() => setPlaceMode('end')}
+              className={clsx(
+                'px-3 py-1 rounded-lg font-medium transition-all',
+                placeMode === 'end' ? 'bg-red-500 text-white' : 'bg-surface text-text-muted'
+              )}
+            >
+              🔴 Arrivée
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-gray-200 rounded-lg p-2 overflow-auto">
+          <div
+            className="inline-grid gap-0 shadow-lg"
+            style={{
+              gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
+            }}
+          >
+            {grid.map((row, rowIdx) =>
+              row.map((cell, colIdx) => (
+                <motion.div
+                  key={`${rowIdx}-${colIdx}`}
+                  onClick={() => handleCellClick(rowIdx, colIdx)}
+                  className="w-4 h-4 cursor-pointer transition-all hover:opacity-80 border border-gray-300/20"
+                  style={{
+                    backgroundColor: getCellColor(cell.type),
+                  }}
+                  whileHover={{ scale: 1.2, zIndex: 10 }}
+                  title={
+                    cell.type === 'start' ? 'Départ' :
+                    cell.type === 'end' ? 'Arrivée' :
+                    cell.type === 'building' ? 'Bâtiment' :
+                    cell.type === 'park' ? 'Parc' :
+                    cell.type === 'water' ? 'Eau' :
+                    cell.type === 'path' ? 'Chemin optimal' :
+                    'Route'
+                  }
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Légende */}
+        <div className="mt-3 pt-3 border-t border-primary-light/10">
+          <div className="flex flex-wrap justify-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#E8E8E8' }} />
+              <span className="text-text-muted">Route</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#95A5A6' }} />
+              <span className="text-text-muted">Bâtiment</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#2ECC71' }} />
+              <span className="text-text-muted">Parc</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#3498DB' }} />
+              <span className="text-text-muted">Eau</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#E67E22' }} />
+              <span className="text-text-muted">Exploration</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#BDC3C7' }} />
+              <span className="text-text-muted">Exploré</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ backgroundColor: '#F39C12' }} />
+              <span className="text-text-muted">Itinéraire</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Section explicative */}
+      {/* Section éducative */}
       <div className="bg-surface-light rounded-xl border border-primary-light/20 overflow-hidden">
         <button
           onClick={() => setShowExplanation(!showExplanation)}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface transition-colors"
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition-colors"
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🧭</span>
-            <span className="font-bold text-text">Comprendre l'algorithme</span>
+            <span className="text-3xl">🧠</span>
+            <div className="text-left">
+              <div className="font-bold text-text text-lg">Comprendre l'algorithme A*</div>
+              <div className="text-sm text-text-muted">Comment fonctionne la navigation GPS intelligente</div>
+            </div>
           </div>
           <motion.span
             animate={{ rotate: showExplanation ? 180 : 0 }}
             transition={{ duration: 0.3 }}
-            className="text-text-muted"
+            className="text-text-muted text-2xl"
           >
             ▼
           </motion.span>
@@ -811,256 +657,203 @@ export function PathfindingVisualizer() {
               transition={{ duration: 0.3 }}
               className="overflow-hidden"
             >
-              <div className="px-4 pb-4 space-y-4 border-t border-primary-light/10">
+              <div className="px-6 pb-6 space-y-6 border-t border-primary-light/10">
                 {/* Comment ça marche */}
                 <div>
-                  <h3 className="font-bold text-primary-light mb-2 mt-4">
-                    🔍 Comment ça marche ?
+                  <h3 className="font-bold text-blue-400 mb-3 mt-6 text-lg flex items-center gap-2">
+                    <span>🔍</span> Comment fonctionne A* ?
                   </h3>
-                  <ol className="space-y-1 text-sm text-text-muted">
-                    {algoInfo.howItWorks.map((step, idx) => (
-                      <li key={idx} className="ml-4">
-                        {step}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-
-                {/* Pourquoi l'utiliser */}
-                <div>
-                  <h3 className="font-bold text-primary-light mb-2">
-                    💡 Pourquoi utiliser cet algorithme ?
-                  </h3>
-                  <p className="text-sm text-text-muted">
-                    {algoInfo.whyUseIt}
-                  </p>
-                </div>
-
-                {/* Avantages et Inconvénients */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-bold text-green-400 mb-2">
-                      ✅ Avantages
-                    </h3>
-                    <ul className="space-y-1 text-sm text-text-muted">
-                      {algoInfo.pros.map((pro, idx) => (
-                        <li key={idx} className="ml-4">• {pro}</li>
-                      ))}
-                    </ul>
+                  <div className="bg-surface rounded-lg p-4 space-y-3">
+                    <p className="text-sm text-text-muted leading-relaxed">
+                      A* est l'algorithme de référence pour le pathfinding. Il combine <strong>la distance parcourue</strong>
+                      {' '}avec <strong>une estimation de la distance restante</strong> pour trouver le chemin optimal.
+                    </p>
+                    <div className="bg-blue-500/10 border-l-4 border-blue-500 p-3 rounded">
+                      <div className="font-mono text-sm text-blue-300 mb-2">f(n) = g(n) + h(n)</div>
+                      <ul className="space-y-1 text-sm text-text-muted">
+                        <li>• <strong>g(n)</strong> = distance réelle depuis le départ</li>
+                        <li>• <strong>h(n)</strong> = estimation (heuristique) vers l'arrivée</li>
+                        <li>• <strong>f(n)</strong> = coût total estimé du chemin</li>
+                      </ul>
+                    </div>
+                    <ol className="space-y-2 text-sm text-text-muted ml-4">
+                      <li>1. Commencer au point de départ avec f(n) = h(n)</li>
+                      <li>2. Explorer toujours le nœud avec le plus petit f(n)</li>
+                      <li>3. Pour chaque voisin, calculer son nouveau coût</li>
+                      <li>4. L'heuristique guide l'exploration vers le but</li>
+                      <li>5. Garantit le chemin optimal si l'heuristique est admissible</li>
+                    </ol>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-red-400 mb-2">
-                      ❌ Inconvénients
-                    </h3>
-                    <ul className="space-y-1 text-sm text-text-muted">
-                      {algoInfo.cons.map((con, idx) => (
-                        <li key={idx} className="ml-4">• {con}</li>
-                      ))}
-                    </ul>
+                </div>
+
+                {/* Pourquoi A* ? */}
+                <div>
+                  <h3 className="font-bold text-green-400 mb-3 text-lg flex items-center gap-2">
+                    <span>💡</span> Pourquoi A* est-il si utilisé ?
+                  </h3>
+                  <div className="bg-surface rounded-lg p-4 space-y-3">
+                    <p className="text-sm text-text-muted leading-relaxed">
+                      A* est <strong>le standard de l'industrie</strong> pour le pathfinding. Utilisé dans 99% des jeux vidéo,
+                      applications GPS, et systèmes de robotique grâce à son <strong>équilibre parfait entre optimalité et performance</strong>.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+                      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                        <div className="font-bold text-green-400 mb-1">✅ Optimal</div>
+                        <div className="text-xs text-text-muted">Trouve toujours le plus court chemin</div>
+                      </div>
+                      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                        <div className="font-bold text-blue-400 mb-1">⚡ Efficace</div>
+                        <div className="text-xs text-text-muted">Explore moins de nœuds que Dijkstra</div>
+                      </div>
+                      <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                        <div className="font-bold text-purple-400 mb-1">🎯 Intelligent</div>
+                        <div className="text-xs text-text-muted">L'heuristique guide vers le but</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Applications réelles */}
                 <div>
-                  <h3 className="font-bold text-primary-light mb-2">
-                    🌍 Applications dans le monde réel
+                  <h3 className="font-bold text-orange-400 mb-3 text-lg flex items-center gap-2">
+                    <span>🌍</span> Applications dans le monde réel
                   </h3>
-                  <ul className="space-y-1 text-sm text-text-muted">
-                    {algoInfo.realWorldUses.map((use, idx) => (
-                      <li key={idx} className="ml-4">• {use}</li>
-                    ))}
-                  </ul>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="bg-surface rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">🗺️</span>
+                        <div className="font-bold text-text">Navigation GPS</div>
+                      </div>
+                      <div className="text-sm text-text-muted">
+                        Google Maps, Waze, Apple Plans utilisent A* pour calculer vos itinéraires en temps réel
+                      </div>
+                    </div>
+                    <div className="bg-surface rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">🎮</span>
+                        <div className="font-bold text-text">Jeux vidéo</div>
+                      </div>
+                      <div className="text-sm text-text-muted">
+                        Déplacement des PNJ, IA des ennemis, calcul de trajectoires dans tous les jeux modernes
+                      </div>
+                    </div>
+                    <div className="bg-surface rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">🤖</span>
+                        <div className="font-bold text-text">Robotique</div>
+                      </div>
+                      <div className="text-sm text-text-muted">
+                        Robots aspirateurs, drones de livraison, véhicules autonomes pour éviter les obstacles
+                      </div>
+                    </div>
+                    <div className="bg-surface rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">📦</span>
+                        <div className="font-bold text-text">Logistique</div>
+                      </div>
+                      <div className="text-sm text-text-muted">
+                        Optimisation des livraisons, planification d'entrepôts, routage de véhicules
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avantages et limites */}
+                <div>
+                  <h3 className="font-bold text-primary-light mb-3 text-lg">⚖️ Avantages et limites</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-surface rounded-lg p-4">
+                      <h4 className="font-bold text-green-400 mb-3 flex items-center gap-2">
+                        <span>✅</span> Avantages
+                      </h4>
+                      <ul className="space-y-2 text-sm text-text-muted">
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-400 mt-0.5">•</span>
+                          <span><strong>Optimal :</strong> Garantit le plus court chemin</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-400 mt-0.5">•</span>
+                          <span><strong>Efficace :</strong> Explore moins que Dijkstra</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-400 mt-0.5">•</span>
+                          <span><strong>Flexible :</strong> Différentes heuristiques possibles</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-green-400 mt-0.5">•</span>
+                          <span><strong>Industriel :</strong> Standard de l'industrie</span>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="bg-surface rounded-lg p-4">
+                      <h4 className="font-bold text-red-400 mb-3 flex items-center gap-2">
+                        <span>⚠️</span> Limites
+                      </h4>
+                      <ul className="space-y-2 text-sm text-text-muted">
+                        <li className="flex items-start gap-2">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          <span><strong>Mémoire :</strong> Stocke tous les nœuds explorés</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          <span><strong>Heuristique :</strong> Dépend de sa qualité</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          <span><strong>Grandes cartes :</strong> Peut être lent sur énormes graphes</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-red-400 mt-0.5">•</span>
+                          <span><strong>Statique :</strong> Recalcul si obstacles bougent</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Lien avec la Licence */}
-                <div
-                  className="rounded-lg p-3 border-l-4"
-                  style={{
-                    backgroundColor: `${algoInfo.color}10`,
-                    borderColor: algoInfo.color
-                  }}
-                >
-                  <h3 className="font-bold mb-2" style={{ color: algoInfo.color }}>
-                    🎓 Dans la Licence Informatique
+                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-6">
+                  <h3 className="font-bold text-blue-400 mb-3 text-lg flex items-center gap-2">
+                    <span>🎓</span> Dans la Licence Informatique
                   </h3>
-                  <p className="text-sm text-text-muted">
-                    Les algorithmes de pathfinding sont enseignés en <strong>L2-L3</strong> dans les UE
-                    "Graphes & Algorithmes" et "Intelligence Artificielle". Vous apprendrez à implémenter
-                    A*, Dijkstra, et comprendre les heuristiques. Ces algorithmes sont au cœur de la robotique,
-                    des jeux vidéo, et de l'IA moderne. Essentiels pour travailler dans ces domaines !
-                  </p>
+                  <div className="space-y-3 text-sm text-text-muted">
+                    <p className="leading-relaxed">
+                      Les algorithmes de pathfinding comme A* sont enseignés en <strong className="text-blue-300">L2-L3</strong> dans
+                      les UE <strong>"Graphes & Algorithmes"</strong> et <strong>"Intelligence Artificielle"</strong>.
+                    </p>
+                    <p className="leading-relaxed">
+                      Vous apprendrez à :
+                    </p>
+                    <ul className="space-y-2 ml-4">
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-400">→</span>
+                        <span>Implémenter A*, Dijkstra, et comprendre leurs différences</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-400">→</span>
+                        <span>Concevoir des heuristiques admissibles (Manhattan, Euclidienne...)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-400">→</span>
+                        <span>Analyser la complexité et optimiser les performances</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-400">→</span>
+                        <span>Appliquer ces algorithmes en robotique et jeux vidéo</span>
+                      </li>
+                    </ul>
+                    <div className="mt-4 pt-4 border-t border-blue-500/20">
+                      <p className="text-blue-300 font-medium">
+                        💼 Ces compétences sont <strong>essentielles</strong> pour travailler dans le jeu vidéo,
+                        la robotique, l'IA, ou tout domaine nécessitant de l'optimisation spatiale !
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
-
-      {/* Grille */}
-      <div
-        className="flex-1 bg-surface-light rounded-xl p-4 border border-primary-light/20 flex items-center justify-center overflow-auto"
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
-        <div
-          className="inline-grid gap-0"
-          style={{
-            gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
-            userSelect: 'none',
-          }}
-        >
-          {grid.map((row, rowIdx) =>
-            row.map((cell, colIdx) => (
-              <motion.div
-                key={`${rowIdx}-${colIdx}`}
-                onMouseDown={() => handleMouseDown(rowIdx, colIdx)}
-                onMouseEnter={() => handleMouseEnter(rowIdx, colIdx)}
-                className="w-5 h-5 border border-surface/30 cursor-pointer transition-colors duration-100"
-                style={{
-                  backgroundColor: getCellColor(cell.type),
-                }}
-                whileHover={state === 'idle' ? { scale: 1.1 } : {}}
-              >
-                {cell.type === 'start' && <div className="w-full h-full flex items-center justify-center text-xs">🟢</div>}
-                {cell.type === 'end' && <div className="w-full h-full flex items-center justify-center text-xs">🎯</div>}
-              </motion.div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Contrôles inférieurs */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Vitesse */}
-        <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20">
-          <label className="text-sm font-bold text-text mb-2 block">
-            Vitesse: {speed}%
-          </label>
-          <input
-            type="range"
-            min="1"
-            max="100"
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
-
-        {/* Actions grille */}
-        <div className="flex gap-2">
-          <button
-            onClick={generateMaze}
-            disabled={state !== 'idle'}
-            className="flex-1 px-6 py-3 rounded-xl font-bold bg-purple-500 text-white hover:bg-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            🎲 Labyrinthe
-          </button>
-          <button
-            onClick={reset}
-            disabled={state === 'running'}
-            className="flex-1 px-6 py-3 rounded-xl font-bold bg-surface-lighter text-text hover:bg-surface-light transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            🔄 Reset
-          </button>
-        </div>
-
-        {/* Boutons de contrôle */}
-        <div className="flex gap-2">
-          {state === 'idle' || state === 'completed' || state === 'no-path' ? (
-            <button
-              onClick={startVisualization}
-              className="flex-1 px-6 py-3 rounded-xl font-bold text-white transition-all hover:scale-105"
-              style={{ backgroundColor: algoInfo.color }}
-            >
-              ▶ {state === 'no-path' ? 'Réessayer' : 'Démarrer'}
-            </button>
-          ) : state === 'running' ? (
-            <>
-              <button
-                onClick={() => {
-                  pausedRef.current = true;
-                  setState('paused');
-                }}
-                className="flex-1 px-6 py-3 rounded-xl font-bold bg-yellow-500 text-white hover:bg-yellow-600 transition-all"
-              >
-                ⏸ Pause
-              </button>
-              <button
-                onClick={() => {
-                  runningRef.current = false;
-                  pausedRef.current = false;
-                  setState('idle');
-                }}
-                className="px-6 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
-              >
-                ⏹ Stop
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={startVisualization}
-                className="flex-1 px-6 py-3 rounded-xl font-bold text-white transition-all"
-                style={{ backgroundColor: algoInfo.color }}
-              >
-                ▶ Reprendre
-              </button>
-              <button
-                onClick={() => {
-                  runningRef.current = false;
-                  pausedRef.current = false;
-                  setState('idle');
-                }}
-                className="px-6 py-3 rounded-xl font-bold bg-red-500 text-white hover:bg-red-600 transition-all"
-              >
-                ⏹ Stop
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Message état */}
-      {state === 'no-path' && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-500/20 border border-red-500 rounded-xl p-4 text-center"
-        >
-          <p className="text-red-400 font-bold">
-            ❌ Aucun chemin trouvé ! Essayez de supprimer des murs.
-          </p>
-        </motion.div>
-      )}
-
-      {/* Légende */}
-      <div className="bg-surface-light rounded-xl p-3 border border-primary-light/20">
-        <div className="flex flex-wrap justify-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-green-500" />
-            <span className="text-text-muted">Départ</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-red-500" />
-            <span className="text-text-muted">Arrivée</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-gray-700" />
-            <span className="text-text-muted">Mur</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: algoInfo.color }} />
-            <span className="text-text-muted">En cours</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: algoInfo.color + '40' }} />
-            <span className="text-text-muted">Visité</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-yellow-500" />
-            <span className="text-text-muted">Chemin</span>
-          </div>
-        </div>
       </div>
     </div>
   );
