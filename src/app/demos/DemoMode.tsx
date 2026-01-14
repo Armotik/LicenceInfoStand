@@ -133,7 +133,7 @@ export function DemoMode() {
       </div>
 
       {/* Zone de la démo */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         <DemoRenderer demo={currentDemo} />
       </div>
 
