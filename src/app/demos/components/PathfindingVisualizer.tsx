@@ -1,6 +1,6 @@
 // ============================================
-// PathfindingVisualizer - Simulateur GPS Réaliste avec A*
-// Interface visuelle comme Google Maps avec routes, marqueurs et navigation
+// PathfindingVisualizer - Simulateur GPS avec Réseau Routier Réaliste
+// Carte 5km x 5km avec routes variées, virages, et poids différents
 // ============================================
 
 import { useState, useEffect, useRef } from 'react';
@@ -16,11 +16,18 @@ interface Point {
   id: string;
 }
 
-interface Street {
+interface Road {
   id: string;
   name: string;
   points: Point[];
-  type: 'main' | 'secondary';
+  type: 'highway' | 'main' | 'secondary' | 'local';
+  speedLimit: number; // km/h
+}
+
+interface Intersection {
+  id: string;
+  point: Point;
+  connectedRoads: string[];
 }
 
 interface Building {
@@ -29,7 +36,8 @@ interface Building {
   y: number;
   width: number;
   height: number;
-  name?: string;
+  name: string;
+  type: 'university' | 'residential' | 'commercial' | 'park' | 'public';
 }
 
 interface PathNode extends Point {
@@ -37,72 +45,273 @@ interface PathNode extends Point {
   h: number;
   f: number;
   parent: PathNode | null;
+  roadType?: string;
 }
 
 type SimulationState = 'idle' | 'calculating' | 'navigating' | 'completed' | 'no-path';
 
 // ============================================
-// Données de la carte - Ville stylisée
+// Données de la carte - Quartier 5km x 5km
 // ============================================
 
-const MAP_WIDTH = 800;
-const MAP_HEIGHT = 600;
+const MAP_SIZE = 2000; // 2000px = 5km (1px = 2.5m)
+const SCALE = 0.0025; // 1px = 2.5m
 
-const STREETS: Street[] = [
-  // Routes principales (horizontal)
-  { id: 's1', name: 'Avenue de l\'Université', points: [{ x: 0, y: 150, id: 'p1' }, { x: 800, y: 150, id: 'p2' }], type: 'main' },
-  { id: 's2', name: 'Boulevard des Sciences', points: [{ x: 0, y: 300, id: 'p3' }, { x: 800, y: 300, id: 'p4' }], type: 'main' },
-  { id: 's3', name: 'Rue de l\'Innovation', points: [{ x: 0, y: 450, id: 'p5' }, { x: 800, y: 450, id: 'p6' }], type: 'secondary' },
+// Routes du quartier avec virages et intersections variées
+const ROADS: Road[] = [
+  // Autoroute périphérique (130 km/h)
+  {
+    id: 'r1',
+    name: 'Périphérique Ouest',
+    points: [
+      { x: 100, y: 100, id: 'p1' },
+      { x: 120, y: 400, id: 'p2' },
+      { x: 150, y: 800, id: 'p3' },
+      { x: 180, y: 1200, id: 'p4' },
+      { x: 200, y: 1600, id: 'p5' },
+      { x: 220, y: 1900, id: 'p6' },
+    ],
+    type: 'highway',
+    speedLimit: 130,
+  },
+  {
+    id: 'r2',
+    name: 'Périphérique Est',
+    points: [
+      { x: 1800, y: 150, id: 'p7' },
+      { x: 1820, y: 500, id: 'p8' },
+      { x: 1850, y: 900, id: 'p9' },
+      { x: 1870, y: 1300, id: 'p10' },
+      { x: 1880, y: 1700, id: 'p11' },
+      { x: 1900, y: 1950, id: 'p12' },
+    ],
+    type: 'highway',
+    speedLimit: 130,
+  },
 
-  // Routes principales (vertical)
-  { id: 's4', name: 'Rue Victor Hugo', points: [{ x: 200, y: 0, id: 'p7' }, { x: 200, y: 600, id: 'p8' }], type: 'main' },
-  { id: 's5', name: 'Avenue Jean Jaurès', points: [{ x: 400, y: 0, id: 'p9' }, { x: 400, y: 600, id: 'p10' }], type: 'main' },
-  { id: 's6', name: 'Rue de la Paix', points: [{ x: 600, y: 0, id: 'p11' }, { x: 600, y: 600, id: 'p12' }], type: 'secondary' },
+  // Routes principales (50 km/h)
+  {
+    id: 'r3',
+    name: 'Avenue de l\'Université',
+    points: [
+      { x: 200, y: 400, id: 'p13' },
+      { x: 500, y: 380, id: 'p14' },
+      { x: 900, y: 400, id: 'p15' },
+      { x: 1300, y: 420, id: 'p16' },
+      { x: 1700, y: 450, id: 'p17' },
+      { x: 1800, y: 500, id: 'p18' },
+    ],
+    type: 'main',
+    speedLimit: 50,
+  },
+  {
+    id: 'r4',
+    name: 'Boulevard des Sciences',
+    points: [
+      { x: 180, y: 1000, id: 'p19' },
+      { x: 400, y: 980, id: 'p20' },
+      { x: 700, y: 1000, id: 'p21' },
+      { x: 1000, y: 1020, id: 'p22' },
+      { x: 1400, y: 1000, id: 'p23' },
+      { x: 1800, y: 980, id: 'p24' },
+    ],
+    type: 'main',
+    speedLimit: 50,
+  },
+  {
+    id: 'r5',
+    name: 'Avenue Jean Jaurès',
+    points: [
+      { x: 200, y: 1600, id: 'p25' },
+      { x: 600, y: 1580, id: 'p26' },
+      { x: 1000, y: 1600, id: 'p27' },
+      { x: 1400, y: 1620, id: 'p28' },
+      { x: 1800, y: 1640, id: 'p29' },
+    ],
+    type: 'main',
+    speedLimit: 50,
+  },
+
+  // Routes verticales principales
+  {
+    id: 'r6',
+    name: 'Rue Victor Hugo',
+    points: [
+      { x: 500, y: 200, id: 'p30' },
+      { x: 500, y: 380, id: 'p31' },
+      { x: 520, y: 700, id: 'p32' },
+      { x: 500, y: 1000, id: 'p33' },
+      { x: 480, y: 1400, id: 'p34' },
+      { x: 500, y: 1800, id: 'p35' },
+    ],
+    type: 'main',
+    speedLimit: 50,
+  },
+  {
+    id: 'r7',
+    name: 'Rue de la République',
+    points: [
+      { x: 1000, y: 150, id: 'p36' },
+      { x: 1000, y: 400, id: 'p37' },
+      { x: 1020, y: 700, id: 'p38' },
+      { x: 1000, y: 1020, id: 'p39' },
+      { x: 980, y: 1400, id: 'p40' },
+      { x: 1000, y: 1850, id: 'p41' },
+    ],
+    type: 'main',
+    speedLimit: 50,
+  },
+  {
+    id: 'r8',
+    name: 'Avenue Gambetta',
+    points: [
+      { x: 1500, y: 200, id: 'p42' },
+      { x: 1500, y: 450, id: 'p43' },
+      { x: 1480, y: 800, id: 'p44' },
+      { x: 1500, y: 1100, id: 'p45' },
+      { x: 1520, y: 1500, id: 'p46' },
+      { x: 1500, y: 1900, id: 'p47' },
+    ],
+    type: 'main',
+    speedLimit: 50,
+  },
+
+  // Routes secondaires avec virages (30 km/h)
+  {
+    id: 'r9',
+    name: 'Rue de la Paix',
+    points: [
+      { x: 300, y: 600, id: 'p48' },
+      { x: 400, y: 650, id: 'p49' },
+      { x: 600, y: 700, id: 'p50' },
+      { x: 800, y: 680, id: 'p51' },
+    ],
+    type: 'secondary',
+    speedLimit: 30,
+  },
+  {
+    id: 'r10',
+    name: 'Rue du Commerce',
+    points: [
+      { x: 700, y: 600, id: 'p52' },
+      { x: 750, y: 750, id: 'p53' },
+      { x: 800, y: 900, id: 'p54' },
+      { x: 850, y: 1050, id: 'p55' },
+    ],
+    type: 'secondary',
+    speedLimit: 30,
+  },
+  {
+    id: 'r11',
+    name: 'Rue des Écoles',
+    points: [
+      { x: 1100, y: 600, id: 'p56' },
+      { x: 1200, y: 700, id: 'p57' },
+      { x: 1300, y: 800, id: 'p58' },
+      { x: 1400, y: 900, id: 'p59' },
+    ],
+    type: 'secondary',
+    speedLimit: 30,
+  },
+  {
+    id: 'r12',
+    name: 'Rue de l\'Innovation',
+    points: [
+      { x: 600, y: 1200, id: 'p60' },
+      { x: 700, y: 1250, id: 'p61' },
+      { x: 800, y: 1300, id: 'p62' },
+      { x: 900, y: 1350, id: 'p63' },
+    ],
+    type: 'secondary',
+    speedLimit: 30,
+  },
+
+  // Petites rues locales (20 km/h)
+  {
+    id: 'r13',
+    name: 'Impasse des Lilas',
+    points: [
+      { x: 650, y: 500, id: 'p64' },
+      { x: 700, y: 550, id: 'p65' },
+      { x: 750, y: 600, id: 'p66' },
+    ],
+    type: 'local',
+    speedLimit: 20,
+  },
+  {
+    id: 'r14',
+    name: 'Allée du Parc',
+    points: [
+      { x: 1150, y: 1200, id: 'p67' },
+      { x: 1200, y: 1250, id: 'p68' },
+      { x: 1250, y: 1300, id: 'p69' },
+    ],
+    type: 'local',
+    speedLimit: 20,
+  },
 ];
 
+// Bâtiments et zones d'intérêt
 const BUILDINGS: Building[] = [
-  { id: 'b1', x: 50, y: 50, width: 100, height: 80, name: 'Mairie' },
-  { id: 'b2', x: 250, y: 50, width: 120, height: 80, name: 'Bibliothèque' },
-  { id: 'b3', x: 450, y: 50, width: 100, height: 80, name: 'Musée' },
-  { id: 'b4', x: 650, y: 50, width: 120, height: 80, name: 'Théâtre' },
+  // Zone universitaire
+  { id: 'b1', x: 400, y: 250, width: 200, height: 120, name: 'Université - Bâtiment A', type: 'university' },
+  { id: 'b2', x: 620, y: 250, width: 180, height: 120, name: 'Campus Informatique', type: 'university' },
+  { id: 'b3', x: 850, y: 250, width: 140, height: 120, name: 'Bibliothèque', type: 'university' },
 
-  { id: 'b5', x: 50, y: 180, width: 120, height: 100, name: 'Université' },
-  { id: 'b6', x: 450, y: 180, width: 120, height: 100, name: 'Campus Info' },
-  { id: 'b7', x: 650, y: 180, width: 100, height: 100, name: 'Gymnase' },
+  // Zone commerciale
+  { id: 'b4', x: 600, y: 850, width: 150, height: 130, name: 'Centre Commercial', type: 'commercial' },
+  { id: 'b5', x: 780, y: 850, width: 120, height: 130, name: 'Cinéma', type: 'commercial' },
 
-  { id: 'b8', x: 50, y: 330, width: 100, height: 100, name: 'Hôpital' },
-  { id: 'b9', x: 250, y: 330, width: 120, height: 100, name: 'Centre Commercial' },
-  { id: 'b10', x: 650, y: 330, width: 100, height: 100, name: 'Parc' },
+  // Zone résidentielle
+  { id: 'b6', x: 300, y: 750, width: 80, height: 80, name: 'Résidence A', type: 'residential' },
+  { id: 'b7', x: 300, y: 850, width: 80, height: 80, name: 'Résidence B', type: 'residential' },
+  { id: 'b8', x: 1150, y: 750, width: 100, height: 100, name: 'Résidence C', type: 'residential' },
 
-  { id: 'b11', x: 50, y: 480, width: 120, height: 100, name: 'Gare' },
-  { id: 'b12', x: 450, y: 480, width: 100, height: 100, name: 'Stade' },
+  // Zone publique
+  { id: 'b9', x: 250, y: 1100, width: 120, height: 100, name: 'Mairie', type: 'public' },
+  { id: 'b10', x: 1100, y: 1100, width: 140, height: 100, name: 'Hôpital', type: 'public' },
+
+  // Parcs
+  { id: 'b11', x: 1200, y: 1350, width: 200, height: 200, name: 'Parc Municipal', type: 'park' },
+  { id: 'b12', x: 600, y: 1400, width: 150, height: 150, name: 'Jardin Public', type: 'park' },
+
+  // Zone résidentielle Sud
+  { id: 'b13', x: 350, y: 1700, width: 90, height: 90, name: 'Résidence D', type: 'residential' },
+  { id: 'b14', x: 470, y: 1700, width: 90, height: 90, name: 'Résidence E', type: 'residential' },
+  { id: 'b15', x: 1600, y: 1500, width: 100, height: 100, name: 'Résidence F', type: 'residential' },
 ];
 
-// Générer les points de navigation sur les intersections
-const generateNavigationPoints = (): Point[] => {
-  const points: Point[] = [];
-  const yPositions = [150, 300, 450];
-  const xPositions = [200, 400, 600];
+// Générer les intersections à partir des routes
+const generateIntersections = (): Intersection[] => {
+  const intersections: Intersection[] = [];
+  const points = new Map<string, { point: Point; roads: string[] }>();
 
+  // Collecter tous les points de toutes les routes
+  ROADS.forEach(road => {
+    road.points.forEach(point => {
+      const key = `${Math.round(point.x)},${Math.round(point.y)}`;
+      if (!points.has(key)) {
+        points.set(key, { point, roads: [road.id] });
+      } else {
+        const existing = points.get(key)!;
+        if (!existing.roads.includes(road.id)) {
+          existing.roads.push(road.id);
+        }
+      }
+    });
+  });
+
+  // Convertir en intersections
   let id = 0;
-  for (const y of yPositions) {
-    for (const x of xPositions) {
-      points.push({ x, y, id: `n${id++}` });
-    }
-  }
+  points.forEach(({ point, roads }) => {
+    intersections.push({
+      id: `i${id++}`,
+      point,
+      connectedRoads: roads,
+    });
+  });
 
-  // Ajouter points de bord
-  const edges = [
-    { x: 50, y: 150 }, { x: 750, y: 150 },
-    { x: 50, y: 300 }, { x: 750, y: 300 },
-    { x: 50, y: 450 }, { x: 750, y: 450 },
-    { x: 200, y: 50 }, { x: 400, y: 50 }, { x: 600, y: 50 },
-    { x: 200, y: 550 }, { x: 400, y: 550 }, { x: 600, y: 550 },
-  ];
-
-  edges.forEach((pt, i) => points.push({ ...pt, id: `e${i}` }));
-
-  return points;
+  return intersections;
 };
 
 // ============================================
@@ -125,55 +334,77 @@ export function PathfindingVisualizer() {
   });
   const [showExplanation, setShowExplanation] = useState(false);
   const [speed, setSpeed] = useState(50);
+  const [viewBox] = useState({ x: 0, y: 0, width: MAP_SIZE, height: MAP_SIZE });
 
-  const navigationPoints = useRef(generateNavigationPoints());
+  const intersections = useRef(generateIntersections());
   const runningRef = useRef(false);
 
-  // Fonction de distance
+  // Distance euclidienne
   const distance = (p1: Point, p2: Point): number => {
     return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
   };
 
-  // Vérifier si un point est dans un bâtiment
-  const isInBuilding = (point: Point): boolean => {
-    return BUILDINGS.some(b =>
-      point.x >= b.x && point.x <= b.x + b.width &&
-      point.y >= b.y && point.y <= b.y + b.height
-    );
+  // Convertir distance pixels en km
+  const distanceInKm = (pixels: number): number => {
+    return pixels * SCALE;
   };
 
-  // Obtenir les voisins d'un point
-  const getNeighbors = (point: Point): Point[] => {
-    const maxDistance = 250; // Distance maximale pour être connecté
-    return navigationPoints.current.filter(p => {
-      if (p.id === point.id) return false;
-      const dist = distance(p, point);
-      if (dist > maxDistance) return false;
-
-      // Vérifier qu'il n'y a pas de bâtiment entre les deux points
-      const steps = 10;
-      for (let i = 0; i <= steps; i++) {
-        const t = i / steps;
-        const checkPoint = {
-          x: point.x + (p.x - point.x) * t,
-          y: point.y + (p.y - point.y) * t,
-          id: 'check'
-        };
-        if (isInBuilding(checkPoint)) return false;
+  // Trouver la route entre deux points
+  const findRoadBetween = (p1: Point, p2: Point): Road | null => {
+    for (const road of ROADS) {
+      const idx1 = road.points.findIndex(p => p.id === p1.id);
+      const idx2 = road.points.findIndex(p => p.id === p2.id);
+      if (idx1 !== -1 && idx2 !== -1 && Math.abs(idx1 - idx2) === 1) {
+        return road;
       }
-
-      return true;
-    });
+    }
+    return null;
   };
 
-  // Heuristique
+  // Calculer le temps de trajet entre deux points (en minutes)
+  const travelTime = (p1: Point, p2: Point): number => {
+    const dist = distanceInKm(distance(p1, p2));
+    const road = findRoadBetween(p1, p2);
+    const speed = road ? road.speedLimit : 30; // vitesse par défaut
+    return (dist / speed) * 60; // convertir en minutes
+  };
+
+  // Obtenir les voisins d'un point (points connectés par des routes)
+  const getNeighbors = (point: Point): Point[] => {
+    const neighbors: Point[] = [];
+
+    // Trouver toutes les routes contenant ce point
+    ROADS.forEach(road => {
+      const idx = road.points.findIndex(p => p.id === point.id);
+      if (idx !== -1) {
+        // Ajouter le point précédent
+        if (idx > 0) {
+          neighbors.push(road.points[idx - 1]);
+        }
+        // Ajouter le point suivant
+        if (idx < road.points.length - 1) {
+          neighbors.push(road.points[idx + 1]);
+        }
+      }
+    });
+
+    return neighbors;
+  };
+
+  // Heuristique (distance euclidienne)
   const heuristic = (p1: Point, p2: Point): number => {
     return distance(p1, p2);
   };
 
-  // Algorithme A*
+  // Algorithme A* avec poids des routes
   const runAStar = async (start: Point, end: Point) => {
-    const startNode: PathNode = { ...start, g: 0, h: heuristic(start, end), f: 0, parent: null };
+    const startNode: PathNode = {
+      ...start,
+      g: 0,
+      h: heuristic(start, end),
+      f: 0,
+      parent: null
+    };
     startNode.f = startNode.g + startNode.h;
 
     const openSet: PathNode[] = [startNode];
@@ -192,7 +423,7 @@ export function PathfindingVisualizer() {
       setExploredNodes([...explored]);
       await new Promise(resolve => setTimeout(resolve, 101 - speed));
 
-      if (distance(current, end) < 20) {
+      if (current.id === end.id) {
         // Reconstruire le chemin
         const finalPath: Point[] = [];
         let node: PathNode | null = current;
@@ -201,17 +432,21 @@ export function PathfindingVisualizer() {
           node = node.parent;
         }
 
-        const totalDistance = finalPath.reduce((sum, point, i) => {
-          if (i === 0) return 0;
-          return sum + distance(finalPath[i - 1], point);
-        }, 0);
+        // Calculer distance et temps réels
+        let totalDistance = 0;
+        let totalTime = 0;
+        for (let i = 1; i < finalPath.length; i++) {
+          const dist = distance(finalPath[i - 1], finalPath[i]);
+          totalDistance += dist;
+          totalTime += travelTime(finalPath[i - 1], finalPath[i]);
+        }
 
         setPath(finalPath);
         setStats({
           nodesExplored: explored.length,
           pathLength: finalPath.length,
-          distance: totalDistance / 100, // Convertir en km
-          estimatedTime: Math.ceil(totalDistance / 833) // 50 km/h en minutes
+          distance: distanceInKm(totalDistance),
+          estimatedTime: Math.ceil(totalTime)
         });
         setState('navigating');
         return;
@@ -222,7 +457,8 @@ export function PathfindingVisualizer() {
         const neighborKey = neighbor.id;
         if (closedSet.has(neighborKey)) continue;
 
-        const tentativeG = current.g + distance(current, neighbor);
+        // g(n) = temps de trajet réel (coût)
+        const tentativeG = current.g + travelTime(current, neighbor);
 
         let neighborNode = openSet.find(n => n.id === neighbor.id);
         if (!neighborNode) {
@@ -260,7 +496,7 @@ export function PathfindingVisualizer() {
     runningRef.current = false;
   };
 
-  // Animer le véhicule sur le chemin
+  // Animer le véhicule
   useEffect(() => {
     if (state === 'navigating' && path.length > 0) {
       const interval = setInterval(() => {
@@ -271,28 +507,30 @@ export function PathfindingVisualizer() {
           }
           return prev + 1;
         });
-      }, 500);
+      }, 300);
 
       return () => clearInterval(interval);
     }
   }, [state, path.length]);
 
-  // Placer un marqueur
+  // Placer un marqueur sur une intersection
   const handleMapClick = (e: React.MouseEvent<SVGSVGElement>) => {
     if (state !== 'idle') return;
 
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = MAP_SIZE / rect.width;
+    const scaleY = MAP_SIZE / rect.height;
+    const x = (e.clientX - rect.left) * scaleX + viewBox.x;
+    const y = (e.clientY - rect.top) * scaleY + viewBox.y;
 
-    // Trouver le point le plus proche
-    const closest = navigationPoints.current.reduce((best, point) => {
-      const dist = distance({ x, y, id: '' }, point);
-      return dist < best.dist ? { point, dist } : best;
-    }, { point: navigationPoints.current[0], dist: Infinity });
+    // Trouver l'intersection la plus proche
+    const closest = intersections.current.reduce((best, inter) => {
+      const dist = distance({ x, y, id: '' }, inter.point);
+      return dist < best.dist ? { point: inter.point, dist } : best;
+    }, { point: intersections.current[0].point, dist: Infinity });
 
-    if (closest.dist > 50) return; // Trop loin
+    if (closest.dist > 80) return;
 
     if (placeMode === 'start') {
       setStartPoint(closest.point);
@@ -323,14 +561,43 @@ export function PathfindingVisualizer() {
 
   const canNavigate = startPoint && endPoint && state === 'idle';
 
+  // Couleurs des types de routes
+  const getRoadColor = (type: Road['type']): { stroke: string; width: number } => {
+    switch (type) {
+      case 'highway':
+        return { stroke: '#FF6B35', width: 16 };
+      case 'main':
+        return { stroke: '#FFA500', width: 12 };
+      case 'secondary':
+        return { stroke: '#FFD700', width: 8 };
+      case 'local':
+        return { stroke: '#F4E285', width: 5 };
+    }
+  };
+
+  const getBuildingColor = (type: Building['type']): string => {
+    switch (type) {
+      case 'university':
+        return '#6495ED';
+      case 'residential':
+        return '#D3D3D3';
+      case 'commercial':
+        return '#DDA15E';
+      case 'park':
+        return '#90EE90';
+      case 'public':
+        return '#B19CD9';
+    }
+  };
+
   return (
     <div className="w-full bg-surface p-6 space-y-6">
       {/* En-tête GPS */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-6 text-white shadow-2xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">🗺️ Navigation GPS Intelligente</h1>
-            <p className="text-blue-100">Pathfinding A* - Comme Google Maps en temps réel</p>
+            <h1 className="text-3xl font-bold mb-2">🗺️ Simulateur GPS - Quartier 5km²</h1>
+            <p className="text-blue-100">Navigation intelligente avec A* • Routes pondérées • Virages réalistes</p>
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-blue-200 mb-1">Algorithme</div>
@@ -349,11 +616,11 @@ export function PathfindingVisualizer() {
           <div className="space-y-2 text-sm text-text-muted">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs font-bold">A</div>
-              <span>1. Cliquez sur une intersection pour le <strong>départ</strong></span>
+              <span>1. Cliquez sur une <strong>intersection</strong> pour le départ</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">B</div>
-              <span>2. Cliquez sur une intersection pour l'<strong>arrivée</strong></span>
+              <span>2. Cliquez sur une intersection pour l'arrivée</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xl">🚗</span>
@@ -363,7 +630,7 @@ export function PathfindingVisualizer() {
           <div className="mt-3 pt-3 border-t border-primary-light/10">
             <div className="text-xs font-medium text-text">
               Mode: <span className={placeMode === 'start' ? 'text-green-400' : 'text-red-400'}>
-                {placeMode === 'start' ? '📍 Placer point A' : '📍 Placer point B'}
+                {placeMode === 'start' ? '📍 Placer point A' : '🎯 Placer point B'}
               </span>
             </div>
           </div>
@@ -377,15 +644,15 @@ export function PathfindingVisualizer() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-2xl font-bold text-blue-400">{stats.nodesExplored}</div>
-              <div className="text-xs text-text-muted">Nœuds explorés</div>
+              <div className="text-xs text-text-muted">Intersections analysées</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-orange-400">{stats.pathLength}</div>
               <div className="text-xs text-text-muted">Points du trajet</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-green-400">{stats.distance.toFixed(1)} km</div>
-              <div className="text-xs text-text-muted">Distance</div>
+              <div className="text-2xl font-bold text-green-400">{stats.distance.toFixed(2)} km</div>
+              <div className="text-xs text-text-muted">Distance réelle</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-purple-400">{stats.estimatedTime} min</div>
@@ -447,7 +714,7 @@ export function PathfindingVisualizer() {
               <div>
                 <div className="font-bold text-green-400 text-lg">Destination atteinte !</div>
                 <div className="text-sm text-text-muted">
-                  {stats.distance.toFixed(1)} km parcourus • {stats.estimatedTime} min • {stats.nodesExplored} intersections analysées
+                  {stats.distance.toFixed(2)} km parcourus • {stats.estimatedTime} min • {stats.nodesExplored} intersections analysées
                 </div>
               </div>
             </div>
@@ -465,7 +732,7 @@ export function PathfindingVisualizer() {
               <div>
                 <div className="font-bold text-red-400 text-lg">Itinéraire impossible</div>
                 <div className="text-sm text-text-muted">
-                  Aucun chemin trouvé entre ces deux points. Essayez d'autres emplacements.
+                  Aucun chemin trouvé entre ces deux points.
                 </div>
               </div>
             </div>
@@ -477,7 +744,7 @@ export function PathfindingVisualizer() {
       <div className="bg-surface-light rounded-2xl p-4 border border-primary-light/20 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-text flex items-center gap-2 text-lg">
-            <span className="text-2xl">🏙️</span> Carte Interactive
+            <span className="text-2xl">🏙️</span> Carte Interactive - Quartier 5km²
           </h3>
           <div className="flex gap-2">
             <button
@@ -499,55 +766,15 @@ export function PathfindingVisualizer() {
           </div>
         </div>
 
-        <div className="bg-gray-100 rounded-xl p-4 shadow-inner">
+        <div className="bg-gray-100 rounded-xl p-4 shadow-inner overflow-hidden">
           <svg
-            width={MAP_WIDTH}
-            height={MAP_HEIGHT}
-            className="w-full h-auto cursor-crosshair bg-gradient-to-br from-green-50 to-blue-50 rounded-lg shadow-lg"
+            width="100%"
+            height="600"
+            viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+            className="w-full cursor-crosshair bg-gradient-to-br from-green-50 to-blue-50 rounded-lg shadow-lg"
             onClick={handleMapClick}
+            preserveAspectRatio="xMidYMid meet"
           >
-            {/* Routes */}
-            {STREETS.map(street => (
-              <g key={street.id}>
-                <line
-                  x1={street.points[0].x}
-                  y1={street.points[0].y}
-                  x2={street.points[1].x}
-                  y2={street.points[1].y}
-                  stroke={street.type === 'main' ? '#FFA500' : '#FFD700'}
-                  strokeWidth={street.type === 'main' ? 12 : 8}
-                  strokeLinecap="round"
-                  opacity={0.9}
-                />
-                <line
-                  x1={street.points[0].x}
-                  y1={street.points[0].y}
-                  x2={street.points[1].x}
-                  y2={street.points[1].y}
-                  stroke="white"
-                  strokeWidth={street.type === 'main' ? 8 : 5}
-                  strokeLinecap="round"
-                  strokeDasharray={street.type === 'secondary' ? '10,5' : undefined}
-                />
-                {/* Nom de rue */}
-                {street.type === 'main' && (
-                  <text
-                    x={(street.points[0].x + street.points[1].x) / 2}
-                    y={(street.points[0].y + street.points[1].y) / 2 + (street.points[0].y === street.points[1].y ? -15 : 0)}
-                    fill="#444"
-                    fontSize="10"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                    transform={street.points[0].y !== street.points[1].y ?
-                      `rotate(-90, ${(street.points[0].x + street.points[1].x) / 2}, ${(street.points[0].y + street.points[1].y) / 2})` :
-                      undefined}
-                  >
-                    {street.name}
-                  </text>
-                )}
-              </g>
-            ))}
-
             {/* Bâtiments */}
             {BUILDINGS.map(building => (
               <g key={building.id}>
@@ -556,27 +783,69 @@ export function PathfindingVisualizer() {
                   y={building.y}
                   width={building.width}
                   height={building.height}
-                  fill={building.name?.includes('Parc') ? '#90EE90' : building.name?.includes('Université') || building.name?.includes('Campus') ? '#6495ED' : '#B0C4DE'}
+                  fill={getBuildingColor(building.type)}
                   stroke="#555"
                   strokeWidth="2"
                   rx="4"
-                  opacity={0.8}
+                  opacity={0.7}
                 />
-                {building.name && (
-                  <text
-                    x={building.x + building.width / 2}
-                    y={building.y + building.height / 2}
-                    fill="#333"
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                  >
-                    {building.name}
-                  </text>
-                )}
+                <text
+                  x={building.x + building.width / 2}
+                  y={building.y + building.height / 2}
+                  fill="#222"
+                  fontSize="12"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {building.name}
+                </text>
               </g>
             ))}
+
+            {/* Routes */}
+            {ROADS.map(road => {
+              const { stroke, width } = getRoadColor(road.type);
+              const pathData = road.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+
+              return (
+                <g key={road.id}>
+                  {/* Bordure de route */}
+                  <path
+                    d={pathData}
+                    fill="none"
+                    stroke={stroke}
+                    strokeWidth={width + 4}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={0.9}
+                  />
+                  {/* Centre de route */}
+                  <path
+                    d={pathData}
+                    fill="none"
+                    stroke="white"
+                    strokeWidth={width}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeDasharray={road.type === 'highway' ? '20,10' : road.type === 'secondary' ? '10,5' : undefined}
+                  />
+                  {/* Nom de route (pour routes principales) */}
+                  {road.type !== 'local' && (
+                    <text
+                      x={road.points[Math.floor(road.points.length / 2)].x}
+                      y={road.points[Math.floor(road.points.length / 2)].y - 10}
+                      fill="#444"
+                      fontSize="11"
+                      fontWeight="bold"
+                      textAnchor="middle"
+                    >
+                      {road.name}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
 
             {/* Nœuds explorés */}
             {exploredNodes.map((node, idx) => (
@@ -584,7 +853,7 @@ export function PathfindingVisualizer() {
                 key={`explored-${node.id}`}
                 cx={node.x}
                 cy={node.y}
-                r={4}
+                r={6}
                 fill="#00BFFF"
                 opacity={0.3 + (idx / exploredNodes.length) * 0.5}
               />
@@ -592,11 +861,11 @@ export function PathfindingVisualizer() {
 
             {/* Chemin trouvé */}
             {path.length > 1 && (
-              <polyline
-                points={path.map(p => `${p.x},${p.y}`).join(' ')}
+              <path
+                d={path.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')}
                 fill="none"
                 stroke="#4169E1"
-                strokeWidth="6"
+                strokeWidth="8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 opacity={0.8}
@@ -609,14 +878,14 @@ export function PathfindingVisualizer() {
                 <circle
                   cx={path[currentPosition].x}
                   cy={path[currentPosition].y}
-                  r={12}
+                  r={15}
                   fill="#4169E1"
                 />
                 <text
                   x={path[currentPosition].x}
                   y={path[currentPosition].y}
                   fill="white"
-                  fontSize="16"
+                  fontSize="20"
                   textAnchor="middle"
                   dominantBaseline="middle"
                 >
@@ -628,13 +897,13 @@ export function PathfindingVisualizer() {
             {/* Marqueur départ */}
             {startPoint && (
               <g>
-                <circle cx={startPoint.x} cy={startPoint.y} r={20} fill="#10B981" opacity={0.2} />
-                <circle cx={startPoint.x} cy={startPoint.y} r={16} fill="#10B981" />
+                <circle cx={startPoint.x} cy={startPoint.y} r={25} fill="#10B981" opacity={0.2} />
+                <circle cx={startPoint.x} cy={startPoint.y} r={20} fill="#10B981" />
                 <text
                   x={startPoint.x}
-                  y={startPoint.y + 1}
+                  y={startPoint.y + 2}
                   fill="white"
-                  fontSize="16"
+                  fontSize="18"
                   fontWeight="bold"
                   textAnchor="middle"
                   dominantBaseline="middle"
@@ -647,13 +916,13 @@ export function PathfindingVisualizer() {
             {/* Marqueur arrivée */}
             {endPoint && (
               <g>
-                <circle cx={endPoint.x} cy={endPoint.y} r={20} fill="#EF4444" opacity={0.2} />
-                <circle cx={endPoint.x} cy={endPoint.y} r={16} fill="#EF4444" />
+                <circle cx={endPoint.x} cy={endPoint.y} r={25} fill="#EF4444" opacity={0.2} />
+                <circle cx={endPoint.x} cy={endPoint.y} r={20} fill="#EF4444" />
                 <text
                   x={endPoint.x}
-                  y={endPoint.y + 1}
+                  y={endPoint.y + 2}
                   fill="white"
-                  fontSize="16"
+                  fontSize="18"
                   fontWeight="bold"
                   textAnchor="middle"
                   dominantBaseline="middle"
@@ -663,16 +932,16 @@ export function PathfindingVisualizer() {
               </g>
             )}
 
-            {/* Points de navigation (petits cercles) */}
-            {state === 'idle' && navigationPoints.current.map(point => (
+            {/* Intersections (petits cercles cliquables) */}
+            {state === 'idle' && intersections.current.map(inter => (
               <circle
-                key={point.id}
-                cx={point.x}
-                cy={point.y}
-                r={3}
-                fill="#999"
-                opacity={0.4}
-                className="hover:opacity-100 transition-opacity"
+                key={inter.id}
+                cx={inter.point.x}
+                cy={inter.point.y}
+                r={5}
+                fill="#666"
+                opacity={0.5}
+                className="hover:opacity-100 transition-opacity cursor-pointer"
               />
             ))}
           </svg>
@@ -682,12 +951,20 @@ export function PathfindingVisualizer() {
         <div className="mt-4 pt-4 border-t border-primary-light/10">
           <div className="flex flex-wrap justify-center gap-6 text-xs">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-3 bg-orange-500 rounded" />
-              <span className="text-text-muted">Route principale</span>
+              <div className="w-8 h-3 bg-orange-600 rounded" />
+              <span className="text-text-muted">Autoroute (130 km/h)</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-6 h-3 bg-yellow-400 rounded" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #FFD700 0, #FFD700 5px, transparent 5px, transparent 10px)' }} />
-              <span className="text-text-muted">Route secondaire</span>
+              <div className="w-8 h-3 bg-orange-500 rounded" />
+              <span className="text-text-muted">Route principale (50 km/h)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-3 bg-yellow-400 rounded" />
+              <span className="text-text-muted">Route secondaire (30 km/h)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-3 bg-yellow-200 rounded" />
+              <span className="text-text-muted">Rue locale (20 km/h)</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-blue-400 rounded-full" />
@@ -701,7 +978,7 @@ export function PathfindingVisualizer() {
         </div>
       </div>
 
-      {/* Section éducative */}
+      {/* Section éducative (condensée) */}
       <div className="bg-surface-light rounded-xl border border-primary-light/20 overflow-hidden shadow-lg">
         <button
           onClick={() => setShowExplanation(!showExplanation)}
@@ -711,7 +988,7 @@ export function PathfindingVisualizer() {
             <span className="text-3xl">🧠</span>
             <div className="text-left">
               <div className="font-bold text-text text-lg">Comprendre l'algorithme A*</div>
-              <div className="text-sm text-text-muted">Le secret derrière Google Maps et la navigation GPS</div>
+              <div className="text-sm text-text-muted">Avec pondération des routes et optimisation du temps de trajet</div>
             </div>
           </div>
           <motion.span
@@ -732,114 +1009,42 @@ export function PathfindingVisualizer() {
               transition={{ duration: 0.3 }}
               className="overflow-hidden"
             >
-              <div className="px-6 pb-6 space-y-6 border-t border-primary-light/10">
-                {/* Comment ça marche */}
-                <div>
-                  <h3 className="font-bold text-blue-400 mb-3 mt-6 text-lg flex items-center gap-2">
-                    <span>🔍</span> Comment fonctionne A* ?
-                  </h3>
-                  <div className="bg-surface rounded-lg p-4 space-y-3">
-                    <p className="text-sm text-text-muted leading-relaxed">
-                      A* combine <strong>distance parcourue</strong> + <strong>estimation intelligente</strong> pour trouver le chemin optimal.
+              <div className="px-6 pb-6 space-y-4 border-t border-primary-light/10">
+                <div className="bg-blue-500/10 border-l-4 border-blue-500 p-4 rounded mt-4">
+                  <h3 className="font-bold text-blue-400 mb-2">🎯 Pondération des routes</h3>
+                  <p className="text-sm text-text-muted leading-relaxed">
+                    Dans cette simulation, A* utilise le <strong>temps de trajet réel</strong> comme coût.
+                    Une autoroute à 130 km/h est plus rapide qu'une petite rue à 20 km/h, même si elle est plus longue !
+                  </p>
+                  <div className="mt-3 space-y-1 text-sm text-text-muted">
+                    <div>• <strong>g(n)</strong> = temps de trajet réel depuis le départ (en minutes)</div>
+                    <div>• <strong>h(n)</strong> = estimation du temps restant (heuristique)</div>
+                    <div>• <strong>Vitesse = distance × limite de vitesse</strong> pour chaque segment</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="bg-surface rounded-lg p-4 border-l-4 border-green-500">
+                    <h4 className="font-bold text-green-400 mb-2">✅ Optimisation intelligente</h4>
+                    <p className="text-sm text-text-muted">
+                      A* peut choisir un trajet plus long sur autoroute plutôt qu'un trajet court sur petites rues,
+                      car le temps de trajet est optimisé.
                     </p>
-                    <div className="bg-blue-500/10 border-l-4 border-blue-500 p-4 rounded">
-                      <div className="font-mono text-lg text-blue-300 mb-3">f(n) = g(n) + h(n)</div>
-                      <ul className="space-y-2 text-sm text-text-muted">
-                        <li>• <strong>g(n)</strong> = distance réelle depuis le départ (GPS mesure les km)</li>
-                        <li>• <strong>h(n)</strong> = estimation vers l'arrivée (heuristique)</li>
-                        <li>• <strong>f(n)</strong> = coût total estimé (guide l'exploration)</li>
-                      </ul>
-                    </div>
-                    <p className="text-sm text-text-muted leading-relaxed">
-                      À chaque intersection, A* choisit le chemin avec le plus petit <code className="text-blue-300">f(n)</code>.
-                      C'est exactement ce que fait Google Maps en temps réel !
+                  </div>
+                  <div className="bg-surface rounded-lg p-4 border-l-4 border-orange-500">
+                    <h4 className="font-bold text-orange-400 mb-2">🌍 Utilisé partout</h4>
+                    <p className="text-sm text-text-muted">
+                      Google Maps, Waze utilisent exactement ce principe : routes pondérées par vitesse + trafic en temps réel.
                     </p>
                   </div>
                 </div>
 
-                {/* Applications */}
-                <div>
-                  <h3 className="font-bold text-green-400 mb-3 text-lg flex items-center gap-2">
-                    <span>🌍</span> Utilisé partout dans le monde réel
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="bg-surface rounded-lg p-4 border-l-4 border-blue-500">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">🗺️</span>
-                        <div className="font-bold text-text">Google Maps / Waze</div>
-                      </div>
-                      <div className="text-sm text-text-muted">
-                        Calcul d'itinéraires en temps réel avec trafic
-                      </div>
-                    </div>
-                    <div className="bg-surface rounded-lg p-4 border-l-4 border-purple-500">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">🎮</span>
-                        <div className="font-bold text-text">Jeux vidéo</div>
-                      </div>
-                      <div className="text-sm text-text-muted">
-                        IA des PNJ, pathfinding des ennemis
-                      </div>
-                    </div>
-                    <div className="bg-surface rounded-lg p-4 border-l-4 border-green-500">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">🤖</span>
-                        <div className="font-bold text-text">Robotique</div>
-                      </div>
-                      <div className="text-sm text-text-muted">
-                        Drones, robots aspirateurs, véhicules autonomes
-                      </div>
-                    </div>
-                    <div className="bg-surface rounded-lg p-4 border-l-4 border-orange-500">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">📦</span>
-                        <div className="font-bold text-text">Logistique</div>
-                      </div>
-                      <div className="text-sm text-text-muted">
-                        Amazon, UPS - optimisation des livraisons
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dans la Licence */}
-                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-2 border-blue-500/30 rounded-xl p-6">
-                  <h3 className="font-bold text-blue-400 mb-3 text-lg flex items-center gap-2">
-                    <span>🎓</span> Dans la Licence Informatique
-                  </h3>
-                  <div className="space-y-3 text-sm text-text-muted leading-relaxed">
-                    <p>
-                      Enseigné en <strong className="text-blue-300">L2-L3</strong> dans les cours
-                      <strong> "Graphes & Algorithmes"</strong> et <strong>"Intelligence Artificielle"</strong>.
-                    </p>
-                    <div className="bg-surface/50 rounded-lg p-4 space-y-2">
-                      <p className="font-bold text-text">Ce que vous apprendrez :</p>
-                      <ul className="space-y-2 ml-4">
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-400">→</span>
-                          <span>Implémenter A*, Dijkstra, BFS, DFS</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-400">→</span>
-                          <span>Concevoir des heuristiques admissibles</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-400">→</span>
-                          <span>Optimiser les performances en temps réel</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-blue-400">→</span>
-                          <span>Appliquer dans des projets de robotique/jeux</span>
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-blue-500/20">
-                      <p className="text-blue-300 font-medium text-base">
-                        💼 Compétence <strong>essentielle</strong> pour travailler chez Google, dans le jeu vidéo,
-                        la robotique, ou l'IA ! Maîtriser A* = maîtriser l'optimisation spatiale.
-                      </p>
-                    </div>
-                  </div>
+                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-2 border-blue-500/30 rounded-xl p-4">
+                  <h4 className="font-bold text-blue-400 mb-2">🎓 Dans la Licence Informatique</h4>
+                  <p className="text-sm text-text-muted">
+                    Enseigné en <strong>L2-L3</strong> dans "Graphes & Algorithmes". Vous apprendrez à implémenter A*
+                    avec différentes fonctions de coût, à concevoir des heuristiques, et à optimiser les performances.
+                  </p>
                 </div>
               </div>
             </motion.div>
