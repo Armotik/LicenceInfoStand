@@ -6,6 +6,7 @@ import { SortingVisualizer } from './components/SortingVisualizer';
 import { MandelbrotVisualizer } from './components/MandelbrotVisualizer';
 import { PathfindingVisualizer } from './components/PathfindingVisualizer';
 import { BoidsVisualizer } from './components/BoidsVisualizer';
+import { GameOfLifeVisualizer } from './components/GameOfLifeVisualizer';
 
 // ============================================
 // Configuration des démos
@@ -221,7 +222,7 @@ function BoidsDemo() {
 }
 
 function GameOfLifeDemo() {
-  return <PlaceholderDemo name="Game of Life" />;
+  return <GameOfLifeVisualizer />;
 }
 
 export default DemoMode;
