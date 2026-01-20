@@ -7,6 +7,7 @@ import { MandelbrotVisualizer } from './components/MandelbrotVisualizer';
 import { PathfindingVisualizer } from './components/PathfindingVisualizer';
 import { BoidsVisualizer } from './components/BoidsVisualizer';
 import { GameOfLifeVisualizer } from './components/GameOfLifeVisualizer';
+import { BodyTrackingVisualizer } from './components/BodyTrackingVisualizer';
 
 // ============================================
 // Configuration des démos
@@ -25,12 +26,12 @@ interface DemoConfig {
 const DEMO_CONFIG: Record<DemoType, DemoConfig> = {
   'body-tracking': {
     id: 'body-tracking',
-    title: 'Body Tracking',
-    description: 'Détection du corps en temps réel avec MediaPipe',
-    competences: ['Vision par ordinateur', 'Intelligence Artificielle', 'Traitement d\'image'],
-    ue: 'Vision embarquée (L3)',
-    icon: '🤖',
-    color: 'text-red-400',
+    title: 'Computer Vision & Body Tracking',
+    description: 'Suite complète : Facial Landmarks, Détection de mouvement, Viola-Jones, ArUco AR',
+    competences: ['Computer Vision', 'Intelligence Artificielle', 'Réalité Augmentée'],
+    ue: 'Vision par ordinateur (L3)',
+    icon: '🎥',
+    color: 'text-purple-400',
   },
   sorting: {
     id: 'sorting',
@@ -202,7 +203,7 @@ function PlaceholderDemo({ name }: { name: string }) {
 // ============================================
 
 function BodyTrackingDemo() {
-  return <PlaceholderDemo name="Body Tracking" />;
+  return <BodyTrackingVisualizer />;
 }
 
 function SortingDemo() {
