@@ -1135,14 +1135,6 @@ export function PathfindingVisualizer() {
                     </p>
                   </div>
                 </div>
-
-                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-2 border-blue-500/30 rounded-xl p-4">
-                  <h4 className="font-bold text-blue-400 mb-2">🎓 Dans la Licence Informatique</h4>
-                  <p className="text-sm text-text-muted">
-                    Enseigné en <strong>L2-L3</strong> dans "Graphes & Algorithmes". Vous apprendrez à implémenter A*
-                    avec différentes fonctions de coût, à concevoir des heuristiques, et à optimiser les performances.
-                  </p>
-                </div>
               </div>
             </motion.div>
           )}
