@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { SortingVisualizer } from './components/SortingVisualizer';
 import { MandelbrotVisualizer } from './components/MandelbrotVisualizer';
 import { PathfindingVisualizer } from './components/PathfindingVisualizer';
+import { BoidsVisualizer } from './components/BoidsVisualizer';
 
 // ============================================
 // Configuration des démos
@@ -216,7 +217,7 @@ function MandelbrotDemo() {
 }
 
 function BoidsDemo() {
-  return <PlaceholderDemo name="Simulation Boids" />;
+  return <BoidsVisualizer />;
 }
 
 function GameOfLifeDemo() {
