@@ -756,23 +756,6 @@ export function SortingVisualizer() {
                 </div>
 
                 {/* Lien avec la Licence */}
-                <div
-                  className="rounded-lg p-3 border-l-4"
-                  style={{
-                    backgroundColor: `${algoInfo.color}10`,
-                    borderColor: algoInfo.color
-                  }}
-                >
-                  <h3 className="font-bold mb-2" style={{ color: algoInfo.color }}>
-                    🎓 Dans la Licence Informatique
-                  </h3>
-                  <p className="text-sm text-text-muted">
-                    Les algorithmes de tri sont enseignés en <strong>L2</strong> dans l'UE "Algorithmique & Structures de données".
-                    Vous apprendrez à analyser leur complexité avec la notation Big O, à comprendre quand utiliser
-                    chaque algorithme, et à les implémenter en C et Java. Ces concepts sont essentiels pour
-                    devenir un bon développeur et réussir les entretiens techniques !
-                  </p>
-                </div>
               </div>
             </motion.div>
           )}
