@@ -692,15 +692,6 @@ export function BoidsVisualizer() {
                     </p>
                   </div>
                 </div>
-
-                <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-2 border-purple-500/30 rounded-xl p-4">
-                  <h4 className="font-bold text-purple-400 mb-2">🎓 Dans la Licence Informatique</h4>
-                  <p className="text-sm text-text-muted">
-                    Les algorithmes de simulation multi-agents comme Boids sont enseignés en <strong>L3</strong> dans les cours
-                    d'Intelligence Artificielle, Modélisation & Simulation, et Systèmes Multi-Agents. Vous apprendrez
-                    les systèmes complexes, l'émergence, et comment programmer des comportements collectifs intelligents.
-                  </p>
-                </div>
               </div>
             </motion.div>
           )}
