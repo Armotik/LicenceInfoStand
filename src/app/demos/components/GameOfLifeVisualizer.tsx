@@ -740,15 +740,6 @@ export function GameOfLifeVisualizer() {
                     </p>
                   </div>
                 </div>
-
-                <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-2 border-cyan-500/30 rounded-xl p-4">
-                  <h4 className="font-bold text-cyan-400 mb-2">🎓 Dans la Licence Informatique</h4>
-                  <p className="text-sm text-text-muted">
-                    Les automates cellulaires sont étudiés en <strong>L1</strong> (Introduction à la programmation) et
-                    approfondis en <strong>L2-L3</strong> (Théorie de la calculabilité, Algorithmique). Vous apprendrez
-                    les systèmes dynamiques, la complexité émergente, et les modèles de calcul alternatifs.
-                  </p>
-                </div>
               </div>
             </motion.div>
           )}

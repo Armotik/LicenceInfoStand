@@ -195,6 +195,7 @@ export const useAppStore = create<AppState & AppActions>()(
         previousMode: get().mode,
         currentDemo: demo,
         isDemoActive: true,
+        showIdleTitle: false, // Masquer le HUD automatiquement
         lastInteraction: Date.now(),
       });
     },

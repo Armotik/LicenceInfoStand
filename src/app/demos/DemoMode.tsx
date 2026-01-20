@@ -138,14 +138,6 @@ export function DemoMode() {
       <div className="flex-1 overflow-y-auto">
         <DemoRenderer demo={currentDemo} />
       </div>
-
-      {/* Footer avec UE */}
-      <div className="bg-surface-light/50 backdrop-blur-sm p-2 text-center">
-        <p className="text-sm text-text-muted">
-          Cette démo illustre les compétences enseignées en{' '}
-          <span className={config.color}>{config.ue}</span>
-        </p>
-      </div>
     </div>
   );
 }
