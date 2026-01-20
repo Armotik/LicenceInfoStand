@@ -193,6 +193,8 @@ export function GameOfLifeVisualizer() {
   const [cellSize, setCellSize] = useState(8);
   const [showGrid, setShowGrid] = useState(true);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawValue, setDrawValue] = useState(true); // true = dessiner, false = effacer
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gridRef = useRef<Grid>([]);
@@ -333,8 +335,27 @@ export function GameOfLifeVisualizer() {
     }
   };
 
-  // Gérer le clic sur la grille
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Dessiner/Effacer une cellule
+  const toggleCell = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const col = Math.floor(x / cellSize);
+    const row = Math.floor(y / cellSize);
+
+    if (row >= 0 && row < rows && col >= 0 && col < cols) {
+      gridRef.current[row][col] = drawValue;
+      drawGrid();
+      updatePopulation();
+    }
+  };
+
+  // Gérer le début du dessin
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isRunning) return;
 
     const canvas = canvasRef.current;
@@ -348,10 +369,27 @@ export function GameOfLifeVisualizer() {
     const row = Math.floor(y / cellSize);
 
     if (row >= 0 && row < rows && col >= 0 && col < cols) {
-      gridRef.current[row][col] = !gridRef.current[row][col];
-      drawGrid();
-      updatePopulation();
+      // Déterminer si on dessine ou efface basé sur la cellule cliquée
+      setDrawValue(!gridRef.current[row][col]);
+      setIsDrawing(true);
+      toggleCell(e);
     }
+  };
+
+  // Gérer le dessin en mouvement
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || isRunning) return;
+    toggleCell(e);
+  };
+
+  // Arrêter le dessin
+  const handleMouseUp = () => {
+    setIsDrawing(false);
+  };
+
+  // Arrêter le dessin si la souris sort du canvas
+  const handleMouseLeave = () => {
+    setIsDrawing(false);
   };
 
   // Placer un pattern
@@ -603,8 +641,11 @@ export function GameOfLifeVisualizer() {
             ref={canvasRef}
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
-            onClick={handleCanvasClick}
-            className="w-full h-auto cursor-pointer"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            className="w-full h-auto cursor-crosshair"
           />
         </div>
       </div>

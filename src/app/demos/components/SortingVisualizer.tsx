@@ -572,7 +572,7 @@ export function SortingVisualizer() {
   const algoInfo = ALGORITHMS[algorithm];
 
   return (
-    <div className="w-full h-full flex flex-col bg-surface p-6 gap-6">
+    <div className="w-full bg-surface p-6 space-y-6">
       {/* Contrôles supérieurs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sélection algorithme */}
