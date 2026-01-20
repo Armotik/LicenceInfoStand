@@ -237,8 +237,9 @@ export function MandelbrotVisualizer() {
     const xMin = viewport.centerX - (range * aspectRatio) / 2;
     const yMin = viewport.centerY - range / 2;
 
-    const x = xMin + (mouseX / canvas.width) * (range * aspectRatio);
-    const y = yMin + (mouseY / canvas.height) * range;
+    // Use displayed dimensions, not native canvas dimensions
+    const x = xMin + (mouseX / rect.width) * (range * aspectRatio);
+    const y = yMin + (mouseY / rect.height) * range;
 
     // Zoomer
     const zoomFactor = e.deltaY > 0 ? 0.8 : 1.25;
@@ -267,8 +268,9 @@ export function MandelbrotVisualizer() {
     const xMin = viewport.centerX - (range * aspectRatio) / 2;
     const yMin = viewport.centerY - range / 2;
 
-    const x = xMin + (mouseX / canvas.width) * (range * aspectRatio);
-    const y = yMin + (mouseY / canvas.height) * range;
+    // Use displayed dimensions, not native canvas dimensions
+    const x = xMin + (mouseX / rect.width) * (range * aspectRatio);
+    const y = yMin + (mouseY / rect.height) * range;
 
     setViewport({
       centerX: x,

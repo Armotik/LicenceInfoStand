@@ -627,17 +627,6 @@ export function PathfindingVisualizer() {
 
               return (
                 <g key={node.id}>
-                  {/* Glow effect for current node */}
-                  {state?.current && (
-                    <circle
-                      cx={node.x}
-                      cy={node.y}
-                      r={35}
-                      fill={fillColor}
-                      opacity={0.3}
-                      className="animate-ping"
-                    />
-                  )}
                   {/* Node circle */}
                   <circle
                     cx={node.x}
