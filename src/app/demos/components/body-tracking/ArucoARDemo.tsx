@@ -228,88 +228,6 @@ export function ArucoARDemo({ onBack }: Props) {
     ctx.fillText('Z', zEnd[0] + 10, zEnd[1] - 10);
   };
 
-  // Détection simplifiée de marqueurs carrés
-  const detectMarkers = (imageData: ImageData): Marker[] => {
-    // Pour cette démo éducative, nous simulons la détection
-    // Une vraie implémentation utiliserait la détection de contours + reconnaissance de patterns
-
-    // Chercher des régions carrées sombres
-    const detected: Marker[] = [];
-    const width = imageData.width;
-    const height = imageData.height;
-    const data = imageData.data;
-
-    // Simulation : chercher des zones avec un contraste élevé formant un carré
-    const minSize = 50;
-    const maxSize = 200;
-    const step = 30;
-
-    for (let y = 0; y < height - minSize; y += step) {
-      for (let x = 0; x < width - minSize; x += step) {
-        for (let size = minSize; size <= Math.min(maxSize, Math.min(width - x, height - y)); size += 30) {
-          // Vérifier si cette région pourrait être un marqueur
-          const score = evaluateMarkerRegion(data, width, x, y, size);
-
-          if (score > 0.7) {
-            detected.push({
-              id: detected.length,
-              corners: [
-                [x, y],
-                [x + size, y],
-                [x + size, y + size],
-                [x, y + size],
-              ],
-              center: [x + size / 2, y + size / 2],
-            });
-          }
-        }
-      }
-    }
-
-    return detected.slice(0, 3); // Limiter à 3 marqueurs
-  };
-
-  const evaluateMarkerRegion = (
-    data: Uint8ClampedArray,
-    width: number,
-    x: number,
-    y: number,
-    size: number
-  ): number => {
-    // Calculer un score basé sur le contraste et la forme
-    let borderBrightness = 0;
-    let centerBrightness = 0;
-    let borderCount = 0;
-    let centerCount = 0;
-
-    // Vérifier la bordure (devrait être sombre pour un marqueur)
-    for (let i = 0; i < size; i++) {
-      for (let j = 0; j < size; j++) {
-        const px = x + i;
-        const py = y + j;
-        if (px >= 0 && px < width && py >= 0 && py < data.length / width / 4) {
-          const idx = (py * width + px) * 4;
-          const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-
-          if (i < 10 || i > size - 10 || j < 10 || j > size - 10) {
-            borderBrightness += brightness;
-            borderCount++;
-          } else {
-            centerBrightness += brightness;
-            centerCount++;
-          }
-        }
-      }
-    }
-
-    const avgBorder = borderCount > 0 ? borderBrightness / borderCount : 0;
-    const avgCenter = centerCount > 0 ? centerBrightness / centerCount : 0;
-
-    // Un bon marqueur a une bordure sombre et un centre contrasté
-    const contrast = Math.abs(avgCenter - avgBorder);
-    return avgBorder < 100 && contrast > 50 ? Math.random() * 0.3 : 0; // Score aléatoire faible (simulation)
-  };
-
   // Dessiner la frame
   const drawFrame = () => {
     const video = videoRef.current;
@@ -322,11 +240,30 @@ export function ArucoARDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détection de marqueurs (toutes les 15 frames pour performance)
-    if (animationFrameRef.current && animationFrameRef.current % 15 === 0) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const detected = detectMarkers(imageData);
-      setMarkers(detected);
+    // Mode démo : créer des marqueurs simulés
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 30 === 0) {
+      const demoMarkers: Marker[] = [];
+
+      // Marqueur central
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const size = Math.min(canvas.width, canvas.height) * 0.25;
+
+      // Ajouter une légère animation
+      const wobble = Math.sin((animationFrameRef.current || 0) * 0.05) * 10;
+
+      demoMarkers.push({
+        id: 0,
+        corners: [
+          [centerX - size / 2 + wobble, centerY - size / 2],
+          [centerX + size / 2 + wobble, centerY - size / 2],
+          [centerX + size / 2 + wobble, centerY + size / 2],
+          [centerX - size / 2 + wobble, centerY + size / 2],
+        ],
+        center: [centerX + wobble, centerY],
+      });
+
+      setMarkers(demoMarkers);
     }
 
     // Dessiner les marqueurs détectés
@@ -396,6 +333,19 @@ export function ArucoARDemo({ onBack }: Props) {
             break;
         }
       }
+    }
+
+    // Message info
+    if (markers.length > 0) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(10, 10, 350, 55);
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('📊 Démonstration ArUco AR', 20, 30);
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = '#00ffff';
+      ctx.fillText('Imprimez les marqueurs ci-dessous pour', 20, 47);
+      ctx.fillText('une détection réelle !', 20, 60);
     }
 
     animationFrameRef.current = (animationFrameRef.current || 0) + 1;

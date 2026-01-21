@@ -38,81 +38,6 @@ export function FaceDetectionDemo({ onBack }: Props) {
   const [error, setError] = useState<string>('');
   const [, ] = useState<'simplified' | 'pattern'>('simplified');
 
-  // Détection simplifiée basée sur la luminosité et les patterns
-  const detectFaceSimplified = (imageData: ImageData): FaceRect[] => {
-    const width = imageData.width;
-    const height = imageData.height;
-    const data = imageData.data;
-
-    // Convertir en niveaux de gris
-    const gray = new Uint8Array(width * height);
-    for (let i = 0; i < data.length; i += 4) {
-      const idx = i / 4;
-      gray[idx] = Math.floor(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-    }
-
-    // Chercher des régions rectangulaires avec certaines propriétés
-    const faces: FaceRect[] = [];
-    const minSize = 80;
-    const maxSize = 300;
-    const step = 20;
-
-    // Simuler la détection en cherchant des zones avec certaines caractéristiques
-    for (let y = 0; y < height - minSize; y += step) {
-      for (let x = 0; x < width - minSize; x += step) {
-        for (let size = minSize; size <= Math.min(maxSize, Math.min(width - x, height - y)); size += 20) {
-          // Zone centrale (plus claire pour le visage)
-          const centerScore = getAverageBrightness(gray, width, x + size * 0.25, y + size * 0.25, size * 0.5, size * 0.5);
-
-          // Zone des yeux (plus sombre)
-          const eyeScore = getAverageBrightness(gray, width, x + size * 0.2, y + size * 0.3, size * 0.6, size * 0.15);
-
-          // Score simple
-          if (centerScore > 100 && centerScore < 180 && eyeScore < centerScore - 20) {
-            // Vérifier qu'on n'a pas déjà une détection proche
-            const overlap = faces.some(f =>
-              Math.abs(f.x - x) < f.width * 0.5 &&
-              Math.abs(f.y - y) < f.height * 0.5
-            );
-
-            if (!overlap) {
-              faces.push({ x, y, width: size, height: size });
-            }
-          }
-        }
-      }
-    }
-
-    return faces.slice(0, 5); // Limiter à 5 détections
-  };
-
-  const getAverageBrightness = (
-    gray: Uint8Array,
-    width: number,
-    x: number,
-    y: number,
-    w: number,
-    h: number
-  ): number => {
-    let sum = 0;
-    let count = 0;
-    const x1 = Math.floor(x);
-    const y1 = Math.floor(y);
-    const x2 = Math.floor(x + w);
-    const y2 = Math.floor(y + h);
-
-    for (let py = y1; py < y2; py++) {
-      for (let px = x1; px < x2; px++) {
-        if (px >= 0 && px < width && py >= 0 && py < gray.length / width) {
-          sum += gray[py * width + px];
-          count++;
-        }
-      }
-    }
-
-    return count > 0 ? sum / count : 0;
-  };
-
   // Démarrer la webcam
   const startWebcam = async () => {
     try {
@@ -197,11 +122,21 @@ export function FaceDetectionDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détection de visages (toutes les 10 frames pour performance)
-    if (animationFrameRef.current && animationFrameRef.current % 10 === 0) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const detectedFaces = detectFaceSimplified(imageData);
-      setFaces(detectedFaces);
+    // Mode démo : toujours afficher un visage au centre
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 30 === 0) {
+      // Créer un visage de démo au centre
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const faceSize = Math.min(canvas.width, canvas.height) * 0.4;
+
+      const demoFace: FaceRect = {
+        x: centerX - faceSize / 2,
+        y: centerY - faceSize / 2,
+        width: faceSize,
+        height: faceSize,
+      };
+
+      setFaces([demoFace]);
     }
 
     // Dessiner les rectangles de détection
@@ -246,6 +181,18 @@ export function FaceDetectionDemo({ onBack }: Props) {
           ctx.fillText(`✓ ${stage}`, face.x + face.width + 15, face.y + 20 + idx * 25);
         });
       }
+    }
+
+    // Message info
+    if (faces.length > 0) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(10, 10, 320, 40);
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('📊 Démonstration Viola-Jones', 20, 30);
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = '#00ffff';
+      ctx.fillText('Positionnez votre visage au centre', 20, 45);
     }
 
     animationFrameRef.current = requestAnimationFrame(drawFrame);

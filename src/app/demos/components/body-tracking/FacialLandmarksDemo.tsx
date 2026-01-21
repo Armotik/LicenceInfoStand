@@ -223,16 +223,36 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convertir les landmarks en coordonnées canvas
+    // Ajouter un overlay semi-transparent pour indiquer que c'est une démo
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Dessiner un cercle pour représenter une tête au centre
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const headRadius = Math.min(canvas.width, canvas.height) * 0.25;
+
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, headRadius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Convertir les landmarks en coordonnées canvas (centrés sur la tête)
     const points = faceLandmarks.map(p => ({
-      x: p.x * canvas.width,
-      y: p.y * canvas.height,
+      x: centerX + (p.x - 0.5) * headRadius * 2,
+      y: centerY + (p.y - 0.5) * headRadius * 2,
     }));
 
     // Triangulation de Delaunay
     let triangles: Triangle[] = [];
     if (showTriangulation) {
-      triangles = delaunayTriangulation(points);
+      try {
+        triangles = delaunayTriangulation(points);
+      } catch (e) {
+        // En cas d'erreur, on continue sans triangulation
+        console.error('Delaunay error:', e);
+      }
     }
 
     // Dessiner la triangulation
@@ -279,6 +299,16 @@ export function FacialLandmarksDemo({ onBack }: Props) {
         ctx.stroke();
       }
     }
+
+    // Message info
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(10, 10, 380, 50);
+    ctx.fillStyle = '#00ff00';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('📊 Démonstration visuelle de triangulation', 20, 30);
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#00ffff';
+    ctx.fillText(`${points.length} points • ${triangles.length} triangles`, 20, 50);
 
     animationFrameRef.current = requestAnimationFrame(drawFrame);
   };

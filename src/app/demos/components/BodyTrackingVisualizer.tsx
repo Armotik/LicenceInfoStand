@@ -114,6 +114,21 @@ export function BodyTrackingVisualizer() {
               </div>
             </div>
 
+            {/* Info démonstration */}
+            <div className="bg-yellow-500/10 border-l-4 border-yellow-500 p-4 rounded-xl">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">ℹ️</span>
+                <div>
+                  <h3 className="font-bold text-yellow-400 mb-1">Mode Démonstration</h3>
+                  <p className="text-sm text-text-muted">
+                    Ces démos utilisent des <strong>algorithmes simplifiés</strong> et des visualisations pédagogiques
+                    pour illustrer les concepts. Pour une implémentation complète avec détection en temps réel,
+                    des bibliothèques comme <strong>MediaPipe</strong>, <strong>OpenCV</strong> ou <strong>TensorFlow.js</strong> sont nécessaires.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Grille des démos */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {DEMOS.map((demo) => (
