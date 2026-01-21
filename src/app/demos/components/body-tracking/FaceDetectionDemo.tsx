@@ -38,6 +38,56 @@ export function FaceDetectionDemo({ onBack }: Props) {
   const [error, setError] = useState<string>('');
   const [, ] = useState<'simplified' | 'pattern'>('simplified');
 
+  // Position trackée (lissée)
+  const trackedPositionRef = useRef({ x: 0.5, y: 0.5 });
+
+  // Fonction pour détecter la zone la plus lumineuse (approximation du visage)
+  const detectBrightestRegion = (imageData: ImageData): { x: number; y: number } => {
+    const width = imageData.width;
+    const height = imageData.height;
+    const data = imageData.data;
+
+    // Diviser l'image en grille 8x6
+    const gridCols = 8;
+    const gridRows = 6;
+    const cellWidth = width / gridCols;
+    const cellHeight = height / gridRows;
+
+    let maxBrightness = 0;
+    let brightestX = width / 2;
+    let brightestY = height / 2;
+
+    // Chercher la cellule la plus lumineuse dans la partie centrale
+    for (let row = 1; row < gridRows - 1; row++) {
+      for (let col = 1; col < gridCols - 1; col++) {
+        let brightness = 0;
+        let count = 0;
+
+        const startX = Math.floor(col * cellWidth);
+        const startY = Math.floor(row * cellHeight);
+        const endX = Math.floor((col + 1) * cellWidth);
+        const endY = Math.floor((row + 1) * cellHeight);
+
+        for (let y = startY; y < endY; y += 4) {
+          for (let x = startX; x < endX; x += 4) {
+            const idx = (y * width + x) * 4;
+            brightness += (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+            count++;
+          }
+        }
+
+        const avgBrightness = brightness / count;
+        if (avgBrightness > maxBrightness) {
+          maxBrightness = avgBrightness;
+          brightestX = startX + cellWidth / 2;
+          brightestY = startY + cellHeight / 2;
+        }
+      }
+    }
+
+    return { x: brightestX, y: brightestY };
+  };
+
   // Démarrer la webcam
   const startWebcam = async () => {
     try {
@@ -122,11 +172,24 @@ export function FaceDetectionDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Mode démo : toujours afficher un visage au centre
+    // Détecter la position toutes les 5 frames pour le tracking
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 5 === 0) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const detected = detectBrightestRegion(imageData);
+
+      // Lissage exponentiel de la position (smoothing)
+      const smoothing = 0.3;
+      trackedPositionRef.current = {
+        x: trackedPositionRef.current.x * (1 - smoothing) + (detected.x / canvas.width) * smoothing,
+        y: trackedPositionRef.current.y * (1 - smoothing) + (detected.y / canvas.height) * smoothing,
+      };
+    }
+
+    // Mode démo : toujours afficher un visage à la position trackée
     if (animationFrameRef.current === undefined || animationFrameRef.current % 30 === 0) {
-      // Créer un visage de démo au centre
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
+      // Utiliser la position trackée au lieu du centre fixe
+      const centerX = trackedPositionRef.current.x * canvas.width;
+      const centerY = trackedPositionRef.current.y * canvas.height;
       const faceSize = Math.min(canvas.width, canvas.height) * 0.4;
 
       const demoFace: FaceRect = {
