@@ -40,27 +40,37 @@ export function ArucoARDemo({ onBack }: Props) {
 
   // Position trackée (lissée)
   const trackedPositionRef = useRef({ x: 0.5, y: 0.5 });
+  const previousFrameRef = useRef<Uint8ClampedArray | null>(null);
 
-  // Fonction pour détecter la zone la plus lumineuse (approximation du marqueur)
-  const detectBrightestRegion = (imageData: ImageData): { x: number; y: number } => {
+  // Fonction pour détecter la zone avec le plus de mouvement (approximation du marqueur)
+  const detectMotionRegion = (imageData: ImageData): { x: number; y: number } => {
     const width = imageData.width;
     const height = imageData.height;
     const data = imageData.data;
 
-    // Diviser l'image en grille 8x6
-    const gridCols = 8;
+    // Première frame : initialiser
+    if (!previousFrameRef.current) {
+      previousFrameRef.current = new Uint8ClampedArray(data.length);
+      for (let i = 0; i < data.length; i++) {
+        previousFrameRef.current[i] = data[i];
+      }
+      return { x: width / 2, y: height / 2 };
+    }
+
+    // Diviser l'image en grille 6x6
+    const gridCols = 6;
     const gridRows = 6;
     const cellWidth = width / gridCols;
     const cellHeight = height / gridRows;
 
-    let maxBrightness = 0;
-    let brightestX = width / 2;
-    let brightestY = height / 2;
+    let maxMotion = 0;
+    let motionX = width / 2;
+    let motionY = height / 2;
 
-    // Chercher la cellule la plus lumineuse dans la partie centrale
-    for (let row = 1; row < gridRows - 1; row++) {
-      for (let col = 1; col < gridCols - 1; col++) {
-        let brightness = 0;
+    // Chercher la cellule avec le plus de mouvement
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridCols; col++) {
+        let motion = 0;
         let count = 0;
 
         const startX = Math.floor(col * cellWidth);
@@ -68,24 +78,45 @@ export function ArucoARDemo({ onBack }: Props) {
         const endX = Math.floor((col + 1) * cellWidth);
         const endY = Math.floor((row + 1) * cellHeight);
 
-        for (let y = startY; y < endY; y += 4) {
-          for (let x = startX; x < endX; x += 4) {
+        // Échantillonner la cellule
+        for (let y = startY; y < endY; y += 3) {
+          for (let x = startX; x < endX; x += 3) {
             const idx = (y * width + x) * 4;
-            brightness += (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+
+            // Calculer la différence avec la frame précédente
+            const diffR = Math.abs(data[idx] - previousFrameRef.current[idx]);
+            const diffG = Math.abs(data[idx + 1] - previousFrameRef.current[idx + 1]);
+            const diffB = Math.abs(data[idx + 2] - previousFrameRef.current[idx + 2]);
+            const diff = (diffR + diffG + diffB) / 3;
+
+            motion += diff;
             count++;
           }
         }
 
-        const avgBrightness = brightness / count;
-        if (avgBrightness > maxBrightness) {
-          maxBrightness = avgBrightness;
-          brightestX = startX + cellWidth / 2;
-          brightestY = startY + cellHeight / 2;
+        const avgMotion = motion / count;
+        if (avgMotion > maxMotion) {
+          maxMotion = avgMotion;
+          motionX = startX + cellWidth / 2;
+          motionY = startY + cellHeight / 2;
         }
       }
     }
 
-    return { x: brightestX, y: brightestY };
+    // Mettre à jour la frame précédente
+    for (let i = 0; i < data.length; i++) {
+      previousFrameRef.current[i] = data[i];
+    }
+
+    // Si pas assez de mouvement, garder la position actuelle
+    if (maxMotion < 5) {
+      return {
+        x: trackedPositionRef.current.x * width,
+        y: trackedPositionRef.current.y * height
+      };
+    }
+
+    return { x: motionX, y: motionY };
   };
 
   // Démarrer la webcam
@@ -290,13 +321,13 @@ export function ArucoARDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter la position toutes les 5 frames pour le tracking
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 5 === 0) {
+    // Détecter la position toutes les 3 frames pour le tracking
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 3 === 0) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const detected = detectBrightestRegion(imageData);
+      const detected = detectMotionRegion(imageData);
 
       // Lissage exponentiel de la position (smoothing)
-      const smoothing = 0.3;
+      const smoothing = 0.2;
       trackedPositionRef.current = {
         x: trackedPositionRef.current.x * (1 - smoothing) + (detected.x / canvas.width) * smoothing,
         y: trackedPositionRef.current.y * (1 - smoothing) + (detected.y / canvas.height) * smoothing,
