@@ -311,7 +311,7 @@ function MatrixRainEffect() {
     ctx.globalAlpha = 1;
   }, []);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 30 });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 45 });
 
   return (
     <div className="canvas-container">
@@ -1154,7 +1154,7 @@ function BoidsEffect() {
     });
   }, [getRandomShape]);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 30 });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 45 });
 
   return (
     <div className="canvas-container">
@@ -1514,7 +1514,7 @@ function NeuralNetworkEffect() {
     ctx.shadowBlur = 0;
   }, [createSignal]);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 30 });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 45 });
 
   return (
     <div className="canvas-container">
