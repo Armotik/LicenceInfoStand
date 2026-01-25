@@ -764,33 +764,29 @@ export function SortingVisualizer() {
 
       {/* Visualisation */}
       <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20 flex items-end justify-center gap-0.5 overflow-hidden h-[400px]">
-        <AnimatePresence mode="sync">
-          {bars.map((bar, idx) => {
-            const barColor =
-              bar.state === 'sorted' ? '#27AE60' :
-              bar.state === 'comparing' ? '#F39C12' :
-              bar.state === 'swapping' ? '#E74C3C' :
-              bar.state === 'pivot' ? '#9B59B6' :
-              algoInfo.color;
+        {bars.map((bar, idx) => {
+          const barColor =
+            bar.state === 'sorted' ? '#27AE60' :
+            bar.state === 'comparing' ? '#F39C12' :
+            bar.state === 'swapping' ? '#E74C3C' :
+            bar.state === 'pivot' ? '#9B59B6' :
+            algoInfo.color;
 
-            return (
-              <motion.div
-                key={idx}
-                layout
-                initial={{ height: 0 }}
-                animate={{
-                  height: `${(bar.value / 100) * 100}%`,
-                }}
-                style={{
-                  width: `${Math.max(100 / arraySize - 1, 2)}%`,
-                  backgroundColor: barColor,
-                  boxShadow: bar.state !== 'normal' ? `0 0 10px ${barColor}` : 'none',
-                }}
-                className="rounded-t transition-all duration-100"
-              />
-            );
-          })}
-        </AnimatePresence>
+          return (
+            <div
+              key={idx}
+              style={{
+                height: `${(bar.value / 100) * 100}%`,
+                width: `${Math.max(100 / arraySize - 1, 2)}%`,
+                backgroundColor: barColor,
+                boxShadow: bar.state !== 'normal' ? `0 0 10px ${barColor}` : 'none',
+                transition: 'height 0.1s ease-out, background-color 0.1s ease-out, box-shadow 0.1s ease-out',
+                willChange: 'height, background-color',
+              }}
+              className="rounded-t"
+            />
+          );
+        })}
       </div>
 
       {/* Contrôles inférieurs */}
