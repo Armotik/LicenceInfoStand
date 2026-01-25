@@ -119,13 +119,15 @@ export function MandelbrotVisualizer() {
     zoom: 1,
   });
 
-  // Points d'intérêt prédéfinis
+  // Points d'intérêt prédéfinis (coordonnées précises)
   const interestingPoints = [
     { name: 'Vue complète', centerX: -0.5, centerY: 0, zoom: 1 },
-    { name: 'Spirale', centerX: -0.743643887037151, centerY: 0.13182590420533, zoom: 100000 },
-    { name: 'Vallée des hippocampes', centerX: -0.749, centerY: 0.1, zoom: 10000 },
-    { name: 'Mini Mandelbrot', centerX: -0.16, centerY: 1.0405, zoom: 10000 },
-    { name: 'Dendrites', centerX: -0.1592, centerY: -1.0317, zoom: 10000 },
+    { name: 'Spirale', centerX: -0.7436, centerY: 0.1319, zoom: 200 },
+    { name: 'Vallée des hippocampes', centerX: -0.749, centerY: 0.1, zoom: 150 },
+    { name: 'Queue de cheval', centerX: -0.7453, centerY: 0.1127, zoom: 500 },
+    { name: 'Mini Mandelbrot', centerX: -0.16, centerY: 1.0405, zoom: 400 },
+    { name: 'Antenne', centerX: -1.25066, centerY: 0.02012, zoom: 300 },
+    { name: 'Dentelles', centerX: 0.3, centerY: -0.01, zoom: 80 },
   ];
 
   // Calculer Mandelbrot pour un point
