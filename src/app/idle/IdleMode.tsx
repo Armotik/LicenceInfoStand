@@ -72,17 +72,24 @@ function GlitchText({ text }: { text: string }) {
 
   return (
     <div className="relative">
-      {/* Texte principal avec gradient animé (CSS pour perfs) */}
-      <h1
+      {/* Texte principal avec gradient animé */}
+      <motion.h1
         ref={textRef}
-        className="text-6xl md:text-8xl font-display font-bold mb-4 gradient-text-idle"
+        className="text-6xl md:text-8xl font-display font-bold mb-4"
+        animate={{
+          backgroundPosition: ['0% 50%', '200% 50%'],
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          ease: "linear"
+        }}
         style={{
           background: 'linear-gradient(90deg, #ffffff, #5DADE2, #2980B9, #5DADE2, #ffffff)',
           backgroundSize: '200% auto',
           WebkitBackgroundClip: 'text',
           backgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
-          animation: 'gradient-shift 6s linear infinite',
         }}
       >
         {text.split('').map((char, index) => (
@@ -90,9 +97,9 @@ function GlitchText({ text }: { text: string }) {
             {char === ' ' ? '\u00A0' : char}
           </span>
         ))}
-      </h1>
+      </motion.h1>
 
-      {/* Effet glitch avec CSS au lieu de Framer Motion */}
+      {/* Effets glitch en superposition */}
       {isGlitching && glitchIndex >= 0 && charPositions[glitchIndex] && (
         <div
           className="absolute top-0 pointer-events-none"
@@ -100,36 +107,78 @@ function GlitchText({ text }: { text: string }) {
             left: charPositions[glitchIndex].left,
           }}
         >
-          <span
-            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold glitch-char"
+          {/* Clone rouge */}
+          <motion.span
+            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
             style={{
-              color: '#00ffff',
+              color: '#ff0066',
               mixBlendMode: 'screen',
-              animation: 'glitch-shake 0.3s linear 3',
+              filter: 'drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 25px #ff0066)',
+            }}
+            initial={{ opacity: 0, x: 0, y: 0 }}
+            animate={{
+              x: [-6, 6, -5, 5, -6, 4, -5, 3, -4, 2, -3, 0],
+              y: [0, -2, 2, -1, 1, -2, 1, -1, 2, -1, 1, 0],
+              opacity: [1, 0.8, 1, 0.7, 1, 0.8, 1, 0.7, 1, 0.8, 1, 1],
+            }}
+            transition={{
+              duration: 0.5,
+              repeat: 5,
+              ease: "linear",
             }}
           >
             {glitchChar}
-          </span>
+          </motion.span>
+
+          {/* Clone cyan */}
+          <motion.span
+            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
+            style={{
+              color: '#00ffff',
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 15px #00ffff) drop-shadow(0 0 25px #00ffff)',
+            }}
+            initial={{ opacity: 0, x: 0, y: 0 }}
+            animate={{
+              x: [6, -6, 5, -5, 6, -4, 5, -3, 4, -2, 3, 0],
+              y: [0, 2, -2, 1, -1, 2, -1, 1, -2, 1, -1, 0],
+              opacity: [1, 0.8, 1, 0.7, 1, 0.8, 1, 0.7, 1, 0.8, 1, 1],
+            }}
+            transition={{
+              duration: 0.5,
+              repeat: 5,
+              ease: "linear",
+              delay: 0.05,
+            }}
+          >
+            {glitchChar}
+          </motion.span>
+
+          {/* Clone jaune */}
+          <motion.span
+            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
+            style={{
+              color: '#ffff00',
+              mixBlendMode: 'screen',
+              filter: 'drop-shadow(0 0 12px #ffff00) drop-shadow(0 0 20px #ffff00)',
+            }}
+            initial={{ opacity: 0, x: 0, y: 0 }}
+            animate={{
+              x: [0, 4, -4, 3, -3, 4, -3, 2, -2, 3, -1, 0],
+              y: [3, -3, 2, -2, 1, -1, 2, -2, 1, -1, 1, 0],
+              opacity: [0.9, 0.7, 1, 0.6, 0.9, 0.7, 1, 0.6, 0.9, 0.7, 1, 0.9],
+            }}
+            transition={{
+              duration: 0.5,
+              repeat: 5,
+              ease: "linear",
+              delay: 0.025,
+            }}
+          >
+            {glitchChar}
+          </motion.span>
         </div>
       )}
-
-      <style>{`
-        @keyframes gradient-shift {
-          0% { background-position: 0% 50%; }
-          100% { background-position: 200% 50%; }
-        }
-        @keyframes glitch-shake {
-          0%, 100% { transform: translateX(0); opacity: 1; }
-          20% { transform: translateX(-4px); opacity: 0.7; }
-          40% { transform: translateX(4px); opacity: 1; }
-          60% { transform: translateX(-3px); opacity: 0.7; }
-          80% { transform: translateX(3px); opacity: 1; }
-        }
-        @keyframes pulse-opacity {
-          0%, 100% { opacity: 0.7; }
-          50% { opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -187,12 +236,13 @@ export function IdleMode() {
                                 <div className="relative inline-block">
                                     <GlitchText text="Licence Informatique" />
                                 </div>
-                                <p
+                                <motion.p
                                     className="text-2xl md:text-3xl text-primary-light font-light"
-                                    style={{ animation: 'pulse-opacity 3s ease-in-out infinite' }}
+                                    animate={{ opacity: [0.7, 1, 0.7] }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                                 >
                                     La Rochelle Université
-                                </p>
+                                </motion.p>
                             </div>
                         </motion.div>
 
@@ -260,39 +310,48 @@ function MatrixRainEffect() {
     const fontSize = 16;
 
     // Fond semi-transparent pour l'effet de traînée
-    ctx.fillStyle = 'rgba(10, 22, 40, 0.1)';
+    ctx.fillStyle = 'rgba(10, 22, 40, 0.05)';
     ctx.fillRect(0, 0, width, height);
 
     // Dessiner les colonnes
     ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
 
     columnsRef.current.forEach((col) => {
-      // Utiliser une couleur simple au lieu de gradient (plus rapide)
-      ctx.fillStyle = `rgba(0, 255, 180, ${col.opacity * 0.6})`;
+      // Couleur dégradée du haut vers le bas - plus vibrant
+      const gradient = ctx.createLinearGradient(col.x, col.y - fontSize * 20, col.x, col.y);
+      gradient.addColorStop(0, 'rgba(0, 255, 150, 0)');
+      gradient.addColorStop(0.5, `rgba(0, 255, 180, ${col.opacity * 0.4})`);
+      gradient.addColorStop(0.8, `rgba(0, 255, 200, ${col.opacity * 0.7})`);
+      gradient.addColorStop(1, `rgba(50, 255, 150, ${col.opacity})`);
 
-      // Dessiner moins de caractères par colonne (12 au lieu de 20)
-      for (let i = 0; i < 12; i++) {
+      ctx.fillStyle = gradient;
+
+      // Dessiner les caractères de la colonne
+      for (let i = 0; i < 20; i++) {
         const charY = col.y - i * fontSize;
         if (charY > 0 && charY < height) {
           const charIndex = Math.floor((col.y / fontSize + i) % col.chars.length);
-          ctx.globalAlpha = Math.max(0, 1 - i / 12) * col.opacity;
+          ctx.globalAlpha = Math.max(0, 1 - i / 20) * col.opacity;
           ctx.fillText(col.chars[charIndex], col.x, charY);
         }
       }
 
-      // Caractère de tête plus lumineux sans glow (glow est coûteux)
+      // Caractère de tête plus lumineux avec glow
       ctx.globalAlpha = 1;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#00ff88';
       ctx.fillStyle = '#FFFFFF';
       ctx.fillText(col.chars[Math.floor(col.y / fontSize) % col.chars.length], col.x, col.y);
+      ctx.shadowBlur = 0;
 
       // Mouvement
       col.y += col.speed;
-      if (col.y > height + fontSize * 12) {
+      if (col.y > height + fontSize * 20) {
         col.y = 0;
         col.speed = 2 + Math.random() * 4;
         // Changer quelques caractères
-        col.chars = col.chars.map(() =>
-          Math.random() > 0.7
+        col.chars = col.chars.map(() => 
+          Math.random() > 0.7 
             ? charSetRef.current[Math.floor(Math.random() * charSetRef.current.length)]
             : col.chars[Math.floor(Math.random() * col.chars.length)]
         );
@@ -302,7 +361,7 @@ function MatrixRainEffect() {
     ctx.globalAlpha = 1;
   }, []);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 24 });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 60 });
 
   return (
     <div className="canvas-container">
@@ -338,7 +397,7 @@ function BoidsEffect() {
   const phaseTimerRef = { current: 0 };
   const centerPointRef = { current: { x: 0, y: 0 } };
 
-  const BOID_COUNT = 70; // Réduit de 150 à 70 pour meilleures perfs
+  const BOID_COUNT = 150;
   const MAX_SPEED = 2.5;
   const MAX_FORCE = 0.05;
   const PERCEPTION_RADIUS = 50;
@@ -1112,13 +1171,22 @@ function BoidsEffect() {
       if (boid.y < 0) boid.y = height;
       if (boid.y > height) boid.y = 0;
 
-      // Dessiner le boid - version simplifiée sans glow/gradient
+      // Dessiner le boid
       ctx.save();
       ctx.translate(boid.x, boid.y);
       ctx.rotate(boid.angle);
 
-      // Triangle simple avec couleur unie (plus rapide)
-      ctx.fillStyle = 'rgba(0, 220, 255, 0.8)';
+      // Glow effect
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#00d4ff';
+
+      // Triangle avec dégradé plus vibrant
+      const gradient = ctx.createLinearGradient(-8, 0, 8, 0);
+      gradient.addColorStop(0, 'rgba(0, 150, 255, 0.4)');
+      gradient.addColorStop(0.5, 'rgba(0, 212, 255, 0.8)');
+      gradient.addColorStop(1, 'rgba(100, 230, 255, 1)');
+
+      ctx.fillStyle = gradient;
       ctx.beginPath();
       ctx.moveTo(10, 0);
       ctx.lineTo(-5, 5);
@@ -1126,16 +1194,17 @@ function BoidsEffect() {
       ctx.closePath();
       ctx.fill();
 
-      // Contour simple
-      ctx.strokeStyle = 'rgba(150, 240, 255, 0.6)';
-      ctx.lineWidth = 1;
+      // Contour lumineux plus visible
+      ctx.strokeStyle = 'rgba(150, 240, 255, 0.9)';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
 
+      ctx.shadowBlur = 0;
       ctx.restore();
     });
   }, [getRandomShape]);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 24 });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 60 });
 
   return (
     <div className="canvas-container">
@@ -1173,16 +1242,16 @@ function NeuralNetworkEffect() {
   const signalsRef = { current: [] as Signal[] };
   const frameCountRef = { current: 0 };
 
-  // Architecture réduite pour meilleures performances
-  const LAYERS = [6, 10, 14, 14, 10, 6]; // Architecture réduite
-  const LAYER_SPACING_RATIO = 0.14; // Augmenté pour compenser moins de couches
+  // Architecture d'un DNN réaliste avec plus de couches
+  const LAYERS = [8, 16, 24, 32, 32, 24, 16, 8]; // Architecture profonde typique d'un DNN
+  const LAYER_SPACING_RATIO = 0.105; // Augmenté pour utiliser plus de largeur d'écran
   const NEURON_MIN_RADIUS = 3;
-  const NEURON_MAX_RADIUS = 5;
-  const CONNECTION_CHANCE = 0.5; // Moins de connexions pour meilleures perfs
-  const SIGNAL_FREQUENCY = 5; // Moins de signaux
+  const NEURON_MAX_RADIUS = 6;
+  const CONNECTION_CHANCE = 0.7; // Plus de connexions comme dans un vrai DNN
+  const SIGNAL_FREQUENCY = 3; // Légèrement plus de signaux
   const ACTIVATION_SPEED = 0.08;
-  const PROPAGATION_CHANCE = 0.5; // Moins de propagation
-  const MAX_SIGNALS = 40; // Réduit pour meilleures perfs
+  const PROPAGATION_CHANCE = 0.7; // Plus de propagation
+  const MAX_SIGNALS = 80; // Augmenté pour une meilleure visualisation
 
   const initNetwork = useCallback((width: number, height: number) => {
     neuronsRef.current = [];
@@ -1299,14 +1368,18 @@ function NeuralNetworkEffect() {
       neuron.connections.forEach(targetIndex => {
         const target = neuronsRef.current[targetIndex];
         if (target) {
-          // Couleur simple selon le type de connexion
+          // Calculer l'opacité basée sur l'activation des neurones
           const avgActivation = (neuron.activation + target.activation) / 2;
-          const opacity = 0.1 + avgActivation * 0.2;
+          const baseOpacity = 0.08; // Opacité de base pour voir toutes les connexions
+          const activeOpacity = avgActivation * 0.25; // Augmentation lors de l'activation
 
+          // Utiliser des couleurs différentes selon le type de connexion - plus vibrant
           if (neuron.isExcitatory) {
-            ctx.strokeStyle = `rgba(0, 200, 255, ${opacity})`;
+            // Cyan/Bleu pour les connexions excitatrices
+            ctx.strokeStyle = `rgba(0, 200, 255, ${baseOpacity + activeOpacity * 1.5})`;
           } else {
-            ctx.strokeStyle = `rgba(255, 80, 150, ${opacity})`;
+            // Magenta/Rose pour les connexions inhibitrices
+            ctx.strokeStyle = `rgba(255, 50, 150, ${baseOpacity + activeOpacity * 1.5})`;
           }
 
           ctx.beginPath();
@@ -1317,7 +1390,8 @@ function NeuralNetworkEffect() {
       });
     });
 
-    // Mettre à jour et dessiner les signaux - version simplifiée
+    // Mettre à jour et dessiner les signaux
+    ctx.shadowBlur = 10;
     const newSignals: Signal[] = [];
 
     signalsRef.current = signalsRef.current.filter(signal => {
@@ -1331,15 +1405,27 @@ function NeuralNetworkEffect() {
           const x = from.x + (to.x - from.x) * signal.progress;
           const y = from.y + (to.y - from.y) * signal.progress;
 
-          // Dessiner le signal simple sans gradient ni glow (plus rapide)
+          // Dessiner le signal avec couleur selon le type - plus vibrant
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, 8);
           if (signal.isExcitatory) {
-            ctx.fillStyle = `rgba(0, 220, 255, ${signal.strength})`;
+            // Cyan brillant pour les signaux excitateurs
+            gradient.addColorStop(0, `rgba(150, 255, 255, ${signal.strength})`);
+            gradient.addColorStop(0.4, `rgba(0, 220, 255, ${signal.strength * 0.7})`);
+            gradient.addColorStop(1, 'rgba(0, 180, 255, 0)');
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 15;
           } else {
-            ctx.fillStyle = `rgba(255, 80, 180, ${signal.strength})`;
+            // Magenta brillant pour les signaux inhibiteurs
+            gradient.addColorStop(0, `rgba(255, 150, 220, ${signal.strength})`);
+            gradient.addColorStop(0.4, `rgba(255, 50, 150, ${signal.strength * 0.7})`);
+            gradient.addColorStop(1, 'rgba(255, 0, 100, 0)');
+            ctx.shadowColor = '#ff00aa';
+            ctx.shadowBlur = 15;
           }
 
+          ctx.fillStyle = gradient;
           ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.arc(x, y, 5, 0, Math.PI * 2);
           ctx.fill();
         }
 
@@ -1383,7 +1469,9 @@ function NeuralNetworkEffect() {
     // Ajouter les nouveaux signaux
     signalsRef.current.push(...newSignals);
 
-    // Mettre à jour et dessiner les neurones - version simplifiée
+    ctx.shadowBlur = 0;
+
+    // Mettre à jour et dessiner les neurones
     neuronsRef.current.forEach((neuron) => {
       // Smooth activation transition
       if (Math.abs(neuron.activation - neuron.targetActivation) > 0.01) {
@@ -1399,45 +1487,84 @@ function NeuralNetworkEffect() {
         neuron.targetActivation = Math.max(0, neuron.targetActivation - 0.01);
       }
 
-      // Dessiner simplement sans glow ni gradient (plus rapide)
-      const baseColor = neuron.isExcitatory ? '0, 200, 255' : '255, 80, 180';
-      const opacity = neuron.activation > 0.7 ? 0.9 : (0.3 + neuron.activation * 0.4);
+      // Dessiner seulement si visible
+      if (neuron.activation < 0.05) {
+        // Neurone inactif - rendu simplifié mais visible
+        ctx.fillStyle = 'rgba(0, 180, 255, 0.3)';
+        ctx.beginPath();
+        ctx.arc(neuron.x, neuron.y, neuron.radius, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
 
-      ctx.fillStyle = `rgba(${baseColor}, ${opacity})`;
+      // Cercle extérieur (glow) - seulement si activation significative
+      if (neuron.activation > 0.3) {
+        const glowGradient = ctx.createRadialGradient(
+          neuron.x, neuron.y, 0,
+          neuron.x, neuron.y, neuron.radius * 2.5
+        );
+        const glowColor = neuron.isExcitatory ? '0, 220, 255' : '255, 50, 180';
+        glowGradient.addColorStop(0, `rgba(${glowColor}, ${neuron.activation * 0.6})`);
+        glowGradient.addColorStop(0.5, `rgba(${glowColor}, ${neuron.activation * 0.3})`);
+        glowGradient.addColorStop(1, `rgba(${glowColor}, 0)`);
+
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(neuron.x, neuron.y, neuron.radius * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Cercle principal
+      if (neuron.activation > 0.7) {
+        // Neurone très actif - blanc brillant
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = neuron.isExcitatory ? '#00ffff' : '#ff00aa';
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.8 + neuron.activation * 0.2})`;
+      } else {
+        // Neurone modérément actif - couleur vive
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = neuron.isExcitatory ? '#00d4ff' : '#ff0088';
+        const baseColor = neuron.isExcitatory ? '0, 200, 255' : '255, 80, 180';
+        ctx.fillStyle = `rgba(${baseColor}, ${0.4 + neuron.activation * 0.6})`;
+      }
+
       ctx.beginPath();
       ctx.arc(neuron.x, neuron.y, neuron.radius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Contour simple
-      if (neuron.activation > 0.3) {
-        ctx.strokeStyle = neuron.isExcitatory
-          ? `rgba(100, 240, 255, ${opacity})`
-          : `rgba(255, 150, 220, ${opacity})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
+      // Contour brillant
+      ctx.strokeStyle = neuron.isExcitatory 
+        ? `rgba(100, 240, 255, ${0.5 + neuron.activation * 0.5})` 
+        : `rgba(255, 150, 220, ${0.5 + neuron.activation * 0.5})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
     });
 
-    // Afficher les labels des couches en bas - version simplifiée
+    // Afficher les labels des couches en bas - sur un fond opaque pour éviter les traînées
     const layerSpacing = width * LAYER_SPACING_RATIO;
     const startX = (width - (LAYERS.length - 1) * layerSpacing) / 2;
-    const labels = ['Input', 'L1', 'L2', 'L3', 'L4', 'Output'];
-
+    const labels = ['Input', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'Output'];
+    
     // Effacer complètement la zone des labels
     ctx.fillStyle = 'rgb(10, 22, 40)';
     ctx.fillRect(0, height - 45, width, 45);
-
+    
     ctx.font = '12px "Inter", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(100, 220, 255, 0.7)';
 
     labels.forEach((label, index) => {
       const x = startX + index * layerSpacing;
+      // Glow effect pour les labels
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#00d4ff';
+      ctx.fillStyle = 'rgba(100, 220, 255, 0.8)';
       ctx.fillText(label, x, height - 20);
     });
+    ctx.shadowBlur = 0;
   }, [createSignal]);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 24 });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 60 });
 
   return (
     <div className="canvas-container">
