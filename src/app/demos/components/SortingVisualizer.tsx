@@ -763,7 +763,7 @@ export function SortingVisualizer() {
       </div>
 
       {/* Visualisation */}
-      <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20 flex items-end justify-center gap-0.5 overflow-hidden min-h-[400px]">
+      <div className="bg-surface-light rounded-xl p-4 border border-primary-light/20 flex items-end justify-center gap-0.5 overflow-hidden h-[400px]">
         <AnimatePresence mode="sync">
           {bars.map((bar, idx) => {
             const barColor =
