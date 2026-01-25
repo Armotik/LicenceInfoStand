@@ -57,9 +57,9 @@ export function ArucoARDemo({ onBack }: Props) {
       return { x: width / 2, y: height / 2 };
     }
 
-    // Diviser l'image en grille 6x6
-    const gridCols = 6;
-    const gridRows = 6;
+    // Diviser l'image en grille 4x4 (réduit de 6x6 pour perfs)
+    const gridCols = 4;
+    const gridRows = 4;
     const cellWidth = width / gridCols;
     const cellHeight = height / gridRows;
 
@@ -78,9 +78,9 @@ export function ArucoARDemo({ onBack }: Props) {
         const endX = Math.floor((col + 1) * cellWidth);
         const endY = Math.floor((row + 1) * cellHeight);
 
-        // Échantillonner la cellule
-        for (let y = startY; y < endY; y += 3) {
-          for (let x = startX; x < endX; x += 3) {
+        // Échantillonner moins densément (tous les 8 pixels au lieu de 3)
+        for (let y = startY; y < endY; y += 8) {
+          for (let x = startX; x < endX; x += 8) {
             const idx = (y * width + x) * 4;
 
             // Calculer la différence avec la frame précédente
@@ -103,9 +103,11 @@ export function ArucoARDemo({ onBack }: Props) {
       }
     }
 
-    // Mettre à jour la frame précédente
-    for (let i = 0; i < data.length; i++) {
-      previousFrameRef.current[i] = data[i];
+    // Mettre à jour la frame précédente moins souvent (tous les 2 appels)
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 6 === 0) {
+      for (let i = 0; i < data.length; i++) {
+        previousFrameRef.current[i] = data[i];
+      }
     }
 
     // Si pas assez de mouvement, garder la position actuelle
@@ -321,8 +323,8 @@ export function ArucoARDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter la position toutes les 3 frames pour le tracking
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 3 === 0) {
+    // Détecter la position toutes les 10 frames pour le tracking (optimisé)
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 10 === 0) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const detected = detectMotionRegion(imageData);
 
