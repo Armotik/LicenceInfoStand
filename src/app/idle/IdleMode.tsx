@@ -72,24 +72,17 @@ function GlitchText({ text }: { text: string }) {
 
   return (
     <div className="relative">
-      {/* Texte principal avec gradient animé */}
-      <motion.h1
+      {/* Texte principal avec gradient animé (CSS pour perfs) */}
+      <h1
         ref={textRef}
-        className="text-6xl md:text-8xl font-display font-bold mb-4"
-        animate={{
-          backgroundPosition: ['0% 50%', '200% 50%'],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "linear"
-        }}
+        className="text-6xl md:text-8xl font-display font-bold mb-4 gradient-text-idle"
         style={{
           background: 'linear-gradient(90deg, #ffffff, #5DADE2, #2980B9, #5DADE2, #ffffff)',
           backgroundSize: '200% auto',
           WebkitBackgroundClip: 'text',
           backgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
+          animation: 'gradient-shift 6s linear infinite',
         }}
       >
         {text.split('').map((char, index) => (
@@ -97,9 +90,9 @@ function GlitchText({ text }: { text: string }) {
             {char === ' ' ? '\u00A0' : char}
           </span>
         ))}
-      </motion.h1>
+      </h1>
 
-      {/* Effets glitch en superposition */}
+      {/* Effet glitch simplifié - UN seul clone au lieu de 3 */}
       {isGlitching && glitchIndex >= 0 && charPositions[glitchIndex] && (
         <div
           className="absolute top-0 pointer-events-none"
@@ -107,78 +100,35 @@ function GlitchText({ text }: { text: string }) {
             left: charPositions[glitchIndex].left,
           }}
         >
-          {/* Clone rouge */}
-          <motion.span
-            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
-            style={{
-              color: '#ff0066',
-              mixBlendMode: 'screen',
-              filter: 'drop-shadow(0 0 15px #ff0066) drop-shadow(0 0 25px #ff0066)',
-            }}
-            initial={{ opacity: 0, x: 0, y: 0 }}
-            animate={{
-              x: [-6, 6, -5, 5, -6, 4, -5, 3, -4, 2, -3, 0],
-              y: [0, -2, 2, -1, 1, -2, 1, -1, 2, -1, 1, 0],
-              opacity: [1, 0.8, 1, 0.7, 1, 0.8, 1, 0.7, 1, 0.8, 1, 1],
-            }}
-            transition={{
-              duration: 0.5,
-              repeat: 5,
-              ease: "linear",
-            }}
-          >
-            {glitchChar}
-          </motion.span>
-
-          {/* Clone cyan */}
           <motion.span
             className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
             style={{
               color: '#00ffff',
               mixBlendMode: 'screen',
-              filter: 'drop-shadow(0 0 15px #00ffff) drop-shadow(0 0 25px #00ffff)',
+              filter: 'drop-shadow(0 0 10px #00ffff)',
             }}
-            initial={{ opacity: 0, x: 0, y: 0 }}
+            initial={{ opacity: 0, x: 0 }}
             animate={{
-              x: [6, -6, 5, -5, 6, -4, 5, -3, 4, -2, 3, 0],
-              y: [0, 2, -2, 1, -1, 2, -1, 1, -2, 1, -1, 0],
-              opacity: [1, 0.8, 1, 0.7, 1, 0.8, 1, 0.7, 1, 0.8, 1, 1],
+              x: [-4, 4, -3, 3, 0],
+              opacity: [1, 0.7, 1, 0.7, 1],
             }}
             transition={{
-              duration: 0.5,
-              repeat: 5,
+              duration: 0.3,
+              repeat: 3,
               ease: "linear",
-              delay: 0.05,
-            }}
-          >
-            {glitchChar}
-          </motion.span>
-
-          {/* Clone jaune */}
-          <motion.span
-            className="absolute top-0 left-0 text-6xl md:text-8xl font-display font-bold"
-            style={{
-              color: '#ffff00',
-              mixBlendMode: 'screen',
-              filter: 'drop-shadow(0 0 12px #ffff00) drop-shadow(0 0 20px #ffff00)',
-            }}
-            initial={{ opacity: 0, x: 0, y: 0 }}
-            animate={{
-              x: [0, 4, -4, 3, -3, 4, -3, 2, -2, 3, -1, 0],
-              y: [3, -3, 2, -2, 1, -1, 2, -2, 1, -1, 1, 0],
-              opacity: [0.9, 0.7, 1, 0.6, 0.9, 0.7, 1, 0.6, 0.9, 0.7, 1, 0.9],
-            }}
-            transition={{
-              duration: 0.5,
-              repeat: 5,
-              ease: "linear",
-              delay: 0.025,
             }}
           >
             {glitchChar}
           </motion.span>
         </div>
       )}
+
+      <style>{`
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -361,7 +311,7 @@ function MatrixRainEffect() {
     ctx.globalAlpha = 1;
   }, []);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 30 });
 
   return (
     <div className="canvas-container">
@@ -1204,7 +1154,7 @@ function BoidsEffect() {
     });
   }, [getRandomShape]);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 30 });
 
   return (
     <div className="canvas-container">
@@ -1564,7 +1514,7 @@ function NeuralNetworkEffect() {
     ctx.shadowBlur = 0;
   }, [createSignal]);
 
-  const { canvasRef } = useCanvas({ onDraw, onSetup });
+  const { canvasRef } = useCanvas({ onDraw, onSetup, fps: 30 });
 
   return (
     <div className="canvas-container">
