@@ -102,15 +102,31 @@ export function ArucoARDemo({ onBack }: Props) {
       try {
         const cv = window.cv;
 
-        // Créer le dictionnaire ArUco 4x4_100
-        dictionaryRef.current = new cv.aruco_Dictionary(cv.DICT_4X4_100);
+        // Vérifier si le module ArUco est disponible
+        console.log('Checking ArUco availability...');
+        console.log('cv.aruco exists:', typeof cv.aruco !== 'undefined');
+        console.log('cv.aruco_Dictionary exists:', typeof cv.aruco_Dictionary !== 'undefined');
+        console.log('cv.DICT_4X4_100 exists:', typeof cv.DICT_4X4_100 !== 'undefined');
+
+        // Essayer différentes syntaxes pour créer le dictionnaire
+        if (cv.aruco && cv.aruco.Dictionary) {
+          // Nouvelle syntaxe
+          console.log('Using cv.aruco.Dictionary');
+          dictionaryRef.current = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_100);
+        } else if (cv.aruco_Dictionary) {
+          // Ancienne syntaxe
+          console.log('Using cv.aruco_Dictionary');
+          dictionaryRef.current = new cv.aruco_Dictionary(cv.DICT_4X4_100);
+        } else {
+          throw new Error('ArUco module not available in this OpenCV.js build');
+        }
 
         console.log('ArUco detector initialized successfully');
         setIsOpenCVReady(true);
         setIsOpenCVLoading(false);
       } catch (err) {
         console.error('Failed to initialize ArUco detector:', err);
-        setError('Impossible d\'initialiser le détecteur ArUco.');
+        setError('Le module ArUco n\'est pas disponible dans cette version d\'OpenCV.js. Veuillez utiliser une version personnalisée incluant ArUco.');
         setIsOpenCVLoading(false);
       }
     };
