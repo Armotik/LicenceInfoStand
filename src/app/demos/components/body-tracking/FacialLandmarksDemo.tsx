@@ -164,6 +164,91 @@ export function FacialLandmarksDemo({ onBack }: Props) {
   const animatedLandmarksRef = useRef<Point[]>([]);
   const landmarksInitializedRef = useRef(false);
 
+  // Détection de caractéristiques du visage
+  const faceFeatureOffsetsRef = useRef<{
+    leftEye: { x: number; y: number };
+    rightEye: { x: number; y: number };
+    mouth: { x: number; y: number };
+    nose: { x: number; y: number };
+  }>({
+    leftEye: { x: 0, y: 0 },
+    rightEye: { x: 0, y: 0 },
+    mouth: { x: 0, y: 0 },
+    nose: { x: 0, y: 0 },
+  });
+
+  // Fonction pour détecter les caractéristiques du visage (yeux, bouche, nez)
+  const detectFaceFeatures = (imageData: ImageData, centerX: number, centerY: number, radius: number) => {
+    const width = imageData.width;
+    const height = imageData.height;
+    const data = imageData.data;
+
+    // Régions d'intérêt relatives au centre détecté
+    const regions = {
+      leftEye: { x: centerX - radius * 0.35, y: centerY - radius * 0.25, w: radius * 0.3, h: radius * 0.15 },
+      rightEye: { x: centerX + radius * 0.05, y: centerY - radius * 0.25, w: radius * 0.3, h: radius * 0.15 },
+      mouth: { x: centerX - radius * 0.25, y: centerY + radius * 0.35, w: radius * 0.5, h: radius * 0.2 },
+      nose: { x: centerX - radius * 0.1, y: centerY, w: radius * 0.2, h: radius * 0.3 },
+    };
+
+    // Pour chaque région, trouver le point le plus sombre (yeux, bouche)
+    const findDarkestPoint = (region: { x: number; y: number; w: number; h: number }) => {
+      let minBrightness = 255;
+      let darkX = region.x + region.w / 2;
+      let darkY = region.y + region.h / 2;
+
+      const startX = Math.max(0, Math.floor(region.x));
+      const startY = Math.max(0, Math.floor(region.y));
+      const endX = Math.min(width, Math.floor(region.x + region.w));
+      const endY = Math.min(height, Math.floor(region.y + region.h));
+
+      // Échantillonner tous les 4 pixels
+      for (let y = startY; y < endY; y += 4) {
+        for (let x = startX; x < endX; x += 4) {
+          const idx = (y * width + x) * 4;
+          const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+
+          if (brightness < minBrightness) {
+            minBrightness = brightness;
+            darkX = x;
+            darkY = y;
+          }
+        }
+      }
+
+      return { x: darkX - centerX, y: darkY - centerY };
+    };
+
+    // Détecter les caractéristiques
+    const features = {
+      leftEye: findDarkestPoint(regions.leftEye),
+      rightEye: findDarkestPoint(regions.rightEye),
+      mouth: findDarkestPoint(regions.mouth),
+      nose: findDarkestPoint(regions.nose),
+    };
+
+    // Lisser les offsets avec les valeurs précédentes
+    const featureSmoothing = 0.15;
+    faceFeatureOffsetsRef.current = {
+      leftEye: {
+        x: faceFeatureOffsetsRef.current.leftEye.x * (1 - featureSmoothing) + features.leftEye.x * featureSmoothing,
+        y: faceFeatureOffsetsRef.current.leftEye.y * (1 - featureSmoothing) + features.leftEye.y * featureSmoothing,
+      },
+      rightEye: {
+        x: faceFeatureOffsetsRef.current.rightEye.x * (1 - featureSmoothing) + features.rightEye.x * featureSmoothing,
+        y: faceFeatureOffsetsRef.current.rightEye.y * (1 - featureSmoothing) + features.rightEye.y * featureSmoothing,
+      },
+      mouth: {
+        x: faceFeatureOffsetsRef.current.mouth.x * (1 - featureSmoothing) + features.mouth.x * featureSmoothing,
+        y: faceFeatureOffsetsRef.current.mouth.y * (1 - featureSmoothing) + features.mouth.y * featureSmoothing,
+      },
+      nose: {
+        x: faceFeatureOffsetsRef.current.nose.x * (1 - featureSmoothing) + features.nose.x * featureSmoothing,
+        y: faceFeatureOffsetsRef.current.nose.y * (1 - featureSmoothing) + features.nose.y * featureSmoothing,
+      },
+    };
+  };
+
   // Fonction pour détecter la zone avec le plus de mouvement (approximation du visage)
   const detectMotionRegion = (imageData: ImageData): { x: number; y: number } => {
     const width = imageData.width;
@@ -225,15 +310,15 @@ export function FacialLandmarksDemo({ onBack }: Props) {
       }
     }
 
-    // Mettre à jour la frame précédente régulièrement
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 3 === 0) {
+    // Mettre à jour la frame précédente moins souvent pour réduire la sensibilité
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
       for (let i = 0; i < data.length; i++) {
         previousFrameRef.current[i] = data[i];
       }
     }
 
-    // Si pas assez de mouvement, garder la position actuelle
-    if (maxMotion < 5) {
+    // Si pas assez de mouvement, garder la position actuelle (seuil augmenté)
+    if (maxMotion < 10) {
       return {
         x: trackedPositionRef.current.x * width,
         y: trackedPositionRef.current.y * height
@@ -296,9 +381,15 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
-    // Réinitialiser l'animation des landmarks
+    // Réinitialiser l'animation des landmarks et les détections
     landmarksInitializedRef.current = false;
     animatedLandmarksRef.current = [];
+    faceFeatureOffsetsRef.current = {
+      leftEye: { x: 0, y: 0 },
+      rightEye: { x: 0, y: 0 },
+      mouth: { x: 0, y: 0 },
+      nose: { x: 0, y: 0 },
+    };
   };
 
   // Dessiner la frame
@@ -313,17 +404,27 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter la position toutes les 5 frames (bon compromis)
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 5 === 0) {
+    // Détecter la position toutes les 8 frames pour réduire la sensibilité
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const detected = detectMotionRegion(imageData);
 
-      // Lissage exponentiel de la position (smoothing)
-      const smoothing = 0.2;
+      // Lissage exponentiel de la position (smoothing plus fort = moins sensible)
+      const smoothing = 0.1;
       trackedPositionRef.current = {
         x: trackedPositionRef.current.x * (1 - smoothing) + (detected.x / canvas.width) * smoothing,
         y: trackedPositionRef.current.y * (1 - smoothing) + (detected.y / canvas.height) * smoothing,
       };
+    }
+
+    // Détecter les caractéristiques du visage toutes les 12 frames
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 12 === 0) {
+      const centerX = trackedPositionRef.current.x * canvas.width;
+      const centerY = trackedPositionRef.current.y * canvas.height;
+      const headRadius = Math.min(canvas.width, canvas.height) * 0.25;
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      detectFaceFeatures(imageData, centerX, centerY, headRadius);
     }
 
     // Ajouter un overlay semi-transparent pour indiquer que c'est une démo
@@ -351,7 +452,7 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     }
 
     // Animer les landmarks vers leurs positions cibles
-    const animationSpeed = 0.08; // Vitesse d'animation (0.08 = assez lent pour être visible)
+    const animationSpeed = 0.06; // Vitesse réduite pour plus de stabilité
     animatedLandmarksRef.current = animatedLandmarksRef.current.map((current, i) => {
       const target = faceLandmarks[i];
       return {
@@ -360,11 +461,37 @@ export function FacialLandmarksDemo({ onBack }: Props) {
       };
     });
 
-    // Convertir les landmarks animés en coordonnées canvas (centrés sur la tête)
-    const points = animatedLandmarksRef.current.map(p => ({
-      x: centerX + (p.x - 0.5) * headRadius * 2,
-      y: centerY + (p.y - 0.5) * headRadius * 2,
-    }));
+    // Convertir les landmarks animés en coordonnées canvas avec ajustements basés sur détection
+    const points = animatedLandmarksRef.current.map((p, i) => {
+      let offsetX = 0;
+      let offsetY = 0;
+
+      // Appliquer les offsets détectés pour les yeux (indices 23-30)
+      if (i >= 23 && i < 27) {
+        // Œil gauche
+        offsetX = faceFeatureOffsetsRef.current.leftEye.x * 0.6;
+        offsetY = faceFeatureOffsetsRef.current.leftEye.y * 0.6;
+      } else if (i >= 27 && i < 31) {
+        // Œil droit
+        offsetX = faceFeatureOffsetsRef.current.rightEye.x * 0.6;
+        offsetY = faceFeatureOffsetsRef.current.rightEye.y * 0.6;
+      }
+      // Appliquer les offsets pour le nez (indices 31-39)
+      else if (i >= 31 && i < 39) {
+        offsetX = faceFeatureOffsetsRef.current.nose.x * 0.5;
+        offsetY = faceFeatureOffsetsRef.current.nose.y * 0.5;
+      }
+      // Appliquer les offsets pour la bouche (indices 39-58)
+      else if (i >= 39 && i < 59) {
+        offsetX = faceFeatureOffsetsRef.current.mouth.x * 0.7;
+        offsetY = faceFeatureOffsetsRef.current.mouth.y * 0.7;
+      }
+
+      return {
+        x: centerX + (p.x - 0.5) * headRadius * 2 + offsetX,
+        y: centerY + (p.y - 0.5) * headRadius * 2 + offsetY,
+      };
+    });
 
     // Triangulation de Delaunay
     let triangles: Triangle[] = [];

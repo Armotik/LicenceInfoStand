@@ -103,15 +103,15 @@ export function FaceDetectionDemo({ onBack }: Props) {
       }
     }
 
-    // Mettre à jour la frame précédente régulièrement
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 3 === 0) {
+    // Mettre à jour la frame précédente moins souvent pour réduire la sensibilité
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
       for (let i = 0; i < data.length; i++) {
         previousFrameRef.current[i] = data[i];
       }
     }
 
-    // Si pas assez de mouvement, garder la position actuelle
-    if (maxMotion < 5) {
+    // Si pas assez de mouvement, garder la position actuelle (seuil augmenté)
+    if (maxMotion < 10) {
       return {
         x: trackedPositionRef.current.x * width,
         y: trackedPositionRef.current.y * height
@@ -205,13 +205,13 @@ export function FaceDetectionDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter la position toutes les 5 frames (bon compromis)
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 5 === 0) {
+    // Détecter la position toutes les 8 frames pour réduire la sensibilité
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const detected = detectMotionRegion(imageData);
 
-      // Lissage exponentiel de la position (smoothing)
-      const smoothing = 0.2;
+      // Lissage exponentiel de la position (smoothing plus fort = moins sensible)
+      const smoothing = 0.1;
       trackedPositionRef.current = {
         x: trackedPositionRef.current.x * (1 - smoothing) + (detected.x / canvas.width) * smoothing,
         y: trackedPositionRef.current.y * (1 - smoothing) + (detected.y / canvas.height) * smoothing,
