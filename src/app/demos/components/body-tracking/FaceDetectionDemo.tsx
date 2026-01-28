@@ -100,16 +100,34 @@ export function FaceDetectionDemo({ onBack }: Props) {
 
     const loadHaarCascade = async () => {
       try {
-        // Charger le fichier Haar Cascade pour la détection de visages frontaux
-        const cascadeUrl = 'https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml';
+        const cv = window.cv;
+        const fileName = 'haarcascade_frontalface_default.xml';
 
+        // Vérifier si le classificateur existe déjà et est valide
+        if (classifierRef.current && classifierRef.current.empty && !classifierRef.current.empty()) {
+          console.log('Haar Cascade already loaded, reusing existing classifier');
+          setIsOpenCVReady(true);
+          setIsOpenCVLoading(false);
+          return;
+        }
+
+        // Télécharger le fichier Haar Cascade
+        const cascadeUrl = 'https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml';
         const response = await fetch(cascadeUrl);
         const cascadeData = await response.text();
 
-        // Créer un fichier virtuel dans le système de fichiers d'Emscripten
-        const cv = window.cv;
-        const fileName = 'haarcascade_frontalface_default.xml';
+        // Essayer de créer le fichier dans le système de fichiers virtuel
+        // Si le fichier existe déjà, supprimer d'abord puis recréer
+        try {
+          cv.FS_unlink('/' + fileName);
+          console.log('Removed existing cascade file');
+        } catch (e) {
+          // Le fichier n'existe pas, c'est normal
+        }
+
+        // Créer le fichier virtuel
         cv.FS_createDataFile('/', fileName, cascadeData, true, false, false);
+        console.log('Haar Cascade file created in virtual FS');
 
         // Charger le classificateur
         classifierRef.current = new cv.CascadeClassifier();
