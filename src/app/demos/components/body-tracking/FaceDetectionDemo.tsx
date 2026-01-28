@@ -38,9 +38,10 @@ export function FaceDetectionDemo({ onBack }: Props) {
   const animationFrameRef = useRef<number | undefined>(undefined);
   const frameCountRef = useRef<number>(0);
   const classifierRef = useRef<any>(null);
+  const facesRef = useRef<FaceRect[]>([]);
 
   const [isActive, setIsActive] = useState(false);
-  const [faces, setFaces] = useState<FaceRect[]>([]);
+  const [numFaces, setNumFaces] = useState(0);
   const [showFeatures, setShowFeatures] = useState(true);
   const [showCascade, setShowCascade] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -259,6 +260,8 @@ export function FaceDetectionDemo({ onBack }: Props) {
     }
     setIsActive(false);
     frameCountRef.current = 0;
+    facesRef.current = [];
+    setNumFaces(0);
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
@@ -320,11 +323,12 @@ export function FaceDetectionDemo({ onBack }: Props) {
     frameCountRef.current++;
     if (frameCountRef.current % 3 === 0) {
       const detectedFaces = detectFaces();
-      setFaces(detectedFaces);
+      facesRef.current = detectedFaces;
+      setNumFaces(detectedFaces.length);
     }
 
-    // Dessiner les rectangles de détection
-    for (const face of faces) {
+    // Dessiner les rectangles de détection avec les visages actuels
+    for (const face of facesRef.current) {
       // Rectangle principal
       ctx.strokeStyle = '#00ff00';
       ctx.lineWidth = 3;
@@ -368,7 +372,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
     }
 
     // Message info
-    if (faces.length > 0) {
+    if (numFaces > 0) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
       ctx.fillRect(10, 10, 320, 40);
       ctx.fillStyle = '#00ff00';
@@ -418,7 +422,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-green-200 mb-1">Visages détectés</div>
-            <div className="text-2xl font-bold">{faces.length}</div>
+            <div className="text-2xl font-bold">{numFaces}</div>
           </div>
         </div>
       </div>
@@ -532,7 +536,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-text-muted">Visages:</span>
-                <span className="text-green-400 font-bold">{faces.length}</span>
+                <span className="text-green-400 font-bold">{numFaces}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">FPS:</span>
