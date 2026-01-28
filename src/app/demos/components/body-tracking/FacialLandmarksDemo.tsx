@@ -160,6 +160,10 @@ export function FacialLandmarksDemo({ onBack }: Props) {
   const trackedPositionRef = useRef({ x: 0.5, y: 0.5 });
   const previousFrameRef = useRef<Uint8ClampedArray | null>(null);
 
+  // Animation des landmarks : positions animées
+  const animatedLandmarksRef = useRef<Point[]>([]);
+  const landmarksInitializedRef = useRef(false);
+
   // Fonction pour détecter la zone avec le plus de mouvement (approximation du visage)
   const detectMotionRegion = (imageData: ImageData): { x: number; y: number } => {
     const width = imageData.width;
@@ -292,6 +296,9 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
+    // Réinitialiser l'animation des landmarks
+    landmarksInitializedRef.current = false;
+    animatedLandmarksRef.current = [];
   };
 
   // Dessiner la frame
@@ -334,8 +341,27 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     ctx.arc(centerX, centerY, headRadius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Convertir les landmarks en coordonnées canvas (centrés sur la tête)
-    const points = faceLandmarks.map(p => ({
+    // Initialiser les landmarks animés si nécessaire
+    if (!landmarksInitializedRef.current) {
+      animatedLandmarksRef.current = faceLandmarks.map(() => ({
+        x: Math.random(),
+        y: Math.random(),
+      }));
+      landmarksInitializedRef.current = true;
+    }
+
+    // Animer les landmarks vers leurs positions cibles
+    const animationSpeed = 0.08; // Vitesse d'animation (0.08 = assez lent pour être visible)
+    animatedLandmarksRef.current = animatedLandmarksRef.current.map((current, i) => {
+      const target = faceLandmarks[i];
+      return {
+        x: current.x + (target.x - current.x) * animationSpeed,
+        y: current.y + (target.y - current.y) * animationSpeed,
+      };
+    });
+
+    // Convertir les landmarks animés en coordonnées canvas (centrés sur la tête)
+    const points = animatedLandmarksRef.current.map(p => ({
       x: centerX + (p.x - 0.5) * headRadius * 2,
       y: centerY + (p.y - 0.5) * headRadius * 2,
     }));

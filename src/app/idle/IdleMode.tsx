@@ -287,7 +287,7 @@ function MatrixRainEffect() {
   const charSetRef = { current: 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF<>{}[]' };
 
   const initColumns = useCallback((width: number, height: number) => {
-    const fontSize = 16;
+    const fontSize = 18; // Augmenté de 16 à 18 pour moins de colonnes
     const columns = Math.floor(width / fontSize);
     
     columnsRef.current = Array.from({ length: columns }, (_, i) => ({
@@ -307,7 +307,7 @@ function MatrixRainEffect() {
 
   const onDraw = useCallback((canvas: CanvasContext, _state: AnimationState) => {
     const { ctx, width, height } = canvas;
-    const fontSize = 16;
+    const fontSize = 18; // Correspond à initColumns
 
     // Fond semi-transparent pour l'effet de traînée
     ctx.fillStyle = 'rgba(10, 22, 40, 0.05)';
@@ -397,7 +397,7 @@ function BoidsEffect() {
   const phaseTimerRef = { current: 0 };
   const centerPointRef = { current: { x: 0, y: 0 } };
 
-  const BOID_COUNT = 150;
+  const BOID_COUNT = 100; // Réduit légèrement de 150 à 100 pour meilleures perfs
   const MAX_SPEED = 2.5;
   const MAX_FORCE = 0.05;
   const PERCEPTION_RADIUS = 50;
@@ -1243,15 +1243,15 @@ function NeuralNetworkEffect() {
   const frameCountRef = { current: 0 };
 
   // Architecture d'un DNN réaliste avec plus de couches
-  const LAYERS = [8, 16, 24, 32, 32, 24, 16, 8]; // Architecture profonde typique d'un DNN
+  const LAYERS = [7, 14, 20, 24, 24, 20, 14, 7]; // Architecture optimisée (réduction ~25%)
   const LAYER_SPACING_RATIO = 0.105; // Augmenté pour utiliser plus de largeur d'écran
   const NEURON_MIN_RADIUS = 3;
   const NEURON_MAX_RADIUS = 6;
-  const CONNECTION_CHANCE = 0.7; // Plus de connexions comme dans un vrai DNN
-  const SIGNAL_FREQUENCY = 3; // Légèrement plus de signaux
+  const CONNECTION_CHANCE = 0.6; // Optimisé pour meilleures perfs
+  const SIGNAL_FREQUENCY = 4; // Légèrement réduit
   const ACTIVATION_SPEED = 0.08;
-  const PROPAGATION_CHANCE = 0.7; // Plus de propagation
-  const MAX_SIGNALS = 80; // Augmenté pour une meilleure visualisation
+  const PROPAGATION_CHANCE = 0.6; // Optimisé
+  const MAX_SIGNALS = 60; // Réduit pour meilleures perfs
 
   const initNetwork = useCallback((width: number, height: number) => {
     neuronsRef.current = [];
