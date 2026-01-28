@@ -108,26 +108,11 @@ export function BodyTrackingVisualizer() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold mb-2">🎥 Computer Vision & Body Tracking</h1>
-                  <p className="text-purple-100">Le projet le plus avancé • Vision par ordinateur et Intelligence Artificielle</p>
+                  <p className="text-purple-100">Vision par ordinateur et Intelligence Artificielle</p>
                 </div>
                 <div className="text-right bg-white/10 rounded-xl px-4 py-2">
                   <div className="text-xs text-purple-200 mb-1">Projets</div>
                   <div className="text-2xl font-bold">{DEMOS.filter(d => d.available).length}/{DEMOS.length}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Info démonstration */}
-            <div className="bg-yellow-500/10 border-l-4 border-yellow-500 p-4 rounded-xl">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">ℹ️</span>
-                <div>
-                  <h3 className="font-bold text-yellow-400 mb-1">Mode Démonstration</h3>
-                  <p className="text-sm text-text-muted">
-                    Ces démos utilisent des <strong>algorithmes simplifiés</strong> et des visualisations pédagogiques
-                    pour illustrer les concepts. Pour une implémentation complète avec détection en temps réel,
-                    des bibliothèques comme <strong>MediaPipe</strong>, <strong>OpenCV</strong> ou <strong>TensorFlow.js</strong> sont nécessaires.
-                  </p>
                 </div>
               </div>
             </div>

@@ -787,25 +787,6 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     return triangles`}
                   </pre>
                 </div>
-
-                {/* Licence */}
-                <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-2 border-cyan-500/30 rounded-xl p-4">
-                  <h4 className="font-bold text-cyan-400 mb-2">🎓 Parcours en Licence</h4>
-                  <div className="space-y-2 text-sm text-text-muted">
-                    <p>
-                      <strong className="text-blue-400">L1 (Mathématiques) :</strong> Géométrie analytique, algèbre linéaire,
-                      calcul matriciel - les bases pour comprendre les transformations géométriques.
-                    </p>
-                    <p>
-                      <strong className="text-purple-400">L2 (Algorithmique) :</strong> Structures de données avancées,
-                      algorithmes géométriques (Delaunay, Voronoi), analyse de complexité.
-                    </p>
-                    <p>
-                      <strong className="text-pink-400">L3 (Computer Vision) :</strong> Détection de points d'intérêt,
-                      reconstruction 3D, maillages, traitement d'image temps réel avec <strong>MediaPipe</strong> et <strong>TensorFlow</strong>.
-                    </p>
-                  </div>
-                </div>
               </div>
             </motion.div>
           )}

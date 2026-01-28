@@ -461,18 +461,6 @@ export function MandelbrotVisualizer() {
                   </ul>
                 </div>
 
-                {/* Lien avec la Licence */}
-                <div className="bg-purple-500/20 rounded-lg p-3 border border-purple-500/30">
-                  <h4 className="font-bold text-purple-300 mb-2 text-xs">🎓 Dans la Licence</h4>
-                  <p className="text-xs text-text-muted leading-relaxed">
-                    <strong>L1 :</strong> Nombres complexes, suites et convergence
-                    <br />
-                    <strong>L2 :</strong> Optimisation, calcul parallèle, structures de données
-                    <br />
-                    <strong>L3 :</strong> Calcul GPU, rendu graphique, traitement d'image
-                  </p>
-                </div>
-
                 {/* Complexité */}
                 <div>
                   <h4 className="font-bold text-purple-300 mb-2">⚡ Complexité</h4>
