@@ -21,6 +21,13 @@ interface FaceRect {
   height: number;
 }
 
+// Déclaration globale pour OpenCV
+declare global {
+  interface Window {
+    cv: any;
+  }
+}
+
 // ============================================
 // Composant principal
 // ============================================
@@ -29,6 +36,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const classifierRef = useRef<any>(null);
 
   const [isActive, setIsActive] = useState(false);
   const [faces, setFaces] = useState<FaceRect[]>([]);
@@ -36,93 +44,156 @@ export function FaceDetectionDemo({ onBack }: Props) {
   const [showCascade, setShowCascade] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string>('');
-  const [, ] = useState<'simplified' | 'pattern'>('simplified');
+  const [isOpenCVLoading, setIsOpenCVLoading] = useState(true);
+  const [isOpenCVReady, setIsOpenCVReady] = useState(false);
 
-  // Position trackée (lissée)
-  const trackedPositionRef = useRef({ x: 0.5, y: 0.5 });
-  const previousFrameRef = useRef<Uint8ClampedArray | null>(null);
-
-  // Fonction pour détecter la zone avec le plus de mouvement (approximation du visage)
-  const detectMotionRegion = (imageData: ImageData): { x: number; y: number } => {
-    const width = imageData.width;
-    const height = imageData.height;
-    const data = imageData.data;
-
-    // Première frame : initialiser
-    if (!previousFrameRef.current) {
-      previousFrameRef.current = new Uint8ClampedArray(data.length);
-      for (let i = 0; i < data.length; i++) {
-        previousFrameRef.current[i] = data[i];
+  // Charger OpenCV.js depuis le CDN
+  useEffect(() => {
+    const loadOpenCV = () => {
+      // Si OpenCV est déjà chargé, on l'utilise directement
+      if (window.cv && window.cv.Mat) {
+        console.log('OpenCV already loaded');
+        loadHaarCascade();
+        return;
       }
-      return { x: width / 2, y: height / 2 };
-    }
 
-    // Diviser l'image en grille 5x5 (compromis perf/précision)
-    const gridCols = 5;
-    const gridRows = 5;
-    const cellWidth = width / gridCols;
-    const cellHeight = height / gridRows;
+      // Charger OpenCV.js depuis le CDN
+      const script = document.createElement('script');
+      script.src = 'https://docs.opencv.org/4.8.0/opencv.js';
+      script.async = true;
 
-    let maxMotion = 0;
-    let motionX = width / 2;
-    let motionY = height / 2;
-
-    // Chercher la cellule avec le plus de mouvement
-    for (let row = 0; row < gridRows; row++) {
-      for (let col = 0; col < gridCols; col++) {
-        let motion = 0;
-        let count = 0;
-
-        const startX = Math.floor(col * cellWidth);
-        const startY = Math.floor(row * cellHeight);
-        const endX = Math.floor((col + 1) * cellWidth);
-        const endY = Math.floor((row + 1) * cellHeight);
-
-        // Échantillonner tous les 5 pixels (compromis)
-        for (let y = startY; y < endY; y += 5) {
-          for (let x = startX; x < endX; x += 5) {
-            const idx = (y * width + x) * 4;
-
-            // Calculer la différence avec la frame précédente
-            const diffR = Math.abs(data[idx] - previousFrameRef.current[idx]);
-            const diffG = Math.abs(data[idx + 1] - previousFrameRef.current[idx + 1]);
-            const diffB = Math.abs(data[idx + 2] - previousFrameRef.current[idx + 2]);
-            const diff = (diffR + diffG + diffB) / 3;
-
-            motion += diff;
-            count++;
+      script.onload = () => {
+        // Attendre que OpenCV soit complètement initialisé
+        const checkOpenCV = setInterval(() => {
+          if (window.cv && window.cv.Mat) {
+            clearInterval(checkOpenCV);
+            console.log('OpenCV loaded successfully');
+            loadHaarCascade();
           }
-        }
-
-        const avgMotion = motion / count;
-        if (avgMotion > maxMotion) {
-          maxMotion = avgMotion;
-          motionX = startX + cellWidth / 2;
-          motionY = startY + cellHeight / 2;
-        }
-      }
-    }
-
-    // Mettre à jour la frame précédente moins souvent pour réduire la sensibilité
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
-      for (let i = 0; i < data.length; i++) {
-        previousFrameRef.current[i] = data[i];
-      }
-    }
-
-    // Si pas assez de mouvement, garder la position actuelle (seuil augmenté)
-    if (maxMotion < 10) {
-      return {
-        x: trackedPositionRef.current.x * width,
-        y: trackedPositionRef.current.y * height
+        }, 100);
       };
+
+      script.onerror = () => {
+        console.error('Failed to load OpenCV.js');
+        setError('Impossible de charger OpenCV.js. Veuillez rafraîchir la page.');
+        setIsOpenCVLoading(false);
+      };
+
+      document.body.appendChild(script);
+    };
+
+    const loadHaarCascade = async () => {
+      try {
+        // Charger le fichier Haar Cascade pour la détection de visages frontaux
+        const cascadeUrl = 'https://raw.githubusercontent.com/opencv/opencv/master/data/haarcascades/haarcascade_frontalface_default.xml';
+
+        const response = await fetch(cascadeUrl);
+        const cascadeData = await response.text();
+
+        // Créer un fichier virtuel dans le système de fichiers d'Emscripten
+        const cv = window.cv;
+        const fileName = 'haarcascade_frontalface_default.xml';
+        cv.FS_createDataFile('/', fileName, cascadeData, true, false, false);
+
+        // Charger le classificateur
+        classifierRef.current = new cv.CascadeClassifier();
+        classifierRef.current.load(fileName);
+
+        console.log('Haar Cascade loaded successfully');
+        setIsOpenCVReady(true);
+        setIsOpenCVLoading(false);
+      } catch (err) {
+        console.error('Failed to load Haar Cascade:', err);
+        setError('Impossible de charger le classificateur Haar Cascade.');
+        setIsOpenCVLoading(false);
+      }
+    };
+
+    loadOpenCV();
+
+    return () => {
+      // Nettoyer le classificateur à la fin
+      if (classifierRef.current) {
+        try {
+          classifierRef.current.delete();
+        } catch (e) {
+          console.error('Error deleting classifier:', e);
+        }
+      }
+    };
+  }, []);
+
+  // Fonction pour détecter les visages avec Viola-Jones (OpenCV)
+  const detectFaces = (): FaceRect[] => {
+    if (!isOpenCVReady || !classifierRef.current || !videoRef.current || !canvasRef.current) {
+      return [];
     }
 
-    return { x: motionX, y: motionY };
+    const cv = window.cv;
+    const video = videoRef.current;
+
+    try {
+      // Créer un Mat à partir de la vidéo
+      const src = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
+      const cap = new cv.VideoCapture(video);
+      cap.read(src);
+
+      // Convertir en niveaux de gris
+      const gray = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+      // Égaliser l'histogramme pour améliorer le contraste
+      cv.equalizeHist(gray, gray);
+
+      // Détecter les visages
+      const faces = new cv.RectVector();
+      const msize = new cv.Size(0, 0);
+
+      // Paramètres de détection Viola-Jones:
+      // - scaleFactor: 1.1 (augmentation de 10% à chaque échelle)
+      // - minNeighbors: 3 (minimum de détections voisines pour confirmer)
+      // - minSize: 30x30 pixels minimum
+      classifierRef.current.detectMultiScale(
+        gray,
+        faces,
+        1.1,    // scaleFactor
+        3,      // minNeighbors
+        0,      // flags
+        msize,  // minSize
+        msize   // maxSize
+      );
+
+      // Convertir les résultats en FaceRect[]
+      const detectedFaces: FaceRect[] = [];
+      for (let i = 0; i < faces.size(); i++) {
+        const face = faces.get(i);
+        detectedFaces.push({
+          x: face.x,
+          y: face.y,
+          width: face.width,
+          height: face.height,
+        });
+      }
+
+      // Nettoyer la mémoire
+      src.delete();
+      gray.delete();
+      faces.delete();
+
+      return detectedFaces;
+    } catch (err) {
+      console.error('Face detection error:', err);
+      return [];
+    }
   };
 
   // Démarrer la webcam
   const startWebcam = async () => {
+    if (!isOpenCVReady) {
+      setError('OpenCV n\'est pas encore chargé. Veuillez patienter...');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
@@ -197,7 +268,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
   const drawFrame = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || !isActive) return;
+    if (!video || !canvas || !isActive || !isOpenCVReady) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -205,34 +276,10 @@ export function FaceDetectionDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter la position toutes les 8 frames pour réduire la sensibilité
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const detected = detectMotionRegion(imageData);
-
-      // Lissage exponentiel de la position (smoothing plus fort = moins sensible)
-      const smoothing = 0.1;
-      trackedPositionRef.current = {
-        x: trackedPositionRef.current.x * (1 - smoothing) + (detected.x / canvas.width) * smoothing,
-        y: trackedPositionRef.current.y * (1 - smoothing) + (detected.y / canvas.height) * smoothing,
-      };
-    }
-
-    // Mode démo : toujours afficher un visage à la position trackée
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 30 === 0) {
-      // Utiliser la position trackée au lieu du centre fixe
-      const centerX = trackedPositionRef.current.x * canvas.width;
-      const centerY = trackedPositionRef.current.y * canvas.height;
-      const faceSize = Math.min(canvas.width, canvas.height) * 0.4;
-
-      const demoFace: FaceRect = {
-        x: centerX - faceSize / 2,
-        y: centerY - faceSize / 2,
-        width: faceSize,
-        height: faceSize,
-      };
-
-      setFaces([demoFace]);
+    // Détecter les visages toutes les 3 frames pour maintenir la fluidité
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 3 === 0) {
+      const detectedFaces = detectFaces();
+      setFaces(detectedFaces);
     }
 
     // Dessiner les rectangles de détection
@@ -304,7 +351,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isActive, showFeatures, showCascade]);
+  }, [isActive, showFeatures, showCascade, isOpenCVReady]);
 
   useEffect(() => {
     return () => {
@@ -326,6 +373,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
           <div>
             <h1 className="text-3xl font-bold mb-2">😊 Détection de visage (Viola-Jones)</h1>
             <p className="text-green-100">Cascades de Haar et AdaBoost • Algorithme classique temps réel</p>
+            <p className="text-sm text-green-200 mt-2">✨ Propulsé par OpenCV.js avec Haar Cascade officiel</p>
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-green-200 mb-1">Visages détectés</div>
@@ -355,13 +403,23 @@ export function FaceDetectionDemo({ onBack }: Props) {
               <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                 <div className="text-center">
                   <div className="text-6xl mb-4">👤</div>
-                  <p className="text-white mb-4">Détection de visage prête</p>
-                  <button
-                    onClick={startWebcam}
-                    className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-all"
-                  >
-                    ▶ Démarrer la détection
-                  </button>
+                  {isOpenCVLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-white">Chargement d'OpenCV.js...</p>
+                      <p className="text-green-300 text-sm">Haar Cascade Classifier en cours de téléchargement</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-white mb-4">Détection Viola-Jones prête</p>
+                      <button
+                        onClick={startWebcam}
+                        className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold transition-all"
+                      >
+                        ▶ Démarrer la détection
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -446,13 +504,13 @@ export function FaceDetectionDemo({ onBack }: Props) {
             </div>
           </div>
 
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3">
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3">
             <div className="flex items-start gap-2">
-              <span className="text-yellow-500 text-lg">ℹ️</span>
+              <span className="text-green-500 text-lg">✅</span>
               <div>
-                <p className="text-yellow-300 font-bold text-xs mb-1">Version simplifiée</p>
+                <p className="text-green-300 font-bold text-xs mb-1">Implémentation authentique</p>
                 <p className="text-text-muted text-xs">
-                  Cette démo utilise une détection simplifiée. L'algorithme Viola-Jones réel utilise des cascades de Haar entraînées.
+                  Cette démo utilise le vrai algorithme Viola-Jones avec OpenCV.js et les cascades de Haar officielles (haarcascade_frontalface_default.xml).
                 </p>
               </div>
             </div>
