@@ -13,6 +13,7 @@
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@fortawesome/react-fontawesome": "^3.1.1",
+    "@mediapipe/tasks-vision": "^0.10.32",
     "@types/three": "^0.181.0",
     "@types/topojson-client": "^3.1.5",
     "@xstate/react": "^6.0.0",
