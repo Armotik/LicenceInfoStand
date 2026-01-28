@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore - js-aruco doesn't have TypeScript definitions
-import { AR } from 'js-aruco';
+import { AR, CV } from 'js-aruco';
 
 // ============================================
 // Types
@@ -62,6 +62,7 @@ export function ArucoARDemo({ onBack }: Props) {
   }, []);
 
   // Fonction pour détecter les marqueurs ArUco avec js-aruco
+  // Avec des paramètres personnalisés plus tolérants
   const detectArucoMarkers = (): Marker[] => {
     if (!isDetectorReady || !detectorRef.current || !canvasRef.current) {
       return [];
@@ -75,13 +76,51 @@ export function ArucoARDemo({ onBack }: Props) {
       // Obtenir l'ImageData du canvas
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      console.log('Detecting markers...', {
+      const detector = detectorRef.current;
+
+      // Détection personnalisée avec paramètres plus tolérants
+      // Au lieu d'utiliser detector.detect() qui a des paramètres trop stricts,
+      // on appelle les méthodes internes avec nos propres paramètres
+
+      // Étape 1: Conversion en niveaux de gris
+      CV.grayscale(imageData, detector.grey);
+
+      // Étape 2: Seuillage adaptatif
+      CV.adaptiveThreshold(detector.grey, detector.thres, 2, 7);
+
+      // Étape 3: Trouver les contours
+      detector.contours = CV.findContours(detector.thres, detector.binary);
+
+      // Étape 4: Trouver les candidats (PARAMÈTRES MODIFIÉS)
+      // Original: minSize = image.width * 0.20 (128px) - TROP STRICT
+      // Nouveau: minSize = image.width * 0.05 (32px) - Plus tolérant
+      const minSize = imageData.width * 0.05; // 5% au lieu de 20%
+      const epsilon = 0.05;
+      const minLength = 10;
+
+      detector.candidates = detector.findCandidates(
+        detector.contours,
+        minSize,
+        epsilon,
+        minLength
+      );
+
+      console.log('Detection with relaxed parameters:', {
         imageSize: `${imageData.width}x${imageData.height}`,
-        dataLength: imageData.data.length
+        minMarkerSize: minSize,
+        contoursFound: detector.contours.length,
+        candidatesFound: detector.candidates.length
       });
 
-      // Détecter les marqueurs avec js-aruco
-      const markers = detectorRef.current.detect(imageData);
+      // Étape 5: Orienter les coins dans le sens horaire
+      detector.candidates = detector.clockwiseCorners(detector.candidates);
+
+      // Étape 6: Éliminer les candidats trop proches
+      detector.candidates = detector.notTooNear(detector.candidates, 10);
+
+      // Étape 7: Identifier les marqueurs
+      const warpSize = 49;
+      const markers = detector.findMarkers(detector.grey, detector.candidates, warpSize);
 
       console.log('Detection result:', {
         markersFound: markers.length,
