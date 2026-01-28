@@ -177,6 +177,19 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     nose: { x: 0, y: 0 },
   });
 
+  // Vérifier si un pixel ressemble à de la peau
+  const isSkinColor = (r: number, g: number, b: number): boolean => {
+    // Détection de peau basée sur les valeurs RGB
+    // Plage étendue pour différents types de peau
+    return (
+      r > 80 && g > 50 && b > 40 &&  // Minimum pour peau
+      r > g && r > b &&              // Rouge dominant
+      Math.abs(r - g) > 15 &&        // Différence R-G
+      r - b > 15 &&                  // Différence R-B
+      r < 250 && g < 220 && b < 200  // Pas trop clair (éviter fond blanc)
+    );
+  };
+
   // Fonction pour détecter les caractéristiques du visage (yeux, bouche, nez)
   const detectFaceFeatures = (imageData: ImageData, centerX: number, centerY: number, radius: number) => {
     const width = imageData.width;
@@ -185,50 +198,67 @@ export function FacialLandmarksDemo({ onBack }: Props) {
 
     // Régions d'intérêt relatives au centre détecté
     const regions = {
-      leftEye: { x: centerX - radius * 0.35, y: centerY - radius * 0.25, w: radius * 0.3, h: radius * 0.15 },
-      rightEye: { x: centerX + radius * 0.05, y: centerY - radius * 0.25, w: radius * 0.3, h: radius * 0.15 },
-      mouth: { x: centerX - radius * 0.25, y: centerY + radius * 0.35, w: radius * 0.5, h: radius * 0.2 },
-      nose: { x: centerX - radius * 0.1, y: centerY, w: radius * 0.2, h: radius * 0.3 },
+      leftEye: { x: centerX - radius * 0.4, y: centerY - radius * 0.35, w: radius * 0.35, h: radius * 0.2 },
+      rightEye: { x: centerX + radius * 0.05, y: centerY - radius * 0.35, w: radius * 0.35, h: radius * 0.2 },
+      mouth: { x: centerX - radius * 0.3, y: centerY + radius * 0.3, w: radius * 0.6, h: radius * 0.25 },
+      nose: { x: centerX - radius * 0.15, y: centerY - radius * 0.05, w: radius * 0.3, h: radius * 0.35 },
     };
 
-    // Pour chaque région, trouver le point le plus sombre (yeux, bouche)
-    const findDarkestPoint = (region: { x: number; y: number; w: number; h: number }) => {
+    // Pour chaque région, trouver le point le plus sombre dans une zone de peau
+    const findDarkestPoint = (region: { x: number; y: number; w: number; h: number }, requireSkin: boolean = true) => {
       let minBrightness = 255;
       let darkX = region.x + region.w / 2;
       let darkY = region.y + region.h / 2;
+      let foundValidPoint = false;
 
       const startX = Math.max(0, Math.floor(region.x));
       const startY = Math.max(0, Math.floor(region.y));
       const endX = Math.min(width, Math.floor(region.x + region.w));
       const endY = Math.min(height, Math.floor(region.y + region.h));
 
-      // Échantillonner tous les 4 pixels
-      for (let y = startY; y < endY; y += 4) {
-        for (let x = startX; x < endX; x += 4) {
+      // Échantillonner tous les 3 pixels pour plus de précision
+      for (let y = startY; y < endY; y += 3) {
+        for (let x = startX; x < endX; x += 3) {
           const idx = (y * width + x) * 4;
-          const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+          const r = data[idx];
+          const g = data[idx + 1];
+          const b = data[idx + 2];
+          const brightness = (r + g + b) / 3;
 
-          if (brightness < minBrightness) {
+          // Pour les yeux et la bouche, chercher des pixels sombres
+          // Pour le nez, vérifier qu'on est dans une zone de peau
+          const isValidPixel = requireSkin ? isSkinColor(r, g, b) : true;
+
+          if (isValidPixel && brightness < minBrightness) {
             minBrightness = brightness;
             darkX = x;
             darkY = y;
+            foundValidPoint = true;
           }
         }
+      }
+
+      // Si aucun point valide trouvé, retourner le centre de la région
+      if (!foundValidPoint) {
+        darkX = region.x + region.w / 2;
+        darkY = region.y + region.h / 2;
       }
 
       return { x: darkX - centerX, y: darkY - centerY };
     };
 
     // Détecter les caractéristiques
+    // Les yeux et la bouche ne requirent pas de vérification de peau (on cherche des zones sombres)
+    // Le nez doit être dans une zone de peau
     const features = {
-      leftEye: findDarkestPoint(regions.leftEye),
-      rightEye: findDarkestPoint(regions.rightEye),
-      mouth: findDarkestPoint(regions.mouth),
-      nose: findDarkestPoint(regions.nose),
+      leftEye: findDarkestPoint(regions.leftEye, false),
+      rightEye: findDarkestPoint(regions.rightEye, false),
+      mouth: findDarkestPoint(regions.mouth, false),
+      nose: findDarkestPoint(regions.nose, false),
     };
 
-    // Lisser les offsets avec les valeurs précédentes
-    const featureSmoothing = 0.15;
+    // Lisser les offsets avec les valeurs précédentes (plus fort pour plus de stabilité)
+    const featureSmoothing = 0.2;
     faceFeatureOffsetsRef.current = {
       leftEye: {
         x: faceFeatureOffsetsRef.current.leftEye.x * (1 - featureSmoothing) + features.leftEye.x * featureSmoothing,
@@ -249,7 +279,7 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     };
   };
 
-  // Fonction pour détecter la zone avec le plus de mouvement (approximation du visage)
+  // Fonction pour détecter la zone avec le plus de mouvement et peau (approximation du visage)
   const detectMotionRegion = (imageData: ImageData): { x: number; y: number } => {
     const width = imageData.width;
     const height = imageData.height;
@@ -270,15 +300,16 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     const cellWidth = width / gridCols;
     const cellHeight = height / gridRows;
 
-    let maxMotion = 0;
+    let maxScore = 0;
     let motionX = width / 2;
     let motionY = height / 2;
 
-    // Chercher la cellule avec le plus de mouvement
+    // Chercher la cellule avec le meilleur score (mouvement + peau)
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         let motion = 0;
-        let count = 0;
+        let skinPixels = 0;
+        let totalPixels = 0;
 
         const startX = Math.floor(col * cellWidth);
         const startY = Math.floor(row * cellHeight);
@@ -290,20 +321,34 @@ export function FacialLandmarksDemo({ onBack }: Props) {
           for (let x = startX; x < endX; x += 5) {
             const idx = (y * width + x) * 4;
 
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+
             // Calculer la différence avec la frame précédente
-            const diffR = Math.abs(data[idx] - previousFrameRef.current[idx]);
-            const diffG = Math.abs(data[idx + 1] - previousFrameRef.current[idx + 1]);
-            const diffB = Math.abs(data[idx + 2] - previousFrameRef.current[idx + 2]);
+            const diffR = Math.abs(r - previousFrameRef.current[idx]);
+            const diffG = Math.abs(g - previousFrameRef.current[idx + 1]);
+            const diffB = Math.abs(b - previousFrameRef.current[idx + 2]);
             const diff = (diffR + diffG + diffB) / 3;
 
             motion += diff;
-            count++;
+
+            // Compter les pixels de peau
+            if (isSkinColor(r, g, b)) {
+              skinPixels++;
+            }
+            totalPixels++;
           }
         }
 
-        const avgMotion = motion / count;
-        if (avgMotion > maxMotion) {
-          maxMotion = avgMotion;
+        const avgMotion = motion / totalPixels;
+        const skinRatio = skinPixels / totalPixels;
+
+        // Score combiné : mouvement + présence de peau (poids 70% peau, 30% mouvement)
+        const score = avgMotion * 0.3 + skinRatio * 100 * 0.7;
+
+        if (score > maxScore) {
+          maxScore = score;
           motionX = startX + cellWidth / 2;
           motionY = startY + cellHeight / 2;
         }
@@ -317,8 +362,8 @@ export function FacialLandmarksDemo({ onBack }: Props) {
       }
     }
 
-    // Si pas assez de mouvement, garder la position actuelle (seuil augmenté)
-    if (maxMotion < 10) {
+    // Si score trop faible, garder la position actuelle
+    if (maxScore < 5) {
       return {
         x: trackedPositionRef.current.x * width,
         y: trackedPositionRef.current.y * height
@@ -409,16 +454,16 @@ export function FacialLandmarksDemo({ onBack }: Props) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const detected = detectMotionRegion(imageData);
 
-      // Lissage exponentiel de la position (smoothing plus fort = moins sensible)
-      const smoothing = 0.1;
+      // Lissage exponentiel de la position (légèrement augmenté avec détection de peau)
+      const smoothing = 0.12;
       trackedPositionRef.current = {
         x: trackedPositionRef.current.x * (1 - smoothing) + (detected.x / canvas.width) * smoothing,
         y: trackedPositionRef.current.y * (1 - smoothing) + (detected.y / canvas.height) * smoothing,
       };
     }
 
-    // Détecter les caractéristiques du visage toutes les 12 frames
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 12 === 0) {
+    // Détecter les caractéristiques du visage toutes les 10 frames
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 10 === 0) {
       const centerX = trackedPositionRef.current.x * canvas.width;
       const centerY = trackedPositionRef.current.y * canvas.height;
       const headRadius = Math.min(canvas.width, canvas.height) * 0.25;
@@ -468,23 +513,23 @@ export function FacialLandmarksDemo({ onBack }: Props) {
 
       // Appliquer les offsets détectés pour les yeux (indices 23-30)
       if (i >= 23 && i < 27) {
-        // Œil gauche
-        offsetX = faceFeatureOffsetsRef.current.leftEye.x * 0.6;
-        offsetY = faceFeatureOffsetsRef.current.leftEye.y * 0.6;
+        // Œil gauche - coefficient augmenté pour meilleur alignement
+        offsetX = faceFeatureOffsetsRef.current.leftEye.x * 0.85;
+        offsetY = faceFeatureOffsetsRef.current.leftEye.y * 0.85;
       } else if (i >= 27 && i < 31) {
-        // Œil droit
-        offsetX = faceFeatureOffsetsRef.current.rightEye.x * 0.6;
-        offsetY = faceFeatureOffsetsRef.current.rightEye.y * 0.6;
+        // Œil droit - coefficient augmenté pour meilleur alignement
+        offsetX = faceFeatureOffsetsRef.current.rightEye.x * 0.85;
+        offsetY = faceFeatureOffsetsRef.current.rightEye.y * 0.85;
       }
       // Appliquer les offsets pour le nez (indices 31-39)
       else if (i >= 31 && i < 39) {
-        offsetX = faceFeatureOffsetsRef.current.nose.x * 0.5;
-        offsetY = faceFeatureOffsetsRef.current.nose.y * 0.5;
+        offsetX = faceFeatureOffsetsRef.current.nose.x * 0.7;
+        offsetY = faceFeatureOffsetsRef.current.nose.y * 0.7;
       }
       // Appliquer les offsets pour la bouche (indices 39-58)
       else if (i >= 39 && i < 59) {
-        offsetX = faceFeatureOffsetsRef.current.mouth.x * 0.7;
-        offsetY = faceFeatureOffsetsRef.current.mouth.y * 0.7;
+        offsetX = faceFeatureOffsetsRef.current.mouth.x * 0.9;
+        offsetY = faceFeatureOffsetsRef.current.mouth.y * 0.9;
       }
 
       return {
