@@ -17,34 +17,83 @@ export class ArucoDetector {
    * Detect ArUco markers in an ImageData
    */
   detect(imageData: ImageData): ArucoMarker[] {
-    // Convert to grayscale
-    const gray = this.toGrayscale(imageData);
+    // Downscale for faster processing (320x240 instead of 640x480)
+    const scale = 0.5;
+    const scaledWidth = Math.floor(imageData.width * scale);
+    const scaledHeight = Math.floor(imageData.height * scale);
+    const scaledImage = this.downscale(imageData, scaledWidth, scaledHeight);
 
-    // Apply adaptive threshold
-    const binary = this.adaptiveThreshold(gray, imageData.width, imageData.height);
+    // Convert to grayscale
+    const gray = this.toGrayscale(scaledImage);
+
+    // Simple global threshold (much faster than adaptive)
+    const binary = this.simpleThreshold(gray, 127);
 
     // Find contours
-    const contours = this.findContours(binary, imageData.width, imageData.height);
+    const contours = this.findContours(binary, scaledWidth, scaledHeight);
 
-    // Find marker candidates (squares)
-    const candidates = this.findSquareCandidates(contours, imageData.width, imageData.height);
+    // Find marker candidates (squares) - limit to top 10 largest
+    const candidates = this.findSquareCandidates(contours, scaledWidth, scaledHeight).slice(0, 10);
 
-    console.log('ArUco detection:', {
-      contours: contours.length,
-      candidates: candidates.length
-    });
+    // Scale candidates back to original resolution
+    const scaledCandidates = candidates.map((candidate) =>
+      candidate.map((point) => ({
+        x: point.x / scale,
+        y: point.y / scale,
+      }))
+    );
 
     // Decode each candidate
     const markers: ArucoMarker[] = [];
-    for (const candidate of candidates) {
-      const marker = this.decodeMarker(gray, candidate, imageData.width, imageData.height);
+    for (const candidate of scaledCandidates) {
+      const marker = this.decodeMarker(
+        this.toGrayscale(imageData),
+        candidate,
+        imageData.width,
+        imageData.height
+      );
       if (marker) {
         markers.push(marker);
-        console.log('Decoded marker:', marker);
       }
     }
 
     return markers;
+  }
+
+  /**
+   * Downscale image for faster processing
+   */
+  private downscale(imageData: ImageData, newWidth: number, newHeight: number): ImageData {
+    const scaled = new ImageData(newWidth, newHeight);
+    const scaleX = imageData.width / newWidth;
+    const scaleY = imageData.height / newHeight;
+
+    for (let y = 0; y < newHeight; y++) {
+      for (let x = 0; x < newWidth; x++) {
+        const srcX = Math.floor(x * scaleX);
+        const srcY = Math.floor(y * scaleY);
+        const srcIdx = (srcY * imageData.width + srcX) * 4;
+        const dstIdx = (y * newWidth + x) * 4;
+
+        scaled.data[dstIdx] = imageData.data[srcIdx];
+        scaled.data[dstIdx + 1] = imageData.data[srcIdx + 1];
+        scaled.data[dstIdx + 2] = imageData.data[srcIdx + 2];
+        scaled.data[dstIdx + 3] = 255;
+      }
+    }
+
+    return scaled;
+  }
+
+  /**
+   * Simple global threshold (much faster than adaptive)
+   */
+  private simpleThreshold(gray: Uint8ClampedArray, threshold: number): Uint8ClampedArray {
+    const binary = new Uint8ClampedArray(gray.length);
+    for (let i = 0; i < gray.length; i++) {
+      binary[i] = gray[i] > threshold ? 255 : 0;
+    }
+    return binary;
   }
 
   /**
@@ -62,39 +111,6 @@ export class ArucoDetector {
     return gray;
   }
 
-  /**
-   * Apply adaptive threshold
-   */
-  private adaptiveThreshold(
-    gray: Uint8ClampedArray,
-    width: number,
-    height: number
-  ): Uint8ClampedArray {
-    const binary = new Uint8ClampedArray(width * height);
-    const windowSize = 25;
-    const k = 0.15;
-
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        let sum = 0;
-        let count = 0;
-
-        // Calculate mean in window
-        for (let wy = Math.max(0, y - windowSize); wy < Math.min(height, y + windowSize); wy++) {
-          for (let wx = Math.max(0, x - windowSize); wx < Math.min(width, x + windowSize); wx++) {
-            sum += gray[wy * width + wx];
-            count++;
-          }
-        }
-
-        const mean = sum / count;
-        const threshold = mean * (1 - k);
-        binary[y * width + x] = gray[y * width + x] > threshold ? 255 : 0;
-      }
-    }
-
-    return binary;
-  }
 
   /**
    * Find contours in binary image (simple implementation)
@@ -314,26 +330,60 @@ export class ArucoDetector {
       }
     }
 
-    console.log('Bit matrix:', bits);
+    // Validate bit pattern quality
+    if (!this.isValidBitPattern(bits)) {
+      return null;
+    }
 
     // Try all 4 rotations and find valid one
     for (let rotation = 0; rotation < 4; rotation++) {
       const rotated = this.rotateBits(bits, rotation);
       const id = this.bitsToId(rotated);
 
-      console.log(`Rotation ${rotation}: ID = ${id}`);
-
-      // Accept any ID (ArUco markers can have IDs from 0 to 65535 for 4x4)
-      if (id >= 0 && id < 65536) {
-        // Rotate corners to match
+      // Only accept IDs in reasonable range for real markers
+      // Most ArUco generators use IDs 0-1023 for 4x4
+      if (id >= 0 && id < 1024) {
         const rotatedCorners = this.rotateCorners(corners, rotation);
-        console.log('✅ Valid marker found!', { id, rotation });
         return { id, corners: rotatedCorners };
       }
     }
 
-    console.log('❌ No valid marker ID found');
     return null;
+  }
+
+  /**
+   * Validate that bit pattern looks like a real ArUco marker
+   * Reject patterns that are too uniform or too random
+   */
+  private isValidBitPattern(bits: number[][]): boolean {
+    // Count black and white bits
+    let blackCount = 0;
+    let whiteCount = 0;
+
+    for (let y = 0; y < bits.length; y++) {
+      for (let x = 0; x < bits[y].length; x++) {
+        if (bits[y][x] === 1) {
+          whiteCount++;
+        } else {
+          blackCount++;
+        }
+      }
+    }
+
+    const total = blackCount + whiteCount;
+
+    // Reject if too uniform (all black or all white)
+    if (blackCount < 2 || whiteCount < 2) {
+      return false;
+    }
+
+    // Reject if too unbalanced (need some pattern variety)
+    const blackRatio = blackCount / total;
+    if (blackRatio < 0.2 || blackRatio > 0.8) {
+      return false;
+    }
+
+    return true;
   }
 
   /**

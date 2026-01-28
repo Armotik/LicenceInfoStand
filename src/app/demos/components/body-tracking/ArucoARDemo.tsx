@@ -320,9 +320,9 @@ export function ArucoARDemo({ onBack }: Props) {
     // Dessiner la vidéo sur le canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter les marqueurs ArUco toutes les 2 frames
+    // Détecter les marqueurs ArUco toutes les 5 frames (pour de meilleures performances)
     frameCountRef.current++;
-    if (frameCountRef.current % 2 === 0) {
+    if (frameCountRef.current % 5 === 0) {
       const detectedMarkers = detectArucoMarkers();
       markersRef.current = detectedMarkers;
       setNumMarkers(detectedMarkers.length);
