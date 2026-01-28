@@ -9,12 +9,13 @@ import { FacialLandmarksDemo } from './body-tracking/FacialLandmarksDemo';
 import { MotionDetectionDemo } from './body-tracking/MotionDetectionDemo';
 import { FaceDetectionDemo } from './body-tracking/FaceDetectionDemo';
 import { ArucoARDemo } from './body-tracking/ArucoARDemo';
+import { YoloObjectDetectionDemo } from './body-tracking/YoloObjectDetectionDemo';
 
 // ============================================
 // Types
 // ============================================
 
-type DemoMode = 'overview' | 'facial-landmarks' | 'motion-detection' | 'face-detection' | 'aruco-ar' | 'yolo-placeholder';
+type DemoMode = 'overview' | 'facial-landmarks' | 'motion-detection' | 'face-detection' | 'aruco-ar' | 'yolo';
 
 interface DemoInfo {
   id: DemoMode;
@@ -68,13 +69,13 @@ const DEMOS: DemoInfo[] = [
     available: true,
   },
   {
-    id: 'yolo-placeholder',
-    name: 'YOLO - Détection d\'objets (Bientôt)',
+    id: 'yolo',
+    name: 'YOLO - Détection d\'objets',
     description: 'Neural network pour détection en temps réel',
     icon: '🤖',
     difficulty: 'Master',
     topics: ['Deep Learning', 'CNN', 'Detection'],
-    available: false,
+    available: true,
   },
 ];
 
@@ -96,6 +97,8 @@ export function BodyTrackingVisualizer() {
         return <FaceDetectionDemo onBack={() => setCurrentDemo('overview')} />;
       case 'aruco-ar':
         return <ArucoARDemo onBack={() => setCurrentDemo('overview')} />;
+      case 'yolo':
+        return <YoloObjectDetectionDemo onBack={() => setCurrentDemo('overview')} />;
       case 'overview':
       default:
         return (
