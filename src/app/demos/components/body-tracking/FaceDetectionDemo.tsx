@@ -36,6 +36,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const frameCountRef = useRef<number>(0);
   const classifierRef = useRef<any>(null);
 
   const [isActive, setIsActive] = useState(false);
@@ -165,12 +166,16 @@ export function FaceDetectionDemo({ onBack }: Props) {
 
     const cv = window.cv;
     const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    // Vérifier que la vidéo a des dimensions valides
+    if (!video.videoWidth || !video.videoHeight || video.videoWidth === 0 || video.videoHeight === 0) {
+      return [];
+    }
 
     try {
-      // Créer un Mat à partir de la vidéo
-      const src = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
-      const cap = new cv.VideoCapture(video);
-      cap.read(src);
+      // Créer un Mat temporaire depuis le canvas (qui contient déjà la frame vidéo)
+      const src = cv.imread(canvas);
 
       // Convertir en niveaux de gris
       const gray = new cv.Mat();
@@ -253,6 +258,7 @@ export function FaceDetectionDemo({ onBack }: Props) {
       videoRef.current.srcObject = null;
     }
     setIsActive(false);
+    frameCountRef.current = 0;
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
@@ -307,11 +313,12 @@ export function FaceDetectionDemo({ onBack }: Props) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Dessiner la vidéo
+    // Dessiner la vidéo sur le canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     // Détecter les visages toutes les 3 frames pour maintenir la fluidité
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 3 === 0) {
+    frameCountRef.current++;
+    if (frameCountRef.current % 3 === 0) {
       const detectedFaces = detectFaces();
       setFaces(detectedFaces);
     }
