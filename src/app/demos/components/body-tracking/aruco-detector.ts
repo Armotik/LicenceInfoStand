@@ -279,6 +279,7 @@ export class ArucoDetector {
 
   /**
    * Decode marker from grayscale image
+   * Supports both bordered and borderless ArUco markers
    */
   private decodeMarker(
     gray: Uint8ClampedArray,
@@ -286,45 +287,103 @@ export class ArucoDetector {
     width: number,
     height: number
   ): ArucoMarker | null {
-    // Extract and warp marker region to normalized 7x7 grid (4x4 data + border)
-    const markerSize = 7;
+    // Extract and warp marker region to normalized grid
+    // For borderless markers (like from chev.me/arucogen/), use 4x4 directly
+    const markerSize = 4; // Direct 4x4 grid without border
     const cellSize = 10;
     const warpedSize = markerSize * cellSize;
 
     // Create perspective transform
     const warped = this.warpPerspective(gray, corners, width, height, warpedSize);
 
-    // Check border (should be black)
-    if (!this.checkBorder(warped, markerSize, cellSize)) {
-      return null;
-    }
+    // Apply threshold to warped image
+    const thresholded = this.thresholdImage(warped);
 
-    // Extract 4x4 bit matrix
+    console.log('Decoding marker candidate...');
+
+    // Extract 4x4 bit matrix (reading entire warped region)
     const bits: number[][] = [];
     for (let y = 0; y < 4; y++) {
       bits[y] = [];
       for (let x = 0; x < 4; x++) {
-        const cellX = (x + 1.5) * cellSize;
-        const cellY = (y + 1.5) * cellSize;
+        // Sample from center of each cell
+        const cellX = (x + 0.5) * cellSize;
+        const cellY = (y + 0.5) * cellSize;
         const idx = Math.floor(cellY) * warpedSize + Math.floor(cellX);
-        bits[y][x] = warped[idx] > 127 ? 1 : 0;
+        bits[y][x] = thresholded[idx] > 127 ? 1 : 0;
       }
     }
+
+    console.log('Bit matrix:', bits);
 
     // Try all 4 rotations and find valid one
     for (let rotation = 0; rotation < 4; rotation++) {
       const rotated = this.rotateBits(bits, rotation);
       const id = this.bitsToId(rotated);
 
-      // Simple validation: ID should be in reasonable range
-      if (id >= 0 && id < 1000) {
+      console.log(`Rotation ${rotation}: ID = ${id}`);
+
+      // Accept any ID (ArUco markers can have IDs from 0 to 65535 for 4x4)
+      if (id >= 0 && id < 65536) {
         // Rotate corners to match
         const rotatedCorners = this.rotateCorners(corners, rotation);
+        console.log('✅ Valid marker found!', { id, rotation });
         return { id, corners: rotatedCorners };
       }
     }
 
+    console.log('❌ No valid marker ID found');
     return null;
+  }
+
+  /**
+   * Threshold image using Otsu's method
+   */
+  private thresholdImage(gray: Uint8ClampedArray): Uint8ClampedArray {
+    // Calculate histogram
+    const histogram = new Array(256).fill(0);
+    for (let i = 0; i < gray.length; i++) {
+      histogram[gray[i]]++;
+    }
+
+    // Calculate threshold using Otsu's method
+    const total = gray.length;
+    let sum = 0;
+    for (let i = 0; i < 256; i++) {
+      sum += i * histogram[i];
+    }
+
+    let sumB = 0;
+    let wB = 0;
+    let wF = 0;
+    let maxVariance = 0;
+    let threshold = 0;
+
+    for (let i = 0; i < 256; i++) {
+      wB += histogram[i];
+      if (wB === 0) continue;
+
+      wF = total - wB;
+      if (wF === 0) break;
+
+      sumB += i * histogram[i];
+      const mB = sumB / wB;
+      const mF = (sum - sumB) / wF;
+      const variance = wB * wF * (mB - mF) * (mB - mF);
+
+      if (variance > maxVariance) {
+        maxVariance = variance;
+        threshold = i;
+      }
+    }
+
+    // Apply threshold
+    const binary = new Uint8ClampedArray(gray.length);
+    for (let i = 0; i < gray.length; i++) {
+      binary[i] = gray[i] > threshold ? 255 : 0;
+    }
+
+    return binary;
   }
 
   /**
@@ -372,29 +431,30 @@ export class ArucoDetector {
 
   /**
    * Check if border is black (all zeros)
+   * Note: Disabled for borderless markers from chev.me/arucogen/
    */
-  private checkBorder(warped: Uint8ClampedArray, markerSize: number, cellSize: number): boolean {
-    const warpedSize = markerSize * cellSize;
-    let blackCount = 0;
-    let totalCount = 0;
+  // private checkBorder(warped: Uint8ClampedArray, markerSize: number, cellSize: number): boolean {
+  //   const warpedSize = markerSize * cellSize;
+  //   let blackCount = 0;
+  //   let totalCount = 0;
 
-    // Check top and bottom borders
-    for (let x = 0; x < warpedSize; x++) {
-      totalCount += 2;
-      if (warped[x] < 127) blackCount++;
-      if (warped[(markerSize - 1) * cellSize * warpedSize + x] < 127) blackCount++;
-    }
+  //   // Check top and bottom borders
+  //   for (let x = 0; x < warpedSize; x++) {
+  //     totalCount += 2;
+  //     if (warped[x] < 127) blackCount++;
+  //     if (warped[(markerSize - 1) * cellSize * warpedSize + x] < 127) blackCount++;
+  //   }
 
-    // Check left and right borders
-    for (let y = 0; y < warpedSize; y++) {
-      totalCount += 2;
-      if (warped[y * warpedSize] < 127) blackCount++;
-      if (warped[y * warpedSize + (markerSize - 1) * cellSize] < 127) blackCount++;
-    }
+  //   // Check left and right borders
+  //   for (let y = 0; y < warpedSize; y++) {
+  //     totalCount += 2;
+  //     if (warped[y * warpedSize] < 127) blackCount++;
+  //     if (warped[y * warpedSize + (markerSize - 1) * cellSize] < 127) blackCount++;
+  //   }
 
-    // At least 80% should be black
-    return blackCount / totalCount > 0.8;
-  }
+  //   // At least 80% should be black
+  //   return blackCount / totalCount > 0.8;
+  // }
 
   /**
    * Rotate bit matrix
