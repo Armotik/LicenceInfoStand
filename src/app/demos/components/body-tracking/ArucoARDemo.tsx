@@ -5,8 +5,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-// @ts-ignore - js-aruco doesn't have TypeScript definitions
-import { AR, CV } from 'js-aruco';
+import { ArucoDetector } from './aruco-detector';
 
 // ============================================
 // Types
@@ -43,15 +42,15 @@ export function ArucoARDemo({ onBack }: Props) {
   const [error, setError] = useState<string>('');
   const [isDetectorReady, setIsDetectorReady] = useState(false);
 
-  // Initialiser le détecteur ArUco js-aruco
+  // Initialiser le détecteur ArUco custom
   useEffect(() => {
     try {
-      console.log('Initializing js-aruco detector...');
-      detectorRef.current = new AR.Detector();
-      console.log('js-aruco detector initialized successfully');
+      console.log('Initializing custom ArUco detector...');
+      detectorRef.current = new ArucoDetector();
+      console.log('Custom ArUco detector initialized successfully');
       setIsDetectorReady(true);
     } catch (err) {
-      console.error('Failed to initialize js-aruco detector:', err);
+      console.error('Failed to initialize ArUco detector:', err);
       setError('Impossible d\'initialiser le détecteur ArUco. Veuillez rafraîchir la page.');
     }
 
@@ -61,8 +60,7 @@ export function ArucoARDemo({ onBack }: Props) {
     };
   }, []);
 
-  // Fonction pour détecter les marqueurs ArUco avec js-aruco
-  // Avec des paramètres personnalisés plus tolérants
+  // Fonction pour détecter les marqueurs ArUco avec le détecteur custom
   const detectArucoMarkers = (): Marker[] => {
     if (!isDetectorReady || !detectorRef.current || !canvasRef.current) {
       return [];
@@ -76,51 +74,8 @@ export function ArucoARDemo({ onBack }: Props) {
       // Obtenir l'ImageData du canvas
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      const detector = detectorRef.current;
-
-      // Détection personnalisée avec paramètres plus tolérants
-      // Au lieu d'utiliser detector.detect() qui a des paramètres trop stricts,
-      // on appelle les méthodes internes avec nos propres paramètres
-
-      // Étape 1: Conversion en niveaux de gris
-      CV.grayscale(imageData, detector.grey);
-
-      // Étape 2: Seuillage adaptatif
-      CV.adaptiveThreshold(detector.grey, detector.thres, 2, 7);
-
-      // Étape 3: Trouver les contours
-      detector.contours = CV.findContours(detector.thres, detector.binary);
-
-      // Étape 4: Trouver les candidats (PARAMÈTRES MODIFIÉS)
-      // Original: minSize = image.width * 0.20 (128px) - TROP STRICT
-      // Nouveau: minSize = image.width * 0.05 (32px) - Plus tolérant
-      const minSize = imageData.width * 0.05; // 5% au lieu de 20%
-      const epsilon = 0.05;
-      const minLength = 10;
-
-      detector.candidates = detector.findCandidates(
-        detector.contours,
-        minSize,
-        epsilon,
-        minLength
-      );
-
-      console.log('Detection with relaxed parameters:', {
-        imageSize: `${imageData.width}x${imageData.height}`,
-        minMarkerSize: minSize,
-        contoursFound: detector.contours.length,
-        candidatesFound: detector.candidates.length
-      });
-
-      // Étape 5: Orienter les coins dans le sens horaire
-      detector.candidates = detector.clockwiseCorners(detector.candidates);
-
-      // Étape 6: Éliminer les candidats trop proches
-      detector.candidates = detector.notTooNear(detector.candidates, 10);
-
-      // Étape 7: Identifier les marqueurs
-      const warpSize = 49;
-      const markers = detector.findMarkers(detector.grey, detector.candidates, warpSize);
+      // Détecter les marqueurs avec notre détecteur custom
+      const markers = detectorRef.current.detect(imageData);
 
       console.log('Detection result:', {
         markersFound: markers.length,
@@ -129,9 +84,7 @@ export function ArucoARDemo({ onBack }: Props) {
 
       // Convertir les résultats en notre format
       const detectedMarkers: Marker[] = markers.map((marker: any) => {
-        console.log('Processing marker:', marker);
-
-        // js-aruco retourne les coins dans l'ordre: corners[0-3] avec propriétés x,y
+        // Notre détecteur retourne les coins dans l'ordre: corners[0-3] avec propriétés x,y
         const cornerPoints: [number, number][] = [
           [marker.corners[0].x, marker.corners[0].y],
           [marker.corners[1].x, marker.corners[1].y],
@@ -494,7 +447,7 @@ export function ArucoARDemo({ onBack }: Props) {
           <div>
             <h1 className="text-3xl font-bold mb-2">🎯 Réalité Augmentée (ArUco)</h1>
             <p className="text-pink-100">Marqueurs fiduciaires, homographie et pose 3D</p>
-            <p className="text-sm text-pink-200 mt-2">✨ Propulsé par js-aruco (détection pure JavaScript)</p>
+            <p className="text-sm text-pink-200 mt-2">✨ Détection ArUco custom avec support 4x4</p>
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-pink-200 mb-1">Marqueurs détectés</div>
@@ -528,7 +481,7 @@ export function ArucoARDemo({ onBack }: Props) {
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
                       <p className="text-white">Initialisation du détecteur ArUco...</p>
-                      <p className="text-pink-300 text-sm">Chargement de js-aruco</p>
+                      <p className="text-pink-300 text-sm">Chargement du détecteur custom</p>
                     </div>
                   ) : (
                     <>
@@ -664,8 +617,8 @@ export function ArucoARDemo({ onBack }: Props) {
                 <span className="text-pink-400 font-bold">{numMarkers}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-muted">Dictionnaire:</span>
-                <span className="text-pink-400 font-bold">4x4_100</span>
+                <span className="text-text-muted">Format:</span>
+                <span className="text-pink-400 font-bold">4x4 ArUco</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Objet:</span>
