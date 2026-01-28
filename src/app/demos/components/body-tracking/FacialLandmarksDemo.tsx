@@ -160,15 +160,22 @@ export function FacialLandmarksDemo({ onBack }: Props) {
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string>('');
   const [isModelLoading, setIsModelLoading] = useState(false);
-  const [detectedLandmarks, setDetectedLandmarks] = useState<Point[]>([]);
-  const [numFaces, setNumFaces] = useState(0);
+  const [maxNumFaces, setMaxNumFaces] = useState(1);
+  const [detectedFaces, setDetectedFaces] = useState<Point[][]>([]);
+  const [numFacesDetected, setNumFacesDetected] = useState(0);
 
   // Initialiser MediaPipe Face Landmarker
   useEffect(() => {
     const initializeFaceLandmarker = async () => {
       try {
-        console.log('Starting MediaPipe Face Landmarker initialization...');
+        console.log(`Starting MediaPipe Face Landmarker initialization for ${maxNumFaces} face(s)...`);
         setIsModelLoading(true);
+
+        // Fermer l'instance précédente si elle existe
+        if (faceLandmarkerRef.current) {
+          faceLandmarkerRef.current.close();
+        }
+
         const vision = await FilesetResolver.forVisionTasks(
           'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
         );
@@ -180,7 +187,7 @@ export function FacialLandmarksDemo({ onBack }: Props) {
             delegate: 'GPU',
           },
           runningMode: 'VIDEO',
-          numFaces: 1,
+          numFaces: maxNumFaces,
           minFaceDetectionConfidence: 0.3,
           minFacePresenceConfidence: 0.3,
           minTrackingConfidence: 0.3,
@@ -206,7 +213,7 @@ export function FacialLandmarksDemo({ onBack }: Props) {
         faceLandmarkerRef.current.close();
       }
     };
-  }, []);
+  }, [maxNumFaces]);
 
   // Démarrer la webcam
   const startWebcam = async () => {
@@ -243,8 +250,8 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
-    setDetectedLandmarks([]);
-    setNumFaces(0);
+    setDetectedFaces([]);
+    setNumFacesDetected(0);
   };
 
   // Dessiner la frame
@@ -279,20 +286,19 @@ export function FacialLandmarksDemo({ onBack }: Props) {
         });
 
         if (results.faceLandmarks && results.faceLandmarks.length > 0) {
-          // Prendre le premier visage détecté
-          const landmarks = results.faceLandmarks[0];
+          // Convertir les landmarks de tous les visages détectés
+          const allFaces: Point[][] = results.faceLandmarks.map(faceLandmarks => {
+            return faceLandmarks.map(landmark => ({
+              x: landmark.x * canvas.width,
+              y: landmark.y * canvas.height,
+            }));
+          });
 
-          // Convertir les landmarks normalisés (0-1) en coordonnées canvas
-          const points: Point[] = landmarks.map(landmark => ({
-            x: landmark.x * canvas.width,
-            y: landmark.y * canvas.height,
-          }));
-
-          setDetectedLandmarks(points);
-          setNumFaces(results.faceLandmarks.length);
+          setDetectedFaces(allFaces);
+          setNumFacesDetected(results.faceLandmarks.length);
         } else {
-          setDetectedLandmarks([]);
-          setNumFaces(0);
+          setDetectedFaces([]);
+          setNumFacesDetected(0);
         }
       } catch (err) {
         console.error('Detection error:', err);
@@ -304,67 +310,83 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Utiliser les landmarks détectés
-    const points = detectedLandmarks;
+    // Couleurs pour différencier les visages
+    const faceColors = [
+      { landmarks: '#00ff00', triangulation: 'rgba(0, 255, 255, 0.4)', circumcircles: 'rgba(255, 0, 255, 0.2)' },
+      { landmarks: '#ff00ff', triangulation: 'rgba(255, 0, 255, 0.4)', circumcircles: 'rgba(0, 255, 255, 0.2)' },
+      { landmarks: '#ffff00', triangulation: 'rgba(255, 255, 0, 0.4)', circumcircles: 'rgba(255, 0, 0, 0.2)' },
+      { landmarks: '#ff8800', triangulation: 'rgba(255, 136, 0, 0.4)', circumcircles: 'rgba(0, 136, 255, 0.2)' },
+      { landmarks: '#00ffff', triangulation: 'rgba(0, 255, 255, 0.4)', circumcircles: 'rgba(255, 255, 0, 0.2)' },
+    ];
 
-    if (points.length > 0) {
-      // Triangulation de Delaunay
-      let triangles: Triangle[] = [];
-      if (showTriangulation) {
-        try {
-          triangles = delaunayTriangulation(points);
-        } catch (e) {
-          console.error('Delaunay error:', e);
+    if (detectedFaces.length > 0) {
+      let totalTriangles = 0;
+      let totalPoints = 0;
+
+      // Dessiner chaque visage détecté avec sa propre couleur
+      detectedFaces.forEach((points, faceIndex) => {
+        const colors = faceColors[faceIndex % faceColors.length];
+        totalPoints += points.length;
+
+        // Triangulation de Delaunay pour ce visage
+        let triangles: Triangle[] = [];
+        if (showTriangulation) {
+          try {
+            triangles = delaunayTriangulation(points);
+            totalTriangles += triangles.length;
+          } catch (e) {
+            console.error('Delaunay error:', e);
+          }
         }
-      }
 
-      // Dessiner la triangulation
-      if (showTriangulation && triangles.length > 0) {
-        ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
-        ctx.lineWidth = 1;
-        for (const triangle of triangles) {
-          ctx.beginPath();
-          ctx.moveTo(triangle.a.x, triangle.a.y);
-          ctx.lineTo(triangle.b.x, triangle.b.y);
-          ctx.lineTo(triangle.c.x, triangle.c.y);
-          ctx.closePath();
-          ctx.stroke();
-        }
-      }
-
-      // Dessiner les cercles circonscrits
-      if (showCircumcircles && triangles.length > 0) {
-        ctx.strokeStyle = 'rgba(255, 0, 255, 0.2)';
-        ctx.lineWidth = 1;
-        for (const triangle of triangles) {
-          const { center, radius } = circumcircle(triangle.a, triangle.b, triangle.c);
-          if (radius < 1000) {
+        // Dessiner la triangulation
+        if (showTriangulation && triangles.length > 0) {
+          ctx.strokeStyle = colors.triangulation;
+          ctx.lineWidth = 1;
+          for (const triangle of triangles) {
             ctx.beginPath();
-            ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+            ctx.moveTo(triangle.a.x, triangle.a.y);
+            ctx.lineTo(triangle.b.x, triangle.b.y);
+            ctx.lineTo(triangle.c.x, triangle.c.y);
+            ctx.closePath();
             ctx.stroke();
           }
         }
-      }
 
-      // Dessiner les landmarks
-      if (showLandmarks) {
-        for (const point of points) {
-          ctx.fillStyle = '#00ff00';
-          ctx.beginPath();
-          ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
-          ctx.fill();
+        // Dessiner les cercles circonscrits
+        if (showCircumcircles && triangles.length > 0) {
+          ctx.strokeStyle = colors.circumcircles;
+          ctx.lineWidth = 1;
+          for (const triangle of triangles) {
+            const { center, radius } = circumcircle(triangle.a, triangle.b, triangle.c);
+            if (radius < 1000) {
+              ctx.beginPath();
+              ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
         }
-      }
+
+        // Dessiner les landmarks
+        if (showLandmarks) {
+          ctx.fillStyle = colors.landmarks;
+          for (const point of points) {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
 
       // Message info avec statut de détection
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(10, 10, 420, 70);
+      ctx.fillRect(10, 10, 450, 70);
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('✅ Visage détecté - MediaPipe Face Mesh', 20, 30);
+      ctx.fillText(`✅ ${numFacesDetected} visage${numFacesDetected > 1 ? 's' : ''} détecté${numFacesDetected > 1 ? 's' : ''} - MediaPipe Face Mesh`, 20, 30);
       ctx.font = '12px sans-serif';
       ctx.fillStyle = '#00ffff';
-      ctx.fillText(`${points.length} points réels détectés • ${triangles.length} triangles`, 20, 50);
+      ctx.fillText(`${totalPoints} points réels détectés • ${totalTriangles} triangles`, 20, 50);
       ctx.fillText(`FPS détection: ~30 • Qualité: Haute`, 20, 68);
     } else {
       // Aucun visage détecté
@@ -391,7 +413,7 @@ export function FacialLandmarksDemo({ onBack }: Props) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isActive, showLandmarks, showTriangulation, showCircumcircles, detectedLandmarks]);
+  }, [isActive, showLandmarks, showTriangulation, showCircumcircles, detectedFaces]);
 
   useEffect(() => {
     return () => {
@@ -417,7 +439,7 @@ export function FacialLandmarksDemo({ onBack }: Props) {
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-cyan-200 mb-1">Points détectés</div>
-            <div className="text-2xl font-bold">{detectedLandmarks.length}</div>
+            <div className="text-2xl font-bold">{detectedFaces.reduce((sum, face) => sum + face.length, 0)}</div>
           </div>
         </div>
       </div>
@@ -519,16 +541,40 @@ export function FacialLandmarksDemo({ onBack }: Props) {
                 />
                 Afficher les cercles circonscrits
               </label>
+
+              <div className="pt-3 border-t border-primary-light/10">
+                <label className="flex flex-col gap-2 text-sm text-text">
+                  <span className="font-medium">Nombre de visages à détecter</span>
+                  <select
+                    value={maxNumFaces}
+                    onChange={(e) => setMaxNumFaces(parseInt(e.target.value))}
+                    className="px-3 py-2 bg-surface border border-primary-light/20 rounded-lg text-text focus:outline-none focus:ring-2 focus:ring-primary-light"
+                    disabled={isActive}
+                  >
+                    <option value="1">1 visage</option>
+                    <option value="2">2 visages</option>
+                    <option value="3">3 visages</option>
+                    <option value="4">4 visages</option>
+                    <option value="5">5 visages</option>
+                  </select>
+                  {isActive && (
+                    <span className="text-xs text-text-muted">
+                      ⚠️ Arrêtez la webcam pour changer ce paramètre
+                    </span>
+                  )}
+                </label>
+              </div>
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl p-4 border border-cyan-500/30">
             <h3 className="font-bold text-cyan-400 mb-2 text-sm">💡 Comment ça marche ?</h3>
             <ul className="text-xs text-text-muted space-y-2">
-              <li>1️⃣ <strong>MediaPipe Face Mesh</strong> détecte 468 points réels sur votre visage</li>
-              <li>2️⃣ <strong>Triangulation de Delaunay</strong> : divise le visage en triangles optimaux</li>
+              <li>1️⃣ <strong>MediaPipe Face Mesh</strong> détecte jusqu'à {maxNumFaces} visage{maxNumFaces > 1 ? 's' : ''} avec 468 points chacun</li>
+              <li>2️⃣ <strong>Triangulation de Delaunay</strong> : divise chaque visage en triangles optimaux</li>
               <li>3️⃣ Chaque triangle a un <strong>cercle circonscrit</strong> qui ne contient aucun autre point</li>
-              <li>4️⃣ Utilisé pour le <strong>maillage 3D</strong>, l'animation faciale, et les filtres AR</li>
+              <li>4️⃣ Chaque visage a sa <strong>propre couleur</strong> pour faciliter la distinction</li>
+              <li>5️⃣ Utilisé pour le <strong>maillage 3D</strong>, l'animation faciale, et les filtres AR</li>
             </ul>
           </div>
 
@@ -537,15 +583,19 @@ export function FacialLandmarksDemo({ onBack }: Props) {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-text-muted">Visages détectés:</span>
-                <span className="text-cyan-400 font-bold">{numFaces}</span>
+                <span className="text-cyan-400 font-bold">{numFacesDetected} / {maxNumFaces}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Points détectés:</span>
-                <span className="text-cyan-400 font-bold">{detectedLandmarks.length}</span>
+                <span className="text-cyan-400 font-bold">{detectedFaces.reduce((sum, face) => sum + face.length, 0)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Triangles:</span>
-                <span className="text-cyan-400 font-bold">{showTriangulation && detectedLandmarks.length > 0 ? `~${detectedLandmarks.length * 2}` : '0'}</span>
+                <span className="text-cyan-400 font-bold">
+                  {showTriangulation && detectedFaces.length > 0
+                    ? `~${detectedFaces.reduce((sum, face) => sum + face.length * 2, 0)}`
+                    : '0'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Résolution:</span>
