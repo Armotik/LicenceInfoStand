@@ -218,11 +218,11 @@ export function useKeyboardNavigation() {
 // ============================================
 
 export function useIdleTimeout(timeoutMs: number = 60000) {
-  const { mode, returnToIdle, recordInteraction } = useAppStore();
+  const { mode, autoReturnToIdle, returnToIdle, recordInteraction } = useAppStore();
 
   useEffect(() => {
-    // Ne pas activer le timeout en mode veille
-    if (mode === 'idle') return;
+    // Ne pas activer le timeout en mode veille ou si désactivé
+    if (mode === 'idle' || !autoReturnToIdle) return;
 
     let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -254,7 +254,7 @@ export function useIdleTimeout(timeoutMs: number = 60000) {
         window.removeEventListener(event, handleActivity);
       });
     };
-  }, [mode, timeoutMs, returnToIdle, recordInteraction]);
+  }, [mode, autoReturnToIdle, timeoutMs, returnToIdle, recordInteraction]);
 }
 
 // ============================================
