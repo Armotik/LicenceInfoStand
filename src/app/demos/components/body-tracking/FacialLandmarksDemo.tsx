@@ -179,14 +179,13 @@ export function FacialLandmarksDemo({ onBack }: Props) {
 
   // Vérifier si un pixel ressemble à de la peau
   const isSkinColor = (r: number, g: number, b: number): boolean => {
-    // Détection de peau basée sur les valeurs RGB
-    // Plage étendue pour différents types de peau
+    // Détection de peau basée sur les valeurs RGB - plage plus permissive
     return (
-      r > 80 && g > 50 && b > 40 &&  // Minimum pour peau
+      r > 60 && g > 40 && b > 30 &&  // Minimum pour peau (plus permissif)
       r > g && r > b &&              // Rouge dominant
-      Math.abs(r - g) > 15 &&        // Différence R-G
-      r - b > 15 &&                  // Différence R-B
-      r < 250 && g < 220 && b < 200  // Pas trop clair (éviter fond blanc)
+      Math.abs(r - g) > 8 &&         // Différence R-G (réduit)
+      r - b > 8 &&                   // Différence R-B (réduit)
+      r < 255 && g < 235 && b < 220  // Pas trop clair (plus permissif)
     );
   };
 
@@ -257,8 +256,8 @@ export function FacialLandmarksDemo({ onBack }: Props) {
       nose: findDarkestPoint(regions.nose, false),
     };
 
-    // Lisser les offsets avec les valeurs précédentes (plus fort pour plus de stabilité)
-    const featureSmoothing = 0.2;
+    // Lisser les offsets avec les valeurs précédentes
+    const featureSmoothing = 0.15;
     faceFeatureOffsetsRef.current = {
       leftEye: {
         x: faceFeatureOffsetsRef.current.leftEye.x * (1 - featureSmoothing) + features.leftEye.x * featureSmoothing,
@@ -344,8 +343,8 @@ export function FacialLandmarksDemo({ onBack }: Props) {
         const avgMotion = motion / totalPixels;
         const skinRatio = skinPixels / totalPixels;
 
-        // Score combiné : mouvement + présence de peau (poids 70% peau, 30% mouvement)
-        const score = avgMotion * 0.3 + skinRatio * 100 * 0.7;
+        // Score combiné : mouvement + présence de peau (poids équilibrés 50/50)
+        const score = avgMotion * 0.5 + skinRatio * 100 * 0.5;
 
         if (score > maxScore) {
           maxScore = score;
@@ -513,23 +512,23 @@ export function FacialLandmarksDemo({ onBack }: Props) {
 
       // Appliquer les offsets détectés pour les yeux (indices 23-30)
       if (i >= 23 && i < 27) {
-        // Œil gauche - coefficient augmenté pour meilleur alignement
-        offsetX = faceFeatureOffsetsRef.current.leftEye.x * 0.85;
-        offsetY = faceFeatureOffsetsRef.current.leftEye.y * 0.85;
+        // Œil gauche - coefficient modéré
+        offsetX = faceFeatureOffsetsRef.current.leftEye.x * 0.5;
+        offsetY = faceFeatureOffsetsRef.current.leftEye.y * 0.5;
       } else if (i >= 27 && i < 31) {
-        // Œil droit - coefficient augmenté pour meilleur alignement
-        offsetX = faceFeatureOffsetsRef.current.rightEye.x * 0.85;
-        offsetY = faceFeatureOffsetsRef.current.rightEye.y * 0.85;
+        // Œil droit - coefficient modéré
+        offsetX = faceFeatureOffsetsRef.current.rightEye.x * 0.5;
+        offsetY = faceFeatureOffsetsRef.current.rightEye.y * 0.5;
       }
       // Appliquer les offsets pour le nez (indices 31-39)
       else if (i >= 31 && i < 39) {
-        offsetX = faceFeatureOffsetsRef.current.nose.x * 0.7;
-        offsetY = faceFeatureOffsetsRef.current.nose.y * 0.7;
+        offsetX = faceFeatureOffsetsRef.current.nose.x * 0.4;
+        offsetY = faceFeatureOffsetsRef.current.nose.y * 0.4;
       }
       // Appliquer les offsets pour la bouche (indices 39-58)
       else if (i >= 39 && i < 59) {
-        offsetX = faceFeatureOffsetsRef.current.mouth.x * 0.9;
-        offsetY = faceFeatureOffsetsRef.current.mouth.y * 0.9;
+        offsetX = faceFeatureOffsetsRef.current.mouth.x * 0.6;
+        offsetY = faceFeatureOffsetsRef.current.mouth.y * 0.6;
       }
 
       return {
