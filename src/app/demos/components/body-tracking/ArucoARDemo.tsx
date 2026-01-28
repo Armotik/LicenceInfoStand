@@ -75,11 +75,23 @@ export function ArucoARDemo({ onBack }: Props) {
       // Obtenir l'ImageData du canvas
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
+      console.log('Detecting markers...', {
+        imageSize: `${imageData.width}x${imageData.height}`,
+        dataLength: imageData.data.length
+      });
+
       // Détecter les marqueurs avec js-aruco
       const markers = detectorRef.current.detect(imageData);
 
+      console.log('Detection result:', {
+        markersFound: markers.length,
+        markers: markers
+      });
+
       // Convertir les résultats en notre format
       const detectedMarkers: Marker[] = markers.map((marker: any) => {
+        console.log('Processing marker:', marker);
+
         // js-aruco retourne les coins dans l'ordre: corners[0-3] avec propriétés x,y
         const cornerPoints: [number, number][] = [
           [marker.corners[0].x, marker.corners[0].y],
