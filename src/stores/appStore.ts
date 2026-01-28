@@ -54,6 +54,7 @@ const initialState: AppState = {
   // Interaction
   lastInteraction: Date.now(),
   idleTimeoutMs: IDLE_TIMEOUT_MS,
+  autoReturnToIdle: true, // Activé par défaut
 };
 
 // ============================================
@@ -250,10 +251,17 @@ export const useAppStore = create<AppState & AppActions>()(
       }));
     },
 
+    toggleAutoReturnToIdle: () => {
+      set((state) => ({
+        autoReturnToIdle: !state.autoReturnToIdle,
+        lastInteraction: Date.now(),
+      }));
+    },
+
     // ----------------------------------------
     // Interaction Tracking
     // ----------------------------------------
-    
+
     recordInteraction: () => {
       set({ lastInteraction: Date.now() });
     },

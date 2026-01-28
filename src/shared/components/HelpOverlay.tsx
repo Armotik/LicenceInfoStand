@@ -53,7 +53,7 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
 // ============================================
 
 export function HelpOverlay() {
-  const { showHelp, toggleHelp } = useAppStore();
+  const { showHelp, toggleHelp, autoReturnToIdle, toggleAutoReturnToIdle } = useAppStore();
 
   return (
     <AnimatePresence>
@@ -119,8 +119,39 @@ export function HelpOverlay() {
               ))}
             </div>
 
+            {/* Settings Section */}
+            <div className="mt-8 pt-6 border-t border-primary-light/20">
+              <h3 className="text-lg font-semibold text-secondary-light mb-4">
+                Paramètres
+              </h3>
+              <div className="space-y-3">
+                <label className="flex items-center justify-between p-4 bg-surface rounded-lg cursor-pointer hover:bg-surface-lighter transition-colors">
+                  <div className="flex-1">
+                    <div className="text-text font-medium">
+                      Retour automatique au mode veille
+                    </div>
+                    <div className="text-text-muted text-sm mt-1">
+                      Revenir au mode veille après 1 minute d'inactivité
+                    </div>
+                  </div>
+                  <button
+                    onClick={toggleAutoReturnToIdle}
+                    className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2 focus:ring-offset-surface ${
+                      autoReturnToIdle ? 'bg-primary-light' : 'bg-surface-lighter'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                        autoReturnToIdle ? 'translate-x-7' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </label>
+              </div>
+            </div>
+
             {/* Footer hint */}
-            <div className="mt-8 pt-4 border-t border-primary-light/20 text-center">
+            <div className="mt-6 pt-4 border-t border-primary-light/20 text-center">
               <p className="text-text-muted text-sm">
                 Appuyez sur <kbd className="kbd mx-1">H</kbd> ou cliquez n'importe où pour fermer
               </p>

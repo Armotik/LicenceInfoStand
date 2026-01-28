@@ -58,6 +58,7 @@ export interface AppState {
   // Idle timeout
   lastInteraction: number;
   idleTimeoutMs: number;
+  autoReturnToIdle: boolean;
 }
 
 // ============================================
@@ -92,6 +93,7 @@ export interface AppActions {
   toggleHelp: () => void;
   toggleDebug: () => void;
   toggleIdleTitle: () => void;
+  toggleAutoReturnToIdle: () => void;
 
   // Interaction tracking
   recordInteraction: () => void;
