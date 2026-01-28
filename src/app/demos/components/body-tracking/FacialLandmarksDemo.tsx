@@ -155,6 +155,8 @@ export function FacialLandmarksDemo({ onBack }: Props) {
   const [showCircumcircles, setShowCircumcircles] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string>('');
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const [calibrationStep, setCalibrationStep] = useState(0);
 
   // Position trackée (lissée)
   const trackedPositionRef = useRef({ x: 0.5, y: 0.5 });
@@ -177,6 +179,17 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     nose: { x: 0, y: 0 },
   });
 
+  // Points de calibration manuelle
+  const calibrationPointsRef = useRef<{
+    leftEye: { x: number; y: number } | null;
+    rightEye: { x: number; y: number } | null;
+    mouth: { x: number; y: number } | null;
+  }>({
+    leftEye: null,
+    rightEye: null,
+    mouth: null,
+  });
+
   // Vérifier si un pixel ressemble à de la peau
   const isSkinColor = (r: number, g: number, b: number): boolean => {
     // Détection de peau basée sur les valeurs RGB - plage plus permissive
@@ -195,6 +208,39 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     const height = imageData.height;
     const data = imageData.data;
 
+    // Si on a des points de calibration, les utiliser directement
+    if (calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth) {
+      const features = {
+        leftEye: { x: calibrationPointsRef.current.leftEye.x - centerX, y: calibrationPointsRef.current.leftEye.y - centerY },
+        rightEye: { x: calibrationPointsRef.current.rightEye.x - centerX, y: calibrationPointsRef.current.rightEye.y - centerY },
+        mouth: { x: calibrationPointsRef.current.mouth.x - centerX, y: calibrationPointsRef.current.mouth.y - centerY },
+        nose: { x: 0, y: 0 }, // Nez au centre
+      };
+
+      // Lisser avec les valeurs précédentes
+      const featureSmoothing = 0.3; // Plus fort pour points manuels
+      faceFeatureOffsetsRef.current = {
+        leftEye: {
+          x: faceFeatureOffsetsRef.current.leftEye.x * (1 - featureSmoothing) + features.leftEye.x * featureSmoothing,
+          y: faceFeatureOffsetsRef.current.leftEye.y * (1 - featureSmoothing) + features.leftEye.y * featureSmoothing,
+        },
+        rightEye: {
+          x: faceFeatureOffsetsRef.current.rightEye.x * (1 - featureSmoothing) + features.rightEye.x * featureSmoothing,
+          y: faceFeatureOffsetsRef.current.rightEye.y * (1 - featureSmoothing) + features.rightEye.y * featureSmoothing,
+        },
+        mouth: {
+          x: faceFeatureOffsetsRef.current.mouth.x * (1 - featureSmoothing) + features.mouth.x * featureSmoothing,
+          y: faceFeatureOffsetsRef.current.mouth.y * (1 - featureSmoothing) + features.mouth.y * featureSmoothing,
+        },
+        nose: {
+          x: faceFeatureOffsetsRef.current.nose.x * (1 - featureSmoothing),
+          y: faceFeatureOffsetsRef.current.nose.y * (1 - featureSmoothing),
+        },
+      };
+      return;
+    }
+
+    // Sinon, utiliser la détection automatique
     // Régions d'intérêt relatives au centre détecté
     const regions = {
       leftEye: { x: centerX - radius * 0.4, y: centerY - radius * 0.35, w: radius * 0.35, h: radius * 0.2 },
@@ -395,6 +441,56 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     { x: 0.46, y: 0.72 }, { x: 0.42, y: 0.71 }, { x: 0.38, y: 0.7 },
   ];
 
+  // Démarrer la calibration
+  const startCalibration = () => {
+    setIsCalibrating(true);
+    setCalibrationStep(0);
+    calibrationPointsRef.current = {
+      leftEye: null,
+      rightEye: null,
+      mouth: null,
+    };
+  };
+
+  // Gérer les clics pendant la calibration
+  const handleCalibrationClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isCalibrating || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Convertir en coordonnées relatives au canvas
+    const relX = (x / rect.width) * canvas.width;
+    const relY = (y / rect.height) * canvas.height;
+
+    if (calibrationStep === 0) {
+      // Œil gauche
+      calibrationPointsRef.current.leftEye = { x: relX, y: relY };
+      setCalibrationStep(1);
+    } else if (calibrationStep === 1) {
+      // Œil droit
+      calibrationPointsRef.current.rightEye = { x: relX, y: relY };
+      setCalibrationStep(2);
+    } else if (calibrationStep === 2) {
+      // Bouche
+      calibrationPointsRef.current.mouth = { x: relX, y: relY };
+      setIsCalibrating(false);
+      setCalibrationStep(0);
+
+      // Calculer le centre du visage à partir des points
+      if (calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye) {
+        const centerX = (calibrationPointsRef.current.leftEye.x + calibrationPointsRef.current.rightEye.x) / 2;
+        const centerY = (calibrationPointsRef.current.leftEye.y + calibrationPointsRef.current.rightEye.y) / 2;
+        trackedPositionRef.current = {
+          x: centerX / canvas.width,
+          y: centerY / canvas.height,
+        };
+      }
+    }
+  };
+
   // Démarrer la webcam
   const startWebcam = async () => {
     try {
@@ -407,6 +503,8 @@ export function FacialLandmarksDemo({ onBack }: Props) {
         videoRef.current.play();
         setIsActive(true);
         setError('');
+        // Lancer la calibration automatiquement
+        setTimeout(() => startCalibration(), 500);
       }
     } catch (err) {
       setError('Impossible d\'accéder à la webcam. Veuillez autoriser l\'accès.');
@@ -471,6 +569,47 @@ export function FacialLandmarksDemo({ onBack }: Props) {
       detectFaceFeatures(imageData, centerX, centerY, headRadius);
     }
 
+    // Mode calibration : afficher les instructions
+    if (isCalibrating) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.font = 'bold 24px Arial';
+      ctx.fillStyle = '#00ffff';
+      ctx.textAlign = 'center';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#00ffff';
+
+      let instruction = '';
+      if (calibrationStep === 0) {
+        instruction = 'Cliquez sur votre ŒIL GAUCHE';
+      } else if (calibrationStep === 1) {
+        instruction = 'Cliquez sur votre ŒIL DROIT';
+      } else if (calibrationStep === 2) {
+        instruction = 'Cliquez sur votre BOUCHE';
+      }
+
+      ctx.fillText(instruction, canvas.width / 2, 50);
+      ctx.shadowBlur = 0;
+
+      // Afficher les points déjà marqués
+      if (calibrationPointsRef.current.leftEye && calibrationStep >= 1) {
+        ctx.fillStyle = '#00ff00';
+        ctx.beginPath();
+        ctx.arc(calibrationPointsRef.current.leftEye.x, calibrationPointsRef.current.leftEye.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (calibrationPointsRef.current.rightEye && calibrationStep >= 2) {
+        ctx.fillStyle = '#00ff00';
+        ctx.beginPath();
+        ctx.arc(calibrationPointsRef.current.rightEye.x, calibrationPointsRef.current.rightEye.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      animationFrameRef.current = requestAnimationFrame(drawFrame);
+      return;
+    }
+
     // Ajouter un overlay semi-transparent pour indiquer que c'est une démo
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -506,29 +645,35 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     });
 
     // Convertir les landmarks animés en coordonnées canvas avec ajustements basés sur détection
+    // Utiliser des coefficients plus forts si on a une calibration manuelle
+    const hasCalibration = calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth;
+    const eyeCoef = hasCalibration ? 0.95 : 0.5;
+    const noseCoef = hasCalibration ? 0.7 : 0.4;
+    const mouthCoef = hasCalibration ? 0.95 : 0.6;
+
     const points = animatedLandmarksRef.current.map((p, i) => {
       let offsetX = 0;
       let offsetY = 0;
 
       // Appliquer les offsets détectés pour les yeux (indices 23-30)
       if (i >= 23 && i < 27) {
-        // Œil gauche - coefficient modéré
-        offsetX = faceFeatureOffsetsRef.current.leftEye.x * 0.5;
-        offsetY = faceFeatureOffsetsRef.current.leftEye.y * 0.5;
+        // Œil gauche
+        offsetX = faceFeatureOffsetsRef.current.leftEye.x * eyeCoef;
+        offsetY = faceFeatureOffsetsRef.current.leftEye.y * eyeCoef;
       } else if (i >= 27 && i < 31) {
-        // Œil droit - coefficient modéré
-        offsetX = faceFeatureOffsetsRef.current.rightEye.x * 0.5;
-        offsetY = faceFeatureOffsetsRef.current.rightEye.y * 0.5;
+        // Œil droit
+        offsetX = faceFeatureOffsetsRef.current.rightEye.x * eyeCoef;
+        offsetY = faceFeatureOffsetsRef.current.rightEye.y * eyeCoef;
       }
       // Appliquer les offsets pour le nez (indices 31-39)
       else if (i >= 31 && i < 39) {
-        offsetX = faceFeatureOffsetsRef.current.nose.x * 0.4;
-        offsetY = faceFeatureOffsetsRef.current.nose.y * 0.4;
+        offsetX = faceFeatureOffsetsRef.current.nose.x * noseCoef;
+        offsetY = faceFeatureOffsetsRef.current.nose.y * noseCoef;
       }
       // Appliquer les offsets pour la bouche (indices 39-58)
       else if (i >= 39 && i < 59) {
-        offsetX = faceFeatureOffsetsRef.current.mouth.x * 0.6;
-        offsetY = faceFeatureOffsetsRef.current.mouth.y * 0.6;
+        offsetX = faceFeatureOffsetsRef.current.mouth.x * mouthCoef;
+        offsetY = faceFeatureOffsetsRef.current.mouth.y * mouthCoef;
       }
 
       return {
@@ -661,6 +806,8 @@ export function FacialLandmarksDemo({ onBack }: Props) {
               width={640}
               height={480}
               className="absolute inset-0 w-full h-full object-cover"
+              onClick={handleCalibrationClick}
+              style={{ cursor: isCalibrating ? 'crosshair' : 'default' }}
             />
 
             {!isActive && (
@@ -693,12 +840,21 @@ export function FacialLandmarksDemo({ onBack }: Props) {
           </div>
 
           {isActive && (
-            <button
-              onClick={stopWebcam}
-              className="w-full mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-all"
-            >
-              ⏸ Arrêter la webcam
-            </button>
+            <div className="space-y-2 mt-4">
+              <button
+                onClick={startCalibration}
+                className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-bold transition-all"
+                disabled={isCalibrating}
+              >
+                🎯 Recalibrer les points
+              </button>
+              <button
+                onClick={stopWebcam}
+                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-all"
+              >
+                ⏸ Arrêter la webcam
+              </button>
+            </div>
           )}
         </div>
 
