@@ -155,267 +155,55 @@ export function FacialLandmarksDemo({ onBack }: Props) {
   const [showCircumcircles, setShowCircumcircles] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string>('');
-  const [isCalibrating, setIsCalibrating] = useState(false);
-  const [calibrationStep, setCalibrationStep] = useState(0);
 
   // Position trackée (lissée)
   const trackedPositionRef = useRef({ x: 0.5, y: 0.5 });
-  const previousFrameRef = useRef<Uint8ClampedArray | null>(null);
 
-  // Animation des landmarks : positions animées
-  const animatedLandmarksRef = useRef<Point[]>([]);
-  const landmarksInitializedRef = useRef(false);
-
-  // Détection de caractéristiques du visage
-  const faceFeatureOffsetsRef = useRef<{
-    leftEye: { x: number; y: number };
-    rightEye: { x: number; y: number };
-    mouth: { x: number; y: number };
-    nose: { x: number; y: number };
-  }>({
-    leftEye: { x: 0, y: 0 },
-    rightEye: { x: 0, y: 0 },
-    mouth: { x: 0, y: 0 },
-    nose: { x: 0, y: 0 },
-  });
-
-  // Points de calibration manuelle
-  const calibrationPointsRef = useRef<{
-    leftEye: { x: number; y: number } | null;
-    rightEye: { x: number; y: number } | null;
-    mouth: { x: number; y: number } | null;
-  }>({
-    leftEye: null,
-    rightEye: null,
-    mouth: null,
-  });
-
-  // Vérifier si un pixel ressemble à de la peau
-  const isSkinColor = (r: number, g: number, b: number): boolean => {
-    // Détection de peau basée sur les valeurs RGB - plage plus permissive
-    return (
-      r > 60 && g > 40 && b > 30 &&  // Minimum pour peau (plus permissif)
-      r > g && r > b &&              // Rouge dominant
-      Math.abs(r - g) > 8 &&         // Différence R-G (réduit)
-      r - b > 8 &&                   // Différence R-B (réduit)
-      r < 255 && g < 235 && b < 220  // Pas trop clair (plus permissif)
-    );
-  };
-
-  // Fonction pour détecter les caractéristiques du visage (yeux, bouche, nez)
-  const detectFaceFeatures = (imageData: ImageData, centerX: number, centerY: number, radius: number) => {
+  // Fonction pour détecter la zone la plus lumineuse (approximation du visage)
+  const detectBrightestRegion = (imageData: ImageData): { x: number; y: number } => {
     const width = imageData.width;
     const height = imageData.height;
     const data = imageData.data;
 
-    // Si on a des points de calibration, les utiliser directement
-    if (calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth) {
-      const features = {
-        leftEye: { x: calibrationPointsRef.current.leftEye.x - centerX, y: calibrationPointsRef.current.leftEye.y - centerY },
-        rightEye: { x: calibrationPointsRef.current.rightEye.x - centerX, y: calibrationPointsRef.current.rightEye.y - centerY },
-        mouth: { x: calibrationPointsRef.current.mouth.x - centerX, y: calibrationPointsRef.current.mouth.y - centerY },
-        nose: { x: 0, y: 0 }, // Nez au centre
-      };
-
-      // Lisser avec les valeurs précédentes
-      const featureSmoothing = 0.3; // Plus fort pour points manuels
-      faceFeatureOffsetsRef.current = {
-        leftEye: {
-          x: faceFeatureOffsetsRef.current.leftEye.x * (1 - featureSmoothing) + features.leftEye.x * featureSmoothing,
-          y: faceFeatureOffsetsRef.current.leftEye.y * (1 - featureSmoothing) + features.leftEye.y * featureSmoothing,
-        },
-        rightEye: {
-          x: faceFeatureOffsetsRef.current.rightEye.x * (1 - featureSmoothing) + features.rightEye.x * featureSmoothing,
-          y: faceFeatureOffsetsRef.current.rightEye.y * (1 - featureSmoothing) + features.rightEye.y * featureSmoothing,
-        },
-        mouth: {
-          x: faceFeatureOffsetsRef.current.mouth.x * (1 - featureSmoothing) + features.mouth.x * featureSmoothing,
-          y: faceFeatureOffsetsRef.current.mouth.y * (1 - featureSmoothing) + features.mouth.y * featureSmoothing,
-        },
-        nose: {
-          x: faceFeatureOffsetsRef.current.nose.x * (1 - featureSmoothing),
-          y: faceFeatureOffsetsRef.current.nose.y * (1 - featureSmoothing),
-        },
-      };
-      return;
-    }
-
-    // Sinon, utiliser la détection automatique
-    // Régions d'intérêt relatives au centre détecté
-    const regions = {
-      leftEye: { x: centerX - radius * 0.4, y: centerY - radius * 0.35, w: radius * 0.35, h: radius * 0.2 },
-      rightEye: { x: centerX + radius * 0.05, y: centerY - radius * 0.35, w: radius * 0.35, h: radius * 0.2 },
-      mouth: { x: centerX - radius * 0.3, y: centerY + radius * 0.3, w: radius * 0.6, h: radius * 0.25 },
-      nose: { x: centerX - radius * 0.15, y: centerY - radius * 0.05, w: radius * 0.3, h: radius * 0.35 },
-    };
-
-    // Pour chaque région, trouver le point le plus sombre dans une zone de peau
-    const findDarkestPoint = (region: { x: number; y: number; w: number; h: number }, requireSkin: boolean = true) => {
-      let minBrightness = 255;
-      let darkX = region.x + region.w / 2;
-      let darkY = region.y + region.h / 2;
-      let foundValidPoint = false;
-
-      const startX = Math.max(0, Math.floor(region.x));
-      const startY = Math.max(0, Math.floor(region.y));
-      const endX = Math.min(width, Math.floor(region.x + region.w));
-      const endY = Math.min(height, Math.floor(region.y + region.h));
-
-      // Échantillonner tous les 3 pixels pour plus de précision
-      for (let y = startY; y < endY; y += 3) {
-        for (let x = startX; x < endX; x += 3) {
-          const idx = (y * width + x) * 4;
-          const r = data[idx];
-          const g = data[idx + 1];
-          const b = data[idx + 2];
-          const brightness = (r + g + b) / 3;
-
-          // Pour les yeux et la bouche, chercher des pixels sombres
-          // Pour le nez, vérifier qu'on est dans une zone de peau
-          const isValidPixel = requireSkin ? isSkinColor(r, g, b) : true;
-
-          if (isValidPixel && brightness < minBrightness) {
-            minBrightness = brightness;
-            darkX = x;
-            darkY = y;
-            foundValidPoint = true;
-          }
-        }
-      }
-
-      // Si aucun point valide trouvé, retourner le centre de la région
-      if (!foundValidPoint) {
-        darkX = region.x + region.w / 2;
-        darkY = region.y + region.h / 2;
-      }
-
-      return { x: darkX - centerX, y: darkY - centerY };
-    };
-
-    // Détecter les caractéristiques
-    // Les yeux et la bouche ne requirent pas de vérification de peau (on cherche des zones sombres)
-    // Le nez doit être dans une zone de peau
-    const features = {
-      leftEye: findDarkestPoint(regions.leftEye, false),
-      rightEye: findDarkestPoint(regions.rightEye, false),
-      mouth: findDarkestPoint(regions.mouth, false),
-      nose: findDarkestPoint(regions.nose, false),
-    };
-
-    // Lisser les offsets avec les valeurs précédentes
-    const featureSmoothing = 0.15;
-    faceFeatureOffsetsRef.current = {
-      leftEye: {
-        x: faceFeatureOffsetsRef.current.leftEye.x * (1 - featureSmoothing) + features.leftEye.x * featureSmoothing,
-        y: faceFeatureOffsetsRef.current.leftEye.y * (1 - featureSmoothing) + features.leftEye.y * featureSmoothing,
-      },
-      rightEye: {
-        x: faceFeatureOffsetsRef.current.rightEye.x * (1 - featureSmoothing) + features.rightEye.x * featureSmoothing,
-        y: faceFeatureOffsetsRef.current.rightEye.y * (1 - featureSmoothing) + features.rightEye.y * featureSmoothing,
-      },
-      mouth: {
-        x: faceFeatureOffsetsRef.current.mouth.x * (1 - featureSmoothing) + features.mouth.x * featureSmoothing,
-        y: faceFeatureOffsetsRef.current.mouth.y * (1 - featureSmoothing) + features.mouth.y * featureSmoothing,
-      },
-      nose: {
-        x: faceFeatureOffsetsRef.current.nose.x * (1 - featureSmoothing) + features.nose.x * featureSmoothing,
-        y: faceFeatureOffsetsRef.current.nose.y * (1 - featureSmoothing) + features.nose.y * featureSmoothing,
-      },
-    };
-  };
-
-  // Fonction pour détecter la zone avec le plus de mouvement et peau (approximation du visage)
-  const detectMotionRegion = (imageData: ImageData): { x: number; y: number } => {
-    const width = imageData.width;
-    const height = imageData.height;
-    const data = imageData.data;
-
-    // Première frame : initialiser
-    if (!previousFrameRef.current) {
-      previousFrameRef.current = new Uint8ClampedArray(data.length);
-      for (let i = 0; i < data.length; i++) {
-        previousFrameRef.current[i] = data[i];
-      }
-      return { x: width / 2, y: height / 2 };
-    }
-
-    // Diviser l'image en grille 5x5 (compromis perf/précision)
-    const gridCols = 5;
-    const gridRows = 5;
+    // Diviser l'image en grille 8x6
+    const gridCols = 8;
+    const gridRows = 6;
     const cellWidth = width / gridCols;
     const cellHeight = height / gridRows;
 
-    let maxScore = 0;
-    let motionX = width / 2;
-    let motionY = height / 2;
+    let maxBrightness = 0;
+    let brightestX = width / 2;
+    let brightestY = height / 2;
 
-    // Chercher la cellule avec le meilleur score (mouvement + peau)
-    for (let row = 0; row < gridRows; row++) {
-      for (let col = 0; col < gridCols; col++) {
-        let motion = 0;
-        let skinPixels = 0;
-        let totalPixels = 0;
+    // Chercher la cellule la plus lumineuse dans la partie centrale
+    for (let row = 1; row < gridRows - 1; row++) {
+      for (let col = 1; col < gridCols - 1; col++) {
+        let brightness = 0;
+        let count = 0;
 
         const startX = Math.floor(col * cellWidth);
         const startY = Math.floor(row * cellHeight);
         const endX = Math.floor((col + 1) * cellWidth);
         const endY = Math.floor((row + 1) * cellHeight);
 
-        // Échantillonner tous les 5 pixels (compromis)
-        for (let y = startY; y < endY; y += 5) {
-          for (let x = startX; x < endX; x += 5) {
+        for (let y = startY; y < endY; y += 4) {
+          for (let x = startX; x < endX; x += 4) {
             const idx = (y * width + x) * 4;
-
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-
-            // Calculer la différence avec la frame précédente
-            const diffR = Math.abs(r - previousFrameRef.current[idx]);
-            const diffG = Math.abs(g - previousFrameRef.current[idx + 1]);
-            const diffB = Math.abs(b - previousFrameRef.current[idx + 2]);
-            const diff = (diffR + diffG + diffB) / 3;
-
-            motion += diff;
-
-            // Compter les pixels de peau
-            if (isSkinColor(r, g, b)) {
-              skinPixels++;
-            }
-            totalPixels++;
+            brightness += (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+            count++;
           }
         }
 
-        const avgMotion = motion / totalPixels;
-        const skinRatio = skinPixels / totalPixels;
-
-        // Score combiné : mouvement + présence de peau (poids équilibrés 50/50)
-        const score = avgMotion * 0.5 + skinRatio * 100 * 0.5;
-
-        if (score > maxScore) {
-          maxScore = score;
-          motionX = startX + cellWidth / 2;
-          motionY = startY + cellHeight / 2;
+        const avgBrightness = brightness / count;
+        if (avgBrightness > maxBrightness) {
+          maxBrightness = avgBrightness;
+          brightestX = startX + cellWidth / 2;
+          brightestY = startY + cellHeight / 2;
         }
       }
     }
 
-    // Mettre à jour la frame précédente moins souvent pour réduire la sensibilité
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
-      for (let i = 0; i < data.length; i++) {
-        previousFrameRef.current[i] = data[i];
-      }
-    }
-
-    // Si score trop faible, garder la position actuelle
-    if (maxScore < 5) {
-      return {
-        x: trackedPositionRef.current.x * width,
-        y: trackedPositionRef.current.y * height
-      };
-    }
-
-    return { x: motionX, y: motionY };
+    return { x: brightestX, y: brightestY };
   };
 
   // Points de landmarks simplifiés (simulés pour la démo)
@@ -441,56 +229,6 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     { x: 0.46, y: 0.72 }, { x: 0.42, y: 0.71 }, { x: 0.38, y: 0.7 },
   ];
 
-  // Démarrer la calibration
-  const startCalibration = () => {
-    setIsCalibrating(true);
-    setCalibrationStep(0);
-    calibrationPointsRef.current = {
-      leftEye: null,
-      rightEye: null,
-      mouth: null,
-    };
-  };
-
-  // Gérer les clics pendant la calibration
-  const handleCalibrationClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isCalibrating || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    // Convertir en coordonnées relatives au canvas
-    const relX = (x / rect.width) * canvas.width;
-    const relY = (y / rect.height) * canvas.height;
-
-    if (calibrationStep === 0) {
-      // Œil gauche
-      calibrationPointsRef.current.leftEye = { x: relX, y: relY };
-      setCalibrationStep(1);
-    } else if (calibrationStep === 1) {
-      // Œil droit
-      calibrationPointsRef.current.rightEye = { x: relX, y: relY };
-      setCalibrationStep(2);
-    } else if (calibrationStep === 2) {
-      // Bouche
-      calibrationPointsRef.current.mouth = { x: relX, y: relY };
-      setIsCalibrating(false);
-      setCalibrationStep(0);
-
-      // Calculer le centre du visage à partir des points
-      if (calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye) {
-        const centerX = (calibrationPointsRef.current.leftEye.x + calibrationPointsRef.current.rightEye.x) / 2;
-        const centerY = (calibrationPointsRef.current.leftEye.y + calibrationPointsRef.current.rightEye.y) / 2;
-        trackedPositionRef.current = {
-          x: centerX / canvas.width,
-          y: centerY / canvas.height,
-        };
-      }
-    }
-  };
-
   // Démarrer la webcam
   const startWebcam = async () => {
     try {
@@ -503,8 +241,6 @@ export function FacialLandmarksDemo({ onBack }: Props) {
         videoRef.current.play();
         setIsActive(true);
         setError('');
-        // Lancer la calibration automatiquement
-        setTimeout(() => startCalibration(), 500);
       }
     } catch (err) {
       setError('Impossible d\'accéder à la webcam. Veuillez autoriser l\'accès.');
@@ -523,15 +259,6 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
-    // Réinitialiser l'animation des landmarks et les détections
-    landmarksInitializedRef.current = false;
-    animatedLandmarksRef.current = [];
-    faceFeatureOffsetsRef.current = {
-      leftEye: { x: 0, y: 0 },
-      rightEye: { x: 0, y: 0 },
-      mouth: { x: 0, y: 0 },
-      nose: { x: 0, y: 0 },
-    };
   };
 
   // Dessiner la frame
@@ -546,184 +273,39 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter la position toutes les 8 frames pour réduire la sensibilité
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
+    // Détecter la position toutes les 5 frames pour le tracking
+    if (animationFrameRef.current === undefined || animationFrameRef.current % 5 === 0) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const detected = detectMotionRegion(imageData);
+      const detected = detectBrightestRegion(imageData);
 
-      // Lissage exponentiel de la position (légèrement augmenté avec détection de peau)
-      const smoothing = 0.12;
+      // Lissage exponentiel de la position (smoothing)
+      const smoothing = 0.3;
       trackedPositionRef.current = {
         x: trackedPositionRef.current.x * (1 - smoothing) + (detected.x / canvas.width) * smoothing,
         y: trackedPositionRef.current.y * (1 - smoothing) + (detected.y / canvas.height) * smoothing,
       };
     }
 
-    // Détecter les caractéristiques du visage toutes les 10 frames (seulement si pas calibré)
-    const hasCalibration = calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth;
-    if (!hasCalibration && (animationFrameRef.current === undefined || animationFrameRef.current % 10 === 0)) {
-      const centerX = trackedPositionRef.current.x * canvas.width;
-      const centerY = trackedPositionRef.current.y * canvas.height;
-      const headRadius = Math.min(canvas.width, canvas.height) * 0.25;
-
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      detectFaceFeatures(imageData, centerX, centerY, headRadius);
-    }
-
-    // Mode calibration : afficher les instructions
-    if (isCalibrating) {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.font = 'bold 24px Arial';
-      ctx.fillStyle = '#00ffff';
-      ctx.textAlign = 'center';
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#00ffff';
-
-      let instruction = '';
-      if (calibrationStep === 0) {
-        instruction = 'Cliquez sur votre ŒIL GAUCHE';
-      } else if (calibrationStep === 1) {
-        instruction = 'Cliquez sur votre ŒIL DROIT';
-      } else if (calibrationStep === 2) {
-        instruction = 'Cliquez sur votre BOUCHE';
-      }
-
-      ctx.fillText(instruction, canvas.width / 2, 50);
-      ctx.shadowBlur = 0;
-
-      // Afficher les points déjà marqués
-      if (calibrationPointsRef.current.leftEye && calibrationStep >= 1) {
-        ctx.fillStyle = '#00ff00';
-        ctx.beginPath();
-        ctx.arc(calibrationPointsRef.current.leftEye.x, calibrationPointsRef.current.leftEye.y, 8, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      if (calibrationPointsRef.current.rightEye && calibrationStep >= 2) {
-        ctx.fillStyle = '#00ff00';
-        ctx.beginPath();
-        ctx.arc(calibrationPointsRef.current.rightEye.x, calibrationPointsRef.current.rightEye.y, 8, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      animationFrameRef.current = requestAnimationFrame(drawFrame);
-      return;
-    }
-
     // Ajouter un overlay semi-transparent pour indiquer que c'est une démo
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Dessiner un cercle pour représenter une tête à la position trackée (seulement si pas calibré)
+    // Dessiner un cercle pour représenter une tête à la position trackée
     const centerX = trackedPositionRef.current.x * canvas.width;
     const centerY = trackedPositionRef.current.y * canvas.height;
     const headRadius = Math.min(canvas.width, canvas.height) * 0.25;
 
-    const hasCalibrationForCircle = calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth;
-    if (!hasCalibrationForCircle) {
-      ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, headRadius, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, headRadius, 0, Math.PI * 2);
+    ctx.stroke();
 
-    // Initialiser les landmarks animés si nécessaire
-    if (!landmarksInitializedRef.current) {
-      animatedLandmarksRef.current = faceLandmarks.map(() => ({
-        x: Math.random(),
-        y: Math.random(),
-      }));
-      landmarksInitializedRef.current = true;
-    }
-
-    // Animer les landmarks vers leurs positions cibles
-    const animationSpeed = 0.06; // Vitesse réduite pour plus de stabilité
-    animatedLandmarksRef.current = animatedLandmarksRef.current.map((current, i) => {
-      const target = faceLandmarks[i];
-      return {
-        x: current.x + (target.x - current.x) * animationSpeed,
-        y: current.y + (target.y - current.y) * animationSpeed,
-      };
-    });
-
-    // Convertir les landmarks animés en coordonnées canvas avec transformation basée sur calibration
-    let points: Point[];
-
-    if (calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth) {
-      // Mode calibré : calculer une transformation complète
-      const leftEye = calibrationPointsRef.current.leftEye;
-      const rightEye = calibrationPointsRef.current.rightEye;
-      const mouth = calibrationPointsRef.current.mouth;
-
-      // Calculer le centre entre les yeux
-      const eyeCenterX = (leftEye.x + rightEye.x) / 2;
-      const eyeCenterY = (leftEye.y + rightEye.y) / 2;
-
-      // Calculer l'échelle basée sur la distance entre les yeux (distance théorique = 0.3)
-      const eyeDistance = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
-      const theoreticalEyeDistance = headRadius * 2 * 0.3; // 30% de la largeur du visage
-      const scaleX = eyeDistance / theoreticalEyeDistance;
-
-      // Calculer la distance verticale entre les yeux et la bouche pour échelle Y
-      const eyeMouthDistance = Math.hypot(mouth.x - eyeCenterX, mouth.y - eyeCenterY);
-      const theoreticalEyeMouthDistance = headRadius * 2 * 0.3; // 30% de la hauteur
-      const scaleY = eyeMouthDistance / theoreticalEyeMouthDistance;
-
-      // Calculer l'angle de rotation du visage
-      const angle = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
-
-      // Transformer chaque landmark
-      points = animatedLandmarksRef.current.map((p) => {
-        // Position relative au centre du modèle (0.5, 0.5)
-        let dx = (p.x - 0.5) * headRadius * 2;
-        let dy = (p.y - 0.5) * headRadius * 2;
-
-        // Appliquer l'échelle
-        dx *= scaleX;
-        dy *= scaleY;
-
-        // Appliquer la rotation
-        const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
-        const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
-
-        // Translater par rapport au centre des yeux
-        return {
-          x: eyeCenterX + rotatedX,
-          y: eyeCenterY + rotatedY,
-        };
-      });
-    } else {
-      // Mode non calibré : utiliser l'ancien système avec offsets
-      const eyeCoef = 0.5;
-      const noseCoef = 0.4;
-      const mouthCoef = 0.6;
-
-      points = animatedLandmarksRef.current.map((p, i) => {
-        let offsetX = 0;
-        let offsetY = 0;
-
-        if (i >= 23 && i < 27) {
-          offsetX = faceFeatureOffsetsRef.current.leftEye.x * eyeCoef;
-          offsetY = faceFeatureOffsetsRef.current.leftEye.y * eyeCoef;
-        } else if (i >= 27 && i < 31) {
-          offsetX = faceFeatureOffsetsRef.current.rightEye.x * eyeCoef;
-          offsetY = faceFeatureOffsetsRef.current.rightEye.y * eyeCoef;
-        } else if (i >= 31 && i < 39) {
-          offsetX = faceFeatureOffsetsRef.current.nose.x * noseCoef;
-          offsetY = faceFeatureOffsetsRef.current.nose.y * noseCoef;
-        } else if (i >= 39 && i < 59) {
-          offsetX = faceFeatureOffsetsRef.current.mouth.x * mouthCoef;
-          offsetY = faceFeatureOffsetsRef.current.mouth.y * mouthCoef;
-        }
-
-        return {
-          x: centerX + (p.x - 0.5) * headRadius * 2 + offsetX,
-          y: centerY + (p.y - 0.5) * headRadius * 2 + offsetY,
-        };
-      });
-    }
+    // Convertir les landmarks en coordonnées canvas (centrés sur la tête)
+    const points = faceLandmarks.map(p => ({
+      x: centerX + (p.x - 0.5) * headRadius * 2,
+      y: centerY + (p.y - 0.5) * headRadius * 2,
+    }));
 
     // Triangulation de Delaunay
     let triangles: Triangle[] = [];
@@ -849,8 +431,6 @@ export function FacialLandmarksDemo({ onBack }: Props) {
               width={640}
               height={480}
               className="absolute inset-0 w-full h-full object-cover"
-              onClick={handleCalibrationClick}
-              style={{ cursor: isCalibrating ? 'crosshair' : 'default' }}
             />
 
             {!isActive && (
@@ -883,21 +463,12 @@ export function FacialLandmarksDemo({ onBack }: Props) {
           </div>
 
           {isActive && (
-            <div className="space-y-2 mt-4">
-              <button
-                onClick={startCalibration}
-                className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-bold transition-all"
-                disabled={isCalibrating}
-              >
-                🎯 Recalibrer les points
-              </button>
-              <button
-                onClick={stopWebcam}
-                className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-all"
-              >
-                ⏸ Arrêter la webcam
-              </button>
-            </div>
+            <button
+              onClick={stopWebcam}
+              className="w-full mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-all"
+            >
+              ⏸ Arrêter la webcam
+            </button>
           )}
         </div>
 
