@@ -5,6 +5,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+// @ts-ignore - js-aruco doesn't have TypeScript definitions
+import AR from 'js-aruco';
 
 // ============================================
 // Types
@@ -20,13 +22,6 @@ interface Marker {
   center: [number, number];
 }
 
-// Déclaration globale pour OpenCV
-declare global {
-  interface Window {
-    cv: any;
-  }
-}
-
 // ============================================
 // Composant principal
 // ============================================
@@ -36,7 +31,7 @@ export function ArucoARDemo({ onBack }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const frameCountRef = useRef<number>(0);
-  const dictionaryRef = useRef<any>(null);
+  const detectorRef = useRef<any>(null);
   const markersRef = useRef<Marker[]>([]);
 
   const [isActive, setIsActive] = useState(false);
@@ -46,168 +41,63 @@ export function ArucoARDemo({ onBack }: Props) {
   const [overlayType, setOverlayType] = useState<'cube' | 'pyramid' | 'sphere' | 'axes'>('cube');
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string>('');
-  const [isOpenCVLoading, setIsOpenCVLoading] = useState(true);
-  const [isOpenCVReady, setIsOpenCVReady] = useState(false);
+  const [isDetectorReady, setIsDetectorReady] = useState(false);
 
-  // Charger OpenCV.js
+  // Initialiser le détecteur ArUco js-aruco
   useEffect(() => {
-    const loadOpenCV = () => {
-      // Si OpenCV est déjà chargé, on l'utilise directement
-      if (window.cv && window.cv.Mat) {
-        console.log('OpenCV already loaded');
-        initArucoDetector();
-        return;
-      }
-
-      // Vérifier si le script existe déjà dans le DOM
-      const existingScript = document.querySelector('script[src*="opencv.js"]');
-      if (existingScript) {
-        console.log('OpenCV script already in DOM, waiting for it to load...');
-        const checkOpenCV = setInterval(() => {
-          if (window.cv && window.cv.Mat) {
-            clearInterval(checkOpenCV);
-            console.log('OpenCV loaded successfully');
-            initArucoDetector();
-          }
-        }, 100);
-        return;
-      }
-
-      // Charger OpenCV.js depuis le CDN
-      const script = document.createElement('script');
-      script.src = 'https://docs.opencv.org/4.8.0/opencv.js';
-      script.async = true;
-      script.id = 'opencv-script';
-
-      script.onload = () => {
-        const checkOpenCV = setInterval(() => {
-          if (window.cv && window.cv.Mat) {
-            clearInterval(checkOpenCV);
-            console.log('OpenCV loaded successfully');
-            initArucoDetector();
-          }
-        }, 100);
-      };
-
-      script.onerror = () => {
-        console.error('Failed to load OpenCV.js');
-        setError('Impossible de charger OpenCV.js. Veuillez rafraîchir la page.');
-        setIsOpenCVLoading(false);
-      };
-
-      document.body.appendChild(script);
-    };
-
-    const initArucoDetector = () => {
-      try {
-        const cv = window.cv;
-
-        // Vérifier si le module ArUco est disponible
-        console.log('Checking ArUco availability...');
-        console.log('cv.aruco exists:', typeof cv.aruco !== 'undefined');
-        console.log('cv.aruco_Dictionary exists:', typeof cv.aruco_Dictionary !== 'undefined');
-        console.log('cv.DICT_4X4_100 exists:', typeof cv.DICT_4X4_100 !== 'undefined');
-
-        // Essayer différentes syntaxes pour créer le dictionnaire
-        if (cv.aruco && cv.aruco.Dictionary) {
-          // Nouvelle syntaxe
-          console.log('Using cv.aruco.Dictionary');
-          dictionaryRef.current = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_100);
-        } else if (cv.aruco_Dictionary) {
-          // Ancienne syntaxe
-          console.log('Using cv.aruco_Dictionary');
-          dictionaryRef.current = new cv.aruco_Dictionary(cv.DICT_4X4_100);
-        } else {
-          throw new Error('ArUco module not available in this OpenCV.js build');
-        }
-
-        console.log('ArUco detector initialized successfully');
-        setIsOpenCVReady(true);
-        setIsOpenCVLoading(false);
-      } catch (err) {
-        console.error('Failed to initialize ArUco detector:', err);
-        setError('Le module ArUco n\'est pas disponible dans cette version d\'OpenCV.js. Veuillez utiliser une version personnalisée incluant ArUco.');
-        setIsOpenCVLoading(false);
-      }
-    };
-
-    loadOpenCV();
+    try {
+      console.log('Initializing js-aruco detector...');
+      detectorRef.current = new AR.Detector();
+      console.log('js-aruco detector initialized successfully');
+      setIsDetectorReady(true);
+    } catch (err) {
+      console.error('Failed to initialize js-aruco detector:', err);
+      setError('Impossible d\'initialiser le détecteur ArUco. Veuillez rafraîchir la page.');
+    }
 
     return () => {
       // Cleanup
-      if (dictionaryRef.current) {
-        try {
-          dictionaryRef.current.delete();
-        } catch (e) {
-          console.error('Error deleting ArUco dictionary:', e);
-        }
-      }
+      detectorRef.current = null;
     };
   }, []);
 
-  // Fonction pour détecter les marqueurs ArUco
+  // Fonction pour détecter les marqueurs ArUco avec js-aruco
   const detectArucoMarkers = (): Marker[] => {
-    if (!isOpenCVReady || !dictionaryRef.current || !videoRef.current || !canvasRef.current) {
+    if (!isDetectorReady || !detectorRef.current || !canvasRef.current) {
       return [];
     }
 
-    const cv = window.cv;
     const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return [];
 
     try {
-      // Créer un Mat depuis le canvas
-      const frame = cv.imread(canvas);
+      // Obtenir l'ImageData du canvas
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      // Vecteurs pour stocker les résultats de détection
-      const markerCorners = new cv.MatVector();
-      const markerIds = new cv.Mat();
-      const rejectedCandidates = new cv.MatVector();
-
-      // Paramètres du détecteur
-      const parameters = new cv.aruco_DetectorParameters();
-
-      // Détecter les marqueurs ArUco
-      cv.aruco_detectMarkers(
-        frame,
-        dictionaryRef.current,
-        markerCorners,
-        markerIds,
-        parameters,
-        rejectedCandidates
-      );
+      // Détecter les marqueurs avec js-aruco
+      const markers = detectorRef.current.detect(imageData);
 
       // Convertir les résultats en notre format
-      const detectedMarkers: Marker[] = [];
-
-      for (let i = 0; i < markerCorners.size(); i++) {
-        const corners = markerCorners.get(i);
-        const id = markerIds.intAt(i, 0);
-
-        // Extraire les 4 coins du marqueur
+      const detectedMarkers: Marker[] = markers.map((marker: any) => {
+        // js-aruco retourne les coins dans l'ordre: corners[0-3] avec propriétés x,y
         const cornerPoints: [number, number][] = [
-          [corners.data32F[0], corners.data32F[1]],   // Top-left
-          [corners.data32F[2], corners.data32F[3]],   // Top-right
-          [corners.data32F[4], corners.data32F[5]],   // Bottom-right
-          [corners.data32F[6], corners.data32F[7]],   // Bottom-left
+          [marker.corners[0].x, marker.corners[0].y],
+          [marker.corners[1].x, marker.corners[1].y],
+          [marker.corners[2].x, marker.corners[2].y],
+          [marker.corners[3].x, marker.corners[3].y],
         ];
 
         // Calculer le centre
         const centerX = (cornerPoints[0][0] + cornerPoints[1][0] + cornerPoints[2][0] + cornerPoints[3][0]) / 4;
         const centerY = (cornerPoints[0][1] + cornerPoints[1][1] + cornerPoints[2][1] + cornerPoints[3][1]) / 4;
 
-        detectedMarkers.push({
-          id,
+        return {
+          id: marker.id,
           corners: cornerPoints,
           center: [centerX, centerY],
-        });
-      }
-
-      // Nettoyer la mémoire
-      frame.delete();
-      markerCorners.delete();
-      markerIds.delete();
-      rejectedCandidates.delete();
-      parameters.delete();
+        };
+      });
 
       return detectedMarkers;
     } catch (err) {
@@ -218,8 +108,8 @@ export function ArucoARDemo({ onBack }: Props) {
 
   // Démarrer la webcam
   const startWebcam = async () => {
-    if (!isOpenCVReady) {
-      setError('OpenCV n\'est pas encore chargé. Veuillez patienter...');
+    if (!isDetectorReady) {
+      setError('Le détecteur ArUco n\'est pas encore prêt. Veuillez patienter...');
       return;
     }
 
@@ -418,7 +308,7 @@ export function ArucoARDemo({ onBack }: Props) {
   const drawFrame = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || !isActive || !isOpenCVReady) return;
+    if (!video || !canvas || !isActive || !isDetectorReady) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -520,7 +410,7 @@ export function ArucoARDemo({ onBack }: Props) {
 
   // Effets
   useEffect(() => {
-    if (isActive && isOpenCVReady) {
+    if (isActive && isDetectorReady) {
       drawFrame();
     }
     return () => {
@@ -528,7 +418,7 @@ export function ArucoARDemo({ onBack }: Props) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isActive, show3DOverlay, overlayType, showMarkerInfo, isOpenCVReady]);
+  }, [isActive, show3DOverlay, overlayType, showMarkerInfo, isDetectorReady]);
 
   useEffect(() => {
     return () => {
@@ -553,7 +443,7 @@ export function ArucoARDemo({ onBack }: Props) {
           <div>
             <h1 className="text-3xl font-bold mb-2">🎯 Réalité Augmentée (ArUco)</h1>
             <p className="text-pink-100">Marqueurs fiduciaires, homographie et pose 3D</p>
-            <p className="text-sm text-pink-200 mt-2">✨ Propulsé par OpenCV.js + ArUco 4x4_100</p>
+            <p className="text-sm text-pink-200 mt-2">✨ Propulsé par js-aruco (détection pure JavaScript)</p>
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-pink-200 mb-1">Marqueurs détectés</div>
@@ -583,16 +473,16 @@ export function ArucoARDemo({ onBack }: Props) {
               <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                 <div className="text-center">
                   <div className="text-6xl mb-4">🎯</div>
-                  {isOpenCVLoading ? (
+                  {!isDetectorReady ? (
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-white">Chargement d'OpenCV.js...</p>
-                      <p className="text-pink-300 text-sm">Initialisation du détecteur ArUco</p>
+                      <p className="text-white">Initialisation du détecteur ArUco...</p>
+                      <p className="text-pink-300 text-sm">Chargement de js-aruco</p>
                     </div>
                   ) : (
                     <>
                       <p className="text-white mb-2">Pointez la caméra vers un marqueur ArUco</p>
-                      <p className="text-gray-400 text-sm mb-4">Dictionnaire 4x4_100 (IDs 0-99)</p>
+                      <p className="text-gray-400 text-sm mb-4">Détection de marqueurs en temps réel</p>
                       <button
                         onClick={startWebcam}
                         className="px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-bold transition-all"
