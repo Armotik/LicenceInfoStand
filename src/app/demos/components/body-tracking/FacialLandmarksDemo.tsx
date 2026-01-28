@@ -167,10 +167,12 @@ export function FacialLandmarksDemo({ onBack }: Props) {
   useEffect(() => {
     const initializeFaceLandmarker = async () => {
       try {
+        console.log('Starting MediaPipe Face Landmarker initialization...');
         setIsModelLoading(true);
         const vision = await FilesetResolver.forVisionTasks(
           'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
         );
+        console.log('FilesetResolver loaded successfully');
 
         const faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: {
@@ -179,12 +181,14 @@ export function FacialLandmarksDemo({ onBack }: Props) {
           },
           runningMode: 'VIDEO',
           numFaces: 1,
-          minFaceDetectionConfidence: 0.5,
-          minFacePresenceConfidence: 0.5,
-          minTrackingConfidence: 0.5,
+          minFaceDetectionConfidence: 0.3,
+          minFacePresenceConfidence: 0.3,
+          minTrackingConfidence: 0.3,
           outputFaceBlendshapes: false,
           outputFacialTransformationMatrixes: false,
         });
+
+        console.log('MediaPipe Face Landmarker initialized successfully');
 
         faceLandmarkerRef.current = faceLandmarker;
         setIsModelLoading(false);
@@ -255,6 +259,12 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     // Dessiner la vidéo
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
+    // Vérifier que le video est prêt (readyState >= 2 signifie que les données sont disponibles)
+    if (video.readyState < 2) {
+      animationFrameRef.current = requestAnimationFrame(drawFrame);
+      return;
+    }
+
     // Détecter les landmarks (limiter à ~30 FPS pour la détection)
     const now = performance.now();
     if (now - lastDetectionTimeRef.current > 33) {
@@ -262,6 +272,11 @@ export function FacialLandmarksDemo({ onBack }: Props) {
 
       try {
         const results: FaceLandmarkerResult = faceLandmarkerRef.current.detectForVideo(video, now);
+
+        console.log('MediaPipe detection results:', {
+          numFaces: results.faceLandmarks?.length || 0,
+          hasLandmarks: !!results.faceLandmarks,
+        });
 
         if (results.faceLandmarks && results.faceLandmarks.length > 0) {
           // Prendre le premier visage détecté
@@ -281,6 +296,7 @@ export function FacialLandmarksDemo({ onBack }: Props) {
         }
       } catch (err) {
         console.error('Detection error:', err);
+        setError(`Erreur de détection: ${err instanceof Error ? err.message : 'Erreur inconnue'}`);
       }
     }
 
