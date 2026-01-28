@@ -57,10 +57,26 @@ export function FaceDetectionDemo({ onBack }: Props) {
         return;
       }
 
+      // Vérifier si le script existe déjà dans le DOM
+      const existingScript = document.querySelector('script[src*="opencv.js"]');
+      if (existingScript) {
+        console.log('OpenCV script already in DOM, waiting for it to load...');
+        // Attendre que OpenCV soit complètement initialisé
+        const checkOpenCV = setInterval(() => {
+          if (window.cv && window.cv.Mat) {
+            clearInterval(checkOpenCV);
+            console.log('OpenCV loaded successfully');
+            loadHaarCascade();
+          }
+        }, 100);
+        return;
+      }
+
       // Charger OpenCV.js depuis le CDN
       const script = document.createElement('script');
       script.src = 'https://docs.opencv.org/4.8.0/opencv.js';
       script.async = true;
+      script.id = 'opencv-script'; // Ajouter un ID pour identification
 
       script.onload = () => {
         // Attendre que OpenCV soit complètement initialisé
