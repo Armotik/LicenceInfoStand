@@ -42,17 +42,60 @@ export function ArucoARDemo({ onBack }: Props) {
   const [error, setError] = useState<string>('');
   const [isDetectorReady, setIsDetectorReady] = useState(false);
 
-  // Initialiser le détecteur ArUco custom
+  // Charger OpenCV.js et initialiser le détecteur
   useEffect(() => {
-    try {
-      console.log('Initializing custom ArUco detector...');
-      detectorRef.current = new ArucoDetector();
-      console.log('Custom ArUco detector initialized successfully');
-      setIsDetectorReady(true);
-    } catch (err) {
-      console.error('Failed to initialize ArUco detector:', err);
-      setError('Impossible d\'initialiser le détecteur ArUco. Veuillez rafraîchir la page.');
-    }
+    const loadOpenCV = () => {
+      // Si OpenCV est déjà chargé
+      if (window.cv && window.cv.Mat) {
+        console.log('OpenCV already loaded');
+        detectorRef.current = new ArucoDetector();
+        detectorRef.current.setOpenCVReady(true);
+        setIsDetectorReady(true);
+        return;
+      }
+
+      // Vérifier si le script existe déjà
+      const existingScript = document.querySelector('script[src*="opencv.js"]');
+      if (existingScript) {
+        console.log('OpenCV script already loading...');
+        const checkInterval = setInterval(() => {
+          if (window.cv && window.cv.Mat) {
+            clearInterval(checkInterval);
+            console.log('OpenCV loaded successfully');
+            detectorRef.current = new ArucoDetector();
+            detectorRef.current.setOpenCVReady(true);
+            setIsDetectorReady(true);
+          }
+        }, 100);
+        return;
+      }
+
+      // Charger OpenCV.js
+      const script = document.createElement('script');
+      script.src = 'https://docs.opencv.org/4.8.0/opencv.js';
+      script.async = true;
+
+      script.onload = () => {
+        const checkInterval = setInterval(() => {
+          if (window.cv && window.cv.Mat) {
+            clearInterval(checkInterval);
+            console.log('OpenCV loaded successfully');
+            detectorRef.current = new ArucoDetector();
+            detectorRef.current.setOpenCVReady(true);
+            setIsDetectorReady(true);
+          }
+        }, 100);
+      };
+
+      script.onerror = () => {
+        console.error('Failed to load OpenCV.js');
+        setError('Impossible de charger OpenCV.js. Veuillez rafraîchir la page.');
+      };
+
+      document.body.appendChild(script);
+    };
+
+    loadOpenCV();
 
     return () => {
       // Cleanup
@@ -447,7 +490,7 @@ export function ArucoARDemo({ onBack }: Props) {
           <div>
             <h1 className="text-3xl font-bold mb-2">🎯 Réalité Augmentée (ArUco)</h1>
             <p className="text-pink-100">Marqueurs fiduciaires, homographie et pose 3D</p>
-            <p className="text-sm text-pink-200 mt-2">✨ Détection ArUco custom avec support 4x4</p>
+            <p className="text-sm text-pink-200 mt-2">✨ Détection ArUco avec OpenCV.js + décodage custom</p>
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-pink-200 mb-1">Marqueurs détectés</div>
@@ -480,8 +523,8 @@ export function ArucoARDemo({ onBack }: Props) {
                   {!isDetectorReady ? (
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-white">Initialisation du détecteur ArUco...</p>
-                      <p className="text-pink-300 text-sm">Chargement du détecteur custom</p>
+                      <p className="text-white">Chargement d'OpenCV.js...</p>
+                      <p className="text-pink-300 text-sm">Initialisation du détecteur ArUco</p>
                     </div>
                   ) : (
                     <>
