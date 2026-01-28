@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 // @ts-ignore - js-aruco doesn't have TypeScript definitions
-import AR from 'js-aruco';
+import { AR } from 'js-aruco';
 
 // ============================================
 // Types
