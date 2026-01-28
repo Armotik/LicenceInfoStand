@@ -559,8 +559,9 @@ export function FacialLandmarksDemo({ onBack }: Props) {
       };
     }
 
-    // Détecter les caractéristiques du visage toutes les 10 frames
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 10 === 0) {
+    // Détecter les caractéristiques du visage toutes les 10 frames (seulement si pas calibré)
+    const hasCalibration = calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth;
+    if (!hasCalibration && (animationFrameRef.current === undefined || animationFrameRef.current % 10 === 0)) {
       const centerX = trackedPositionRef.current.x * canvas.width;
       const centerY = trackedPositionRef.current.y * canvas.height;
       const headRadius = Math.min(canvas.width, canvas.height) * 0.25;
@@ -614,16 +615,19 @@ export function FacialLandmarksDemo({ onBack }: Props) {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Dessiner un cercle pour représenter une tête à la position trackée
+    // Dessiner un cercle pour représenter une tête à la position trackée (seulement si pas calibré)
     const centerX = trackedPositionRef.current.x * canvas.width;
     const centerY = trackedPositionRef.current.y * canvas.height;
     const headRadius = Math.min(canvas.width, canvas.height) * 0.25;
 
-    ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, headRadius, 0, Math.PI * 2);
-    ctx.stroke();
+    const hasCalibrationForCircle = calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth;
+    if (!hasCalibrationForCircle) {
+      ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, headRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     // Initialiser les landmarks animés si nécessaire
     if (!landmarksInitializedRef.current) {
@@ -644,43 +648,82 @@ export function FacialLandmarksDemo({ onBack }: Props) {
       };
     });
 
-    // Convertir les landmarks animés en coordonnées canvas avec ajustements basés sur détection
-    // Utiliser des coefficients plus forts si on a une calibration manuelle
-    const hasCalibration = calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth;
-    const eyeCoef = hasCalibration ? 0.95 : 0.5;
-    const noseCoef = hasCalibration ? 0.7 : 0.4;
-    const mouthCoef = hasCalibration ? 0.95 : 0.6;
+    // Convertir les landmarks animés en coordonnées canvas avec transformation basée sur calibration
+    let points: Point[];
 
-    const points = animatedLandmarksRef.current.map((p, i) => {
-      let offsetX = 0;
-      let offsetY = 0;
+    if (calibrationPointsRef.current.leftEye && calibrationPointsRef.current.rightEye && calibrationPointsRef.current.mouth) {
+      // Mode calibré : calculer une transformation complète
+      const leftEye = calibrationPointsRef.current.leftEye;
+      const rightEye = calibrationPointsRef.current.rightEye;
+      const mouth = calibrationPointsRef.current.mouth;
 
-      // Appliquer les offsets détectés pour les yeux (indices 23-30)
-      if (i >= 23 && i < 27) {
-        // Œil gauche
-        offsetX = faceFeatureOffsetsRef.current.leftEye.x * eyeCoef;
-        offsetY = faceFeatureOffsetsRef.current.leftEye.y * eyeCoef;
-      } else if (i >= 27 && i < 31) {
-        // Œil droit
-        offsetX = faceFeatureOffsetsRef.current.rightEye.x * eyeCoef;
-        offsetY = faceFeatureOffsetsRef.current.rightEye.y * eyeCoef;
-      }
-      // Appliquer les offsets pour le nez (indices 31-39)
-      else if (i >= 31 && i < 39) {
-        offsetX = faceFeatureOffsetsRef.current.nose.x * noseCoef;
-        offsetY = faceFeatureOffsetsRef.current.nose.y * noseCoef;
-      }
-      // Appliquer les offsets pour la bouche (indices 39-58)
-      else if (i >= 39 && i < 59) {
-        offsetX = faceFeatureOffsetsRef.current.mouth.x * mouthCoef;
-        offsetY = faceFeatureOffsetsRef.current.mouth.y * mouthCoef;
-      }
+      // Calculer le centre entre les yeux
+      const eyeCenterX = (leftEye.x + rightEye.x) / 2;
+      const eyeCenterY = (leftEye.y + rightEye.y) / 2;
 
-      return {
-        x: centerX + (p.x - 0.5) * headRadius * 2 + offsetX,
-        y: centerY + (p.y - 0.5) * headRadius * 2 + offsetY,
-      };
-    });
+      // Calculer l'échelle basée sur la distance entre les yeux (distance théorique = 0.3)
+      const eyeDistance = Math.hypot(rightEye.x - leftEye.x, rightEye.y - leftEye.y);
+      const theoreticalEyeDistance = headRadius * 2 * 0.3; // 30% de la largeur du visage
+      const scaleX = eyeDistance / theoreticalEyeDistance;
+
+      // Calculer la distance verticale entre les yeux et la bouche pour échelle Y
+      const eyeMouthDistance = Math.hypot(mouth.x - eyeCenterX, mouth.y - eyeCenterY);
+      const theoreticalEyeMouthDistance = headRadius * 2 * 0.3; // 30% de la hauteur
+      const scaleY = eyeMouthDistance / theoreticalEyeMouthDistance;
+
+      // Calculer l'angle de rotation du visage
+      const angle = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x);
+
+      // Transformer chaque landmark
+      points = animatedLandmarksRef.current.map((p) => {
+        // Position relative au centre du modèle (0.5, 0.5)
+        let dx = (p.x - 0.5) * headRadius * 2;
+        let dy = (p.y - 0.5) * headRadius * 2;
+
+        // Appliquer l'échelle
+        dx *= scaleX;
+        dy *= scaleY;
+
+        // Appliquer la rotation
+        const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
+        const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
+
+        // Translater par rapport au centre des yeux
+        return {
+          x: eyeCenterX + rotatedX,
+          y: eyeCenterY + rotatedY,
+        };
+      });
+    } else {
+      // Mode non calibré : utiliser l'ancien système avec offsets
+      const eyeCoef = 0.5;
+      const noseCoef = 0.4;
+      const mouthCoef = 0.6;
+
+      points = animatedLandmarksRef.current.map((p, i) => {
+        let offsetX = 0;
+        let offsetY = 0;
+
+        if (i >= 23 && i < 27) {
+          offsetX = faceFeatureOffsetsRef.current.leftEye.x * eyeCoef;
+          offsetY = faceFeatureOffsetsRef.current.leftEye.y * eyeCoef;
+        } else if (i >= 27 && i < 31) {
+          offsetX = faceFeatureOffsetsRef.current.rightEye.x * eyeCoef;
+          offsetY = faceFeatureOffsetsRef.current.rightEye.y * eyeCoef;
+        } else if (i >= 31 && i < 39) {
+          offsetX = faceFeatureOffsetsRef.current.nose.x * noseCoef;
+          offsetY = faceFeatureOffsetsRef.current.nose.y * noseCoef;
+        } else if (i >= 39 && i < 59) {
+          offsetX = faceFeatureOffsetsRef.current.mouth.x * mouthCoef;
+          offsetY = faceFeatureOffsetsRef.current.mouth.y * mouthCoef;
+        }
+
+        return {
+          x: centerX + (p.x - 0.5) * headRadius * 2 + offsetX,
+          y: centerY + (p.y - 0.5) * headRadius * 2 + offsetY,
+        };
+      });
+    }
 
     // Triangulation de Delaunay
     let triangles: Triangle[] = [];
