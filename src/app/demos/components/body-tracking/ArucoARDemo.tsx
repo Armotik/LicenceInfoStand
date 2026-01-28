@@ -20,6 +20,13 @@ interface Marker {
   center: [number, number];
 }
 
+// Déclaration globale pour OpenCV
+declare global {
+  interface Window {
+    cv: any;
+  }
+}
+
 // ============================================
 // Composant principal
 // ============================================
@@ -28,101 +35,178 @@ export function ArucoARDemo({ onBack }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
+  const frameCountRef = useRef<number>(0);
+  const dictionaryRef = useRef<any>(null);
+  const markersRef = useRef<Marker[]>([]);
 
   const [isActive, setIsActive] = useState(false);
-  const [markers, setMarkers] = useState<Marker[]>([]);
+  const [numMarkers, setNumMarkers] = useState(0);
   const [showMarkerInfo, setShowMarkerInfo] = useState(true);
   const [show3DOverlay, setShow3DOverlay] = useState(true);
   const [overlayType, setOverlayType] = useState<'cube' | 'pyramid' | 'sphere' | 'axes'>('cube');
   const [showExplanation, setShowExplanation] = useState(false);
   const [error, setError] = useState<string>('');
-  const [showMarkerGenerator, setShowMarkerGenerator] = useState(false);
+  const [isOpenCVLoading, setIsOpenCVLoading] = useState(true);
+  const [isOpenCVReady, setIsOpenCVReady] = useState(false);
 
-  // Position trackée (lissée)
-  const trackedPositionRef = useRef({ x: 0.5, y: 0.5 });
-  const previousFrameRef = useRef<Uint8ClampedArray | null>(null);
-
-  // Fonction pour détecter la zone avec le plus de mouvement (approximation du marqueur)
-  const detectMotionRegion = (imageData: ImageData): { x: number; y: number } => {
-    const width = imageData.width;
-    const height = imageData.height;
-    const data = imageData.data;
-
-    // Première frame : initialiser
-    if (!previousFrameRef.current) {
-      previousFrameRef.current = new Uint8ClampedArray(data.length);
-      for (let i = 0; i < data.length; i++) {
-        previousFrameRef.current[i] = data[i];
+  // Charger OpenCV.js
+  useEffect(() => {
+    const loadOpenCV = () => {
+      // Si OpenCV est déjà chargé, on l'utilise directement
+      if (window.cv && window.cv.Mat) {
+        console.log('OpenCV already loaded');
+        initArucoDetector();
+        return;
       }
-      return { x: width / 2, y: height / 2 };
-    }
 
-    // Diviser l'image en grille 5x5 (compromis perf/précision)
-    const gridCols = 5;
-    const gridRows = 5;
-    const cellWidth = width / gridCols;
-    const cellHeight = height / gridRows;
-
-    let maxMotion = 0;
-    let motionX = width / 2;
-    let motionY = height / 2;
-
-    // Chercher la cellule avec le plus de mouvement
-    for (let row = 0; row < gridRows; row++) {
-      for (let col = 0; col < gridCols; col++) {
-        let motion = 0;
-        let count = 0;
-
-        const startX = Math.floor(col * cellWidth);
-        const startY = Math.floor(row * cellHeight);
-        const endX = Math.floor((col + 1) * cellWidth);
-        const endY = Math.floor((row + 1) * cellHeight);
-
-        // Échantillonner tous les 5 pixels (compromis)
-        for (let y = startY; y < endY; y += 5) {
-          for (let x = startX; x < endX; x += 5) {
-            const idx = (y * width + x) * 4;
-
-            // Calculer la différence avec la frame précédente
-            const diffR = Math.abs(data[idx] - previousFrameRef.current[idx]);
-            const diffG = Math.abs(data[idx + 1] - previousFrameRef.current[idx + 1]);
-            const diffB = Math.abs(data[idx + 2] - previousFrameRef.current[idx + 2]);
-            const diff = (diffR + diffG + diffB) / 3;
-
-            motion += diff;
-            count++;
+      // Vérifier si le script existe déjà dans le DOM
+      const existingScript = document.querySelector('script[src*="opencv.js"]');
+      if (existingScript) {
+        console.log('OpenCV script already in DOM, waiting for it to load...');
+        const checkOpenCV = setInterval(() => {
+          if (window.cv && window.cv.Mat) {
+            clearInterval(checkOpenCV);
+            console.log('OpenCV loaded successfully');
+            initArucoDetector();
           }
-        }
-
-        const avgMotion = motion / count;
-        if (avgMotion > maxMotion) {
-          maxMotion = avgMotion;
-          motionX = startX + cellWidth / 2;
-          motionY = startY + cellHeight / 2;
-        }
+        }, 100);
+        return;
       }
-    }
 
-    // Mettre à jour la frame précédente moins souvent pour réduire la sensibilité
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
-      for (let i = 0; i < data.length; i++) {
-        previousFrameRef.current[i] = data[i];
-      }
-    }
+      // Charger OpenCV.js depuis le CDN
+      const script = document.createElement('script');
+      script.src = 'https://docs.opencv.org/4.8.0/opencv.js';
+      script.async = true;
+      script.id = 'opencv-script';
 
-    // Si pas assez de mouvement, garder la position actuelle (seuil augmenté)
-    if (maxMotion < 10) {
-      return {
-        x: trackedPositionRef.current.x * width,
-        y: trackedPositionRef.current.y * height
+      script.onload = () => {
+        const checkOpenCV = setInterval(() => {
+          if (window.cv && window.cv.Mat) {
+            clearInterval(checkOpenCV);
+            console.log('OpenCV loaded successfully');
+            initArucoDetector();
+          }
+        }, 100);
       };
+
+      script.onerror = () => {
+        console.error('Failed to load OpenCV.js');
+        setError('Impossible de charger OpenCV.js. Veuillez rafraîchir la page.');
+        setIsOpenCVLoading(false);
+      };
+
+      document.body.appendChild(script);
+    };
+
+    const initArucoDetector = () => {
+      try {
+        const cv = window.cv;
+
+        // Créer le dictionnaire ArUco 4x4_100
+        dictionaryRef.current = new cv.aruco_Dictionary(cv.DICT_4X4_100);
+
+        console.log('ArUco detector initialized successfully');
+        setIsOpenCVReady(true);
+        setIsOpenCVLoading(false);
+      } catch (err) {
+        console.error('Failed to initialize ArUco detector:', err);
+        setError('Impossible d\'initialiser le détecteur ArUco.');
+        setIsOpenCVLoading(false);
+      }
+    };
+
+    loadOpenCV();
+
+    return () => {
+      // Cleanup
+      if (dictionaryRef.current) {
+        try {
+          dictionaryRef.current.delete();
+        } catch (e) {
+          console.error('Error deleting ArUco dictionary:', e);
+        }
+      }
+    };
+  }, []);
+
+  // Fonction pour détecter les marqueurs ArUco
+  const detectArucoMarkers = (): Marker[] => {
+    if (!isOpenCVReady || !dictionaryRef.current || !videoRef.current || !canvasRef.current) {
+      return [];
     }
 
-    return { x: motionX, y: motionY };
+    const cv = window.cv;
+    const canvas = canvasRef.current;
+
+    try {
+      // Créer un Mat depuis le canvas
+      const frame = cv.imread(canvas);
+
+      // Vecteurs pour stocker les résultats de détection
+      const markerCorners = new cv.MatVector();
+      const markerIds = new cv.Mat();
+      const rejectedCandidates = new cv.MatVector();
+
+      // Paramètres du détecteur
+      const parameters = new cv.aruco_DetectorParameters();
+
+      // Détecter les marqueurs ArUco
+      cv.aruco_detectMarkers(
+        frame,
+        dictionaryRef.current,
+        markerCorners,
+        markerIds,
+        parameters,
+        rejectedCandidates
+      );
+
+      // Convertir les résultats en notre format
+      const detectedMarkers: Marker[] = [];
+
+      for (let i = 0; i < markerCorners.size(); i++) {
+        const corners = markerCorners.get(i);
+        const id = markerIds.intAt(i, 0);
+
+        // Extraire les 4 coins du marqueur
+        const cornerPoints: [number, number][] = [
+          [corners.data32F[0], corners.data32F[1]],   // Top-left
+          [corners.data32F[2], corners.data32F[3]],   // Top-right
+          [corners.data32F[4], corners.data32F[5]],   // Bottom-right
+          [corners.data32F[6], corners.data32F[7]],   // Bottom-left
+        ];
+
+        // Calculer le centre
+        const centerX = (cornerPoints[0][0] + cornerPoints[1][0] + cornerPoints[2][0] + cornerPoints[3][0]) / 4;
+        const centerY = (cornerPoints[0][1] + cornerPoints[1][1] + cornerPoints[2][1] + cornerPoints[3][1]) / 4;
+
+        detectedMarkers.push({
+          id,
+          corners: cornerPoints,
+          center: [centerX, centerY],
+        });
+      }
+
+      // Nettoyer la mémoire
+      frame.delete();
+      markerCorners.delete();
+      markerIds.delete();
+      rejectedCandidates.delete();
+      parameters.delete();
+
+      return detectedMarkers;
+    } catch (err) {
+      console.error('ArUco detection error:', err);
+      return [];
+    }
   };
 
   // Démarrer la webcam
   const startWebcam = async () => {
+    if (!isOpenCVReady) {
+      setError('OpenCV n\'est pas encore chargé. Veuillez patienter...');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
@@ -148,6 +232,9 @@ export function ArucoARDemo({ onBack }: Props) {
       videoRef.current.srcObject = null;
     }
     setIsActive(false);
+    frameCountRef.current = 0;
+    markersRef.current = [];
+    setNumMarkers(0);
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
@@ -315,55 +402,24 @@ export function ArucoARDemo({ onBack }: Props) {
   const drawFrame = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas || !isActive) return;
+    if (!video || !canvas || !isActive || !isOpenCVReady) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Dessiner la vidéo
+    // Dessiner la vidéo sur le canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter la position toutes les 8 frames pour réduire la sensibilité
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 8 === 0) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const detected = detectMotionRegion(imageData);
-
-      // Lissage exponentiel de la position (smoothing plus fort = moins sensible)
-      const smoothing = 0.1;
-      trackedPositionRef.current = {
-        x: trackedPositionRef.current.x * (1 - smoothing) + (detected.x / canvas.width) * smoothing,
-        y: trackedPositionRef.current.y * (1 - smoothing) + (detected.y / canvas.height) * smoothing,
-      };
-    }
-
-    // Mode démo : créer des marqueurs simulés à la position trackée
-    if (animationFrameRef.current === undefined || animationFrameRef.current % 30 === 0) {
-      const demoMarkers: Marker[] = [];
-
-      // Utiliser la position trackée au lieu du centre fixe
-      const centerX = trackedPositionRef.current.x * canvas.width;
-      const centerY = trackedPositionRef.current.y * canvas.height;
-      const size = Math.min(canvas.width, canvas.height) * 0.25;
-
-      // Ajouter une légère animation
-      const wobble = Math.sin((animationFrameRef.current || 0) * 0.05) * 10;
-
-      demoMarkers.push({
-        id: 0,
-        corners: [
-          [centerX - size / 2 + wobble, centerY - size / 2],
-          [centerX + size / 2 + wobble, centerY - size / 2],
-          [centerX + size / 2 + wobble, centerY + size / 2],
-          [centerX - size / 2 + wobble, centerY + size / 2],
-        ],
-        center: [centerX + wobble, centerY],
-      });
-
-      setMarkers(demoMarkers);
+    // Détecter les marqueurs ArUco toutes les 2 frames
+    frameCountRef.current++;
+    if (frameCountRef.current % 2 === 0) {
+      const detectedMarkers = detectArucoMarkers();
+      markersRef.current = detectedMarkers;
+      setNumMarkers(detectedMarkers.length);
     }
 
     // Dessiner les marqueurs détectés
-    for (const marker of markers) {
+    for (const marker of markersRef.current) {
       // Contour du marqueur
       ctx.strokeStyle = '#00ff00';
       ctx.lineWidth = 3;
@@ -432,26 +488,23 @@ export function ArucoARDemo({ onBack }: Props) {
     }
 
     // Message info
-    if (markers.length > 0) {
+    if (numMarkers > 0) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(10, 10, 350, 55);
+      ctx.fillRect(10, 10, 320, 40);
       ctx.fillStyle = '#00ff00';
       ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('📊 Démonstration ArUco AR', 20, 30);
+      ctx.fillText('📊 ArUco AR - Détection réelle !', 20, 30);
       ctx.font = '11px sans-serif';
       ctx.fillStyle = '#00ffff';
-      ctx.fillText('Imprimez les marqueurs ci-dessous pour', 20, 47);
-      ctx.fillText('une détection réelle !', 20, 60);
+      ctx.fillText(`${numMarkers} marqueur(s) détecté(s)`, 20, 45);
     }
 
-    animationFrameRef.current = (animationFrameRef.current || 0) + 1;
     animationFrameRef.current = requestAnimationFrame(drawFrame);
   };
 
   // Effets
   useEffect(() => {
-    if (isActive) {
-      animationFrameRef.current = 0;
+    if (isActive && isOpenCVReady) {
       drawFrame();
     }
     return () => {
@@ -459,7 +512,7 @@ export function ArucoARDemo({ onBack }: Props) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isActive, show3DOverlay, overlayType, showMarkerInfo]);
+  }, [isActive, show3DOverlay, overlayType, showMarkerInfo, isOpenCVReady]);
 
   useEffect(() => {
     return () => {
@@ -467,30 +520,8 @@ export function ArucoARDemo({ onBack }: Props) {
     };
   }, []);
 
-  // Générer un marqueur ArUco (exemple visuel)
-  const generateMarkerSVG = (id: number) => {
-    const patterns = [
-      [[1,0,1,0,1],[0,1,0,1,0],[1,0,1,0,1],[0,1,0,1,0],[1,0,1,0,1]],
-      [[0,1,1,1,0],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,0,1],[0,1,1,1,0]],
-      [[1,1,0,1,1],[1,0,0,0,1],[0,0,1,0,0],[1,0,0,0,1],[1,1,0,1,1]],
-    ];
-    const pattern = patterns[id % patterns.length];
-
-    return (
-      <svg viewBox="0 0 7 7" className="w-full h-full">
-        <rect fill="white" x="0" y="0" width="7" height="7" />
-        <rect fill="black" x="0" y="0" width="7" height="1" />
-        <rect fill="black" x="0" y="6" width="7" height="1" />
-        <rect fill="black" x="0" y="0" width="1" height="7" />
-        <rect fill="black" x="6" y="0" width="1" height="7" />
-        {pattern.map((row, y) =>
-          row.map((cell, x) =>
-            cell ? <rect key={`${x}-${y}`} fill="black" x={x + 1} y={y + 1} width="1" height="1" /> : null
-          )
-        )}
-      </svg>
-    );
-  };
+  // Générer un lien vers le générateur de marqueurs ArUco en ligne
+  const arucoGeneratorURL = 'https://chev.me/arucogen/';
 
   return (
     <div className="space-y-6">
@@ -506,10 +537,11 @@ export function ArucoARDemo({ onBack }: Props) {
           <div>
             <h1 className="text-3xl font-bold mb-2">🎯 Réalité Augmentée (ArUco)</h1>
             <p className="text-pink-100">Marqueurs fiduciaires, homographie et pose 3D</p>
+            <p className="text-sm text-pink-200 mt-2">✨ Propulsé par OpenCV.js + ArUco 4x4_100</p>
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-pink-200 mb-1">Marqueurs détectés</div>
-            <div className="text-2xl font-bold">{markers.length}</div>
+            <div className="text-2xl font-bold">{numMarkers}</div>
           </div>
         </div>
       </div>
@@ -535,20 +567,32 @@ export function ArucoARDemo({ onBack }: Props) {
               <div className="absolute inset-0 flex items-center justify-center bg-black/80">
                 <div className="text-center">
                   <div className="text-6xl mb-4">🎯</div>
-                  <p className="text-white mb-2">Pointez la caméra vers un marqueur ArUco</p>
-                  <p className="text-gray-400 text-sm mb-4">Ou vers un objet contrasté carré</p>
-                  <button
-                    onClick={startWebcam}
-                    className="px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-bold transition-all"
-                  >
-                    ▶ Démarrer la caméra
-                  </button>
-                  <button
-                    onClick={() => setShowMarkerGenerator(!showMarkerGenerator)}
-                    className="block mx-auto mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-all"
-                  >
-                    📄 Générer des marqueurs
-                  </button>
+                  {isOpenCVLoading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-white">Chargement d'OpenCV.js...</p>
+                      <p className="text-pink-300 text-sm">Initialisation du détecteur ArUco</p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-white mb-2">Pointez la caméra vers un marqueur ArUco</p>
+                      <p className="text-gray-400 text-sm mb-4">Dictionnaire 4x4_100 (IDs 0-99)</p>
+                      <button
+                        onClick={startWebcam}
+                        className="px-6 py-3 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-bold transition-all"
+                      >
+                        ▶ Démarrer la caméra
+                      </button>
+                      <a
+                        href={arucoGeneratorURL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block mx-auto mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm transition-all"
+                      >
+                        📄 Générer des marqueurs en ligne
+                      </a>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -566,9 +610,9 @@ export function ArucoARDemo({ onBack }: Props) {
               </div>
             )}
 
-            {isActive && markers.length === 0 && (
+            {isActive && numMarkers === 0 && (
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-yellow-500/80 px-4 py-2 rounded-lg text-black text-sm font-medium">
-                🔍 Recherche de marqueurs...
+                🔍 Recherche de marqueurs ArUco...
               </div>
             )}
           </div>
@@ -581,12 +625,14 @@ export function ArucoARDemo({ onBack }: Props) {
               >
                 ⏸ Arrêter
               </button>
-              <button
-                onClick={() => setShowMarkerGenerator(!showMarkerGenerator)}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold transition-all"
+              <a
+                href={arucoGeneratorURL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold transition-all text-center"
               >
                 📄 Marqueurs
-              </button>
+              </a>
             </div>
           )}
         </div>
@@ -646,10 +692,10 @@ export function ArucoARDemo({ onBack }: Props) {
           <div className="bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-xl p-4 border border-pink-500/30">
             <h3 className="font-bold text-pink-400 mb-2 text-sm">💡 Comment ça marche ?</h3>
             <ul className="text-xs text-text-muted space-y-2">
-              <li>1️⃣ <strong>Détection</strong> : Trouver les marqueurs carrés dans l'image</li>
-              <li>2️⃣ <strong>Identification</strong> : Lire le code binaire du marqueur</li>
-              <li>3️⃣ <strong>Pose estimation</strong> : Calculer l'orientation 3D</li>
-              <li>4️⃣ <strong>Projection</strong> : Afficher l'objet 3D dans le bon repère</li>
+              <li>1️⃣ <strong>Détection</strong> : OpenCV trouve les carrés noirs</li>
+              <li>2️⃣ <strong>Identification</strong> : Lecture du code binaire 4x4</li>
+              <li>3️⃣ <strong>Pose estimation</strong> : Calcul de l'orientation 3D</li>
+              <li>4️⃣ <strong>Projection</strong> : Affichage de l'objet 3D</li>
             </ul>
           </div>
 
@@ -658,7 +704,11 @@ export function ArucoARDemo({ onBack }: Props) {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-text-muted">Marqueurs:</span>
-                <span className="text-pink-400 font-bold">{markers.length}</span>
+                <span className="text-pink-400 font-bold">{numMarkers}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-text-muted">Dictionnaire:</span>
+                <span className="text-pink-400 font-bold">4x4_100</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Objet:</span>
@@ -666,43 +716,20 @@ export function ArucoARDemo({ onBack }: Props) {
               </div>
             </div>
           </div>
+
+          <div className="bg-pink-500/10 border border-pink-500/30 rounded-xl p-3">
+            <div className="flex items-start gap-2">
+              <span className="text-pink-500 text-lg">✅</span>
+              <div>
+                <p className="text-pink-300 font-bold text-xs mb-1">Détection authentique</p>
+                <p className="text-text-muted text-xs">
+                  Cette démo utilise le vrai algorithme de détection ArUco d'OpenCV avec le dictionnaire 4x4_100.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Générateur de marqueurs */}
-      <AnimatePresence>
-        {showMarkerGenerator && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-surface-light rounded-xl p-6 border border-primary-light/20 shadow-lg overflow-hidden"
-          >
-            <h3 className="font-bold text-text mb-4 flex items-center gap-2 text-lg">
-              <span>📄</span> Générateur de marqueurs ArUco
-            </h3>
-            <p className="text-sm text-text-muted mb-4">
-              Imprimez ces marqueurs et pointez la caméra vers eux pour tester la réalité augmentée !
-            </p>
-            <div className="grid grid-cols-3 gap-4">
-              {[0, 1, 2].map((id) => (
-                <div key={id} className="bg-white p-4 rounded-lg">
-                  <div className="aspect-square mb-2">
-                    {generateMarkerSVG(id)}
-                  </div>
-                  <p className="text-center text-xs text-black font-bold">Marqueur {id}</p>
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={() => window.print()}
-              className="w-full mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold transition-all"
-            >
-              🖨️ Imprimer les marqueurs
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Section éducative */}
       <div className="bg-surface-light rounded-xl border border-primary-light/20 overflow-hidden shadow-lg">
@@ -745,7 +772,7 @@ export function ArucoARDemo({ onBack }: Props) {
                   </p>
                   <ul className="text-sm text-text-muted space-y-1 pl-4">
                     <li>• <strong>Carré noir</strong> avec bordure blanche</li>
-                    <li>• <strong>Code binaire</strong> unique à l'intérieur (5×5 bits)</li>
+                    <li>• <strong>Code binaire</strong> unique à l'intérieur (4×4 bits)</li>
                     <li>• <strong>Rotation-invariant</strong> : détectable dans toutes les orientations</li>
                     <li>• <strong>Rapide</strong> : Détection en temps réel ({'>'}100 FPS)</li>
                   </ul>
@@ -770,7 +797,7 @@ export function ArucoARDemo({ onBack }: Props) {
                       <strong className="text-cyan-300 text-sm">2️⃣ Identification du marqueur</strong>
                       <ul className="text-xs text-text-muted mt-1 space-y-1 pl-4">
                         <li>• Correction de perspective (homographie)</li>
-                        <li>• Échantillonnage de la grille 5×5</li>
+                        <li>• Échantillonnage de la grille 4×4</li>
                         <li>• Lecture du code binaire</li>
                         <li>• Vérification avec dictionnaire ArUco</li>
                         <li>• Détection et correction d'erreurs (code de Hamming)</li>
