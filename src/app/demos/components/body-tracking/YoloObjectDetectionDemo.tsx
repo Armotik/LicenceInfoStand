@@ -117,6 +117,8 @@ export function YoloObjectDetectionDemo({ onBack }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const modelRef = useRef<cocoSsd.ObjectDetection | null>(null);
+  const frameCountRef = useRef<number>(0);
+  const detectionsRef = useRef<Detection[]>([]);
 
   const [isActive, setIsActive] = useState(false);
   const [detections, setDetections] = useState<Detection[]>([]);
@@ -136,7 +138,7 @@ export function YoloObjectDetectionDemo({ onBack }: Props) {
       try {
         console.log('Loading COCO-SSD model...');
         const model = await cocoSsd.load({
-          base: 'mobilenet_v2', // Plus rapide que lite_mobilenet_v2
+          base: 'lite_mobilenet_v2', // Plus rapide et plus léger
         });
         modelRef.current = model;
         console.log('COCO-SSD model loaded successfully');
@@ -168,7 +170,11 @@ export function YoloObjectDetectionDemo({ onBack }: Props) {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 },
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 }
+        },
       });
 
       if (videoRef.current) {
@@ -237,7 +243,7 @@ export function YoloObjectDetectionDemo({ onBack }: Props) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Calculer FPS
+    // Calculer FPS (rendu, pas inférence)
     const now = Date.now();
     const delta = now - lastTimeRef.current;
     lastTimeRef.current = now;
@@ -251,12 +257,16 @@ export function YoloObjectDetectionDemo({ onBack }: Props) {
     // Dessiner la vidéo sur le canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter les objets
-    const detectedObjects = await detectObjects();
-    setDetections(detectedObjects);
+    // Détecter les objets toutes les 3 frames pour économiser les ressources
+    frameCountRef.current++;
+    if (frameCountRef.current % 3 === 0) {
+      const detectedObjects = await detectObjects();
+      detectionsRef.current = detectedObjects;
+      setDetections(detectedObjects);
+    }
 
-    // Dessiner les bounding boxes et labels
-    for (const detection of detectedObjects) {
+    // Dessiner les bounding boxes et labels (utilise les dernières détections)
+    for (const detection of detectionsRef.current) {
       const [x, y, width, height] = detection.bbox;
       const color = CLASS_COLORS[detection.class] || DEFAULT_COLOR;
 
@@ -271,16 +281,16 @@ export function YoloObjectDetectionDemo({ onBack }: Props) {
           ? `${detection.class} ${Math.round(detection.score * 100)}%`
           : detection.class;
 
-        ctx.font = 'bold 14px sans-serif';
+        ctx.font = 'bold 16px sans-serif';
         const textWidth = ctx.measureText(label).width;
 
         // Fond du label
         ctx.fillStyle = color;
-        ctx.fillRect(x, y - 25, textWidth + 10, 25);
+        ctx.fillRect(x, y - 28, textWidth + 12, 28);
 
         // Texte du label
         ctx.fillStyle = '#000';
-        ctx.fillText(label, x + 5, y - 8);
+        ctx.fillText(label, x + 6, y - 9);
       }
     }
 
@@ -325,7 +335,7 @@ export function YoloObjectDetectionDemo({ onBack }: Props) {
           <div>
             <h1 className="text-3xl font-bold mb-2">🤖 YOLO - Détection d'objets</h1>
             <p className="text-red-100">Deep Learning • Neural Networks • Temps réel</p>
-            <p className="text-sm text-red-200 mt-2">✨ Propulsé par TensorFlow.js + COCO-SSD (MobileNet V2)</p>
+            <p className="text-sm text-red-200 mt-2">✨ Propulsé par TensorFlow.js + COCO-SSD (Lite MobileNet V2 - Optimisé)</p>
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-red-200 mb-1">Objets détectés</div>
@@ -346,8 +356,8 @@ export function YoloObjectDetectionDemo({ onBack }: Props) {
             />
             <canvas
               ref={canvasRef}
-              width={640}
-              height={480}
+              width={1280}
+              height={720}
               className="absolute inset-0 w-full h-full object-cover"
             />
 
