@@ -43,20 +43,39 @@ export class ArucoDetector {
       const gray = new cv.Mat();
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      // Threshold INVERSÉ pour détecter les marqueurs NOIRS
-      // Les marqueurs noirs deviennent blancs dans l'image binaire
+      // Prétraitement pour améliorer la détection
+      // 1. Équilibrage de l'histogramme pour gérer les variations d'éclairage
+      const equalized = new cv.Mat();
+      cv.equalizeHist(gray, equalized);
+
+      // 2. Threshold ADAPTATIF pour gérer le fond et les ombres
+      // ADAPTIVE_THRESH_GAUSSIAN_C gère mieux les variations d'éclairage locales
       const binary = new cv.Mat();
-      cv.threshold(gray, binary, 127, 255, cv.THRESH_BINARY_INV);
+      cv.adaptiveThreshold(
+        equalized,
+        binary,
+        255,
+        cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv.THRESH_BINARY_INV,
+        11, // Block size
+        2   // C constant
+      );
+
+      // 3. Morphologie pour nettoyer le bruit
+      const kernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(3, 3));
+      const cleaned = new cv.Mat();
+      cv.morphologyEx(binary, cleaned, cv.MORPH_CLOSE, kernel);
+      cv.morphologyEx(cleaned, cleaned, cv.MORPH_OPEN, kernel);
 
       // Find contours (maintenant les marqueurs noirs sont des contours blancs)
       const contours = new cv.MatVector();
       const hierarchy = new cv.Mat();
-      cv.findContours(binary, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
+      cv.findContours(cleaned, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
 
       // Find square candidates
-      // Avec hiérarchie : ne garder que les contours qui ont au moins 1 enfant
-      // (vrais marqueurs ArUco = carré noir avec motif à l'intérieur)
+      // Filtrer les contours pour trouver les vrais marqueurs ArUco
       const candidates: Array<{ x: number; y: number }[]> = [];
+      const imageArea = imageData.width * imageData.height;
 
       for (let i = 0; i < contours.size(); i++) {
         const contour = contours.get(i);
@@ -67,37 +86,68 @@ export class ArucoDetector {
         const approx = new cv.Mat();
         cv.approxPolyDP(contour, approx, perimeter * 0.02, true);
 
-        // Check if it's a quadrilateral with reasonable size
-        // ET si le contour a au moins un enfant (structure interne)
-        const hasChild = hierarchy.intAt(0, i * 4 + 2) !== -1; // [Next, Previous, First_Child, Parent]
+        // Vérifications de base : 4 coins, aire raisonnable
+        if (approx.rows !== 4) {
+          approx.delete();
+          contour.delete();
+          continue;
+        }
 
-        if (approx.rows === 4 && perimeter > 120 && hasChild) {
-          const corners: { x: number; y: number }[] = [];
-          for (let j = 0; j < 4; j++) {
-            corners.push({
-              x: approx.data32S[j * 2],
-              y: approx.data32S[j * 2 + 1]
-            });
-          }
+        // Filtrage par taille : ni trop petit, ni trop grand (max 50% de l'image)
+        const areaRatio = area / imageArea;
+        if (area < 1000 || areaRatio > 0.5) {
+          console.log(`❌ Candidate ${i}: Area too small (${area}) or too large (${(areaRatio * 100).toFixed(1)}% of image)`);
+          approx.delete();
+          contour.delete();
+          continue;
+        }
 
-          // Validation supplémentaire : vérifier l'aspect ratio (doit être proche de 1.0)
-          const sorted = this.sortCorners(corners);
-          const width = Math.hypot(sorted[1].x - sorted[0].x, sorted[1].y - sorted[0].y);
-          const height = Math.hypot(sorted[3].x - sorted[0].x, sorted[3].y - sorted[0].y);
-          const aspectRatio = Math.max(width, height) / Math.min(width, height);
+        const corners: { x: number; y: number }[] = [];
+        for (let j = 0; j < 4; j++) {
+          corners.push({
+            x: approx.data32S[j * 2],
+            y: approx.data32S[j * 2 + 1]
+          });
+        }
 
-          // Validation de convexité : aire vs périmètre
-          const circularityRatio = (4 * Math.PI * area) / (perimeter * perimeter);
+        // Validation géométrique : aspect ratio proche de 1.0
+        const sorted = this.sortCorners(corners);
+        const width = Math.hypot(sorted[1].x - sorted[0].x, sorted[1].y - sorted[0].y);
+        const height = Math.hypot(sorted[3].x - sorted[0].x, sorted[3].y - sorted[0].y);
+        const aspectRatio = Math.max(width, height) / Math.min(width, height);
 
-          console.log(`📐 Candidate ${i}: Perimeter=${perimeter.toFixed(0)}, AspectRatio=${aspectRatio.toFixed(2)}, Circularity=${circularityRatio.toFixed(2)}`);
+        if (aspectRatio > 1.5) {
+          console.log(`❌ Candidate ${i}: Not square enough (aspect ratio ${aspectRatio.toFixed(2)})`);
+          approx.delete();
+          contour.delete();
+          continue;
+        }
 
-          // Filtres stricts : aspect ratio proche de 1.0 (carré) et forme raisonnablement régulière
-          if (aspectRatio < 2.0 && circularityRatio > 0.3) {
-            candidates.push(corners);
-            console.log(`🎯 Valid marker candidate at index ${i}`);
-          } else {
-            console.log(`❌ Rejected candidate ${i}: AspectRatio or Circularity out of range`);
-          }
+        // Vérifier la hiérarchie : doit avoir plusieurs enfants (grille interne)
+        const firstChild = hierarchy.intAt(0, i * 4 + 2);
+        if (firstChild === -1) {
+          console.log(`❌ Candidate ${i}: No internal structure`);
+          approx.delete();
+          contour.delete();
+          continue;
+        }
+
+        // Compter le nombre d'enfants (un vrai marqueur ArUco a plusieurs contours internes)
+        let childCount = 0;
+        let childIdx = firstChild;
+        while (childIdx !== -1 && childCount < 20) {
+          childCount++;
+          childIdx = hierarchy.intAt(0, childIdx * 4); // Next sibling
+        }
+
+        console.log(`📐 Candidate ${i}: Area=${area.toFixed(0)}, AspectRatio=${aspectRatio.toFixed(2)}, Children=${childCount}`);
+
+        // Un marqueur ArUco doit avoir au moins 2-3 contours internes
+        if (childCount >= 2) {
+          candidates.push(corners);
+          console.log(`🎯 Valid marker candidate at index ${i}`);
+        } else {
+          console.log(`❌ Rejected candidate ${i}: Not enough internal contours (${childCount})`);
         }
 
         approx.delete();
@@ -107,7 +157,10 @@ export class ArucoDetector {
       // Clean up
       src.delete();
       gray.delete();
+      equalized.delete();
       binary.delete();
+      cleaned.delete();
+      kernel.delete();
       contours.delete();
       hierarchy.delete();
 
@@ -214,13 +267,13 @@ export class ArucoDetector {
         const rotated = this.rotateBits(bits, rotation);
         const id = this.bitsToId(rotated);
 
-        console.log(`🔄 Rotation ${rotation}: ID = ${id}`);
+        console.log(`🔄 Rotation ${rotation}: ID = ${id}, Bits: ${JSON.stringify(rotated)}`);
 
-        // Dictionnaire ArUco 4x4_100 : IDs valides 0-99
-        // On se concentre sur 0-3 pour les tests
-        if (id >= 0 && id < 100) {
+        // Dictionnaire ArUco 4x4 : 16 bits = 0-65535 possible
+        // On accepte 0-1000 pour être raisonnable (inclut 4x4_50 et 4x4_100)
+        if (id >= 0 && id < 1000) {
           const rotatedCorners = this.rotateCorners(sorted, rotation);
-          console.log('✅ Valid marker found! ID:', id, 'Bits:', bits);
+          console.log('✅ Valid marker found! ID:', id);
           return { id, corners: rotatedCorners };
         }
       }
@@ -258,7 +311,6 @@ export class ArucoDetector {
 
   /**
    * Validate that bit pattern looks like a real ArUco marker
-   * Critères plus stricts pour réduire les faux positifs
    * Note: With THRESH_BINARY_INV, 1=noir (black areas), 0=blanc (white areas)
    */
   private isValidBitPattern(bits: number[][]): boolean {
@@ -280,40 +332,15 @@ export class ArucoDetector {
 
     console.log(`📊 Bit counts - Black: ${blackCount}, White: ${whiteCount}, Ratio: ${blackRatio.toFixed(2)}`);
 
-    // Au moins 3 bits de chaque couleur (plus strict)
-    if (blackCount < 3 || whiteCount < 3) {
+    // Au moins 2 bits de chaque couleur
+    if (blackCount < 2 || whiteCount < 2) {
       console.log('⚠️ Not enough variation - rejecting');
       return false;
     }
 
-    // Balance raisonnable (20-80% au lieu de 10-90%)
-    if (blackRatio < 0.2 || blackRatio > 0.8) {
+    // Balance raisonnable (15-85%)
+    if (blackRatio < 0.15 || blackRatio > 0.85) {
       console.log('⚠️ Too unbalanced - rejecting');
-      return false;
-    }
-
-    // Vérifier qu'il n'y a pas de pattern trop uniforme (toutes les lignes/colonnes pareilles)
-    let sameRowCount = 0;
-    let sameColCount = 0;
-
-    // Check rows
-    for (let y = 0; y < bits.length - 1; y++) {
-      if (JSON.stringify(bits[y]) === JSON.stringify(bits[y + 1])) {
-        sameRowCount++;
-      }
-    }
-
-    // Check columns
-    for (let x = 0; x < bits[0].length - 1; x++) {
-      const col1 = bits.map(row => row[x]);
-      const col2 = bits.map(row => row[x + 1]);
-      if (JSON.stringify(col1) === JSON.stringify(col2)) {
-        sameColCount++;
-      }
-    }
-
-    if (sameRowCount > 2 || sameColCount > 2) {
-      console.log('⚠️ Too uniform (repeated rows/cols) - rejecting');
       return false;
     }
 
