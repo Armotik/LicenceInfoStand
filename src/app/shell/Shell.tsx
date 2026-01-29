@@ -79,7 +79,7 @@ export function Shell() {
   useFullscreenSync();
 
   return (
-    <div className="w-full h-full overflow-hidden bg-surface">
+    <div className="w-full h-full bg-surface">
       {/* Contenu principal avec transitions */}
       <AnimatePresence mode="wait">
         <motion.div

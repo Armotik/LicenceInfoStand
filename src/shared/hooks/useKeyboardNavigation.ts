@@ -221,8 +221,11 @@ export function useIdleTimeout(timeoutMs: number = 60000) {
   const { mode, autoReturnToIdle, returnToIdle, recordInteraction } = useAppStore();
 
   useEffect(() => {
-    // Ne pas activer le timeout en mode veille ou si désactivé
-    if (mode === 'idle' || !autoReturnToIdle) return;
+    // Détecter si c'est un appareil tactile (mobile/tablette)
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    // Ne pas activer le timeout sur les appareils tactiles, en mode veille, ou si désactivé
+    if (isTouchDevice || mode === 'idle' || !autoReturnToIdle) return;
 
     let timeoutId: ReturnType<typeof setTimeout>;
 
