@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marqueurs ArUco 4x4 - Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .markers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .marker-card {
+            background: white;
+            border: 3px solid #333;
+            padding: 20px;
+            text-align: center;
+        }
+        .marker-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e91e63;
+            margin-bottom: 15px;
+        }
+        canvas {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        .instructions {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .instructions h2 {
+            margin-top: 0;
+            color: #e91e63;
+        }
+        .instructions ol {
+            line-height: 1.8;
+        }
+        @media (max-width: 600px) {
+            .markers-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .fullscreen-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #e91e63;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .fullscreen-btn:hover {
+            background: #c2185b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Marqueurs ArUco 4x4 (IDs 0-3)</h1>
+
+        <button class="fullscreen-btn" onclick="toggleFullscreen()">📱 Mode Plein Écran</button>
+
+        <div class="markers-grid">
+            <div class="marker-card">
+                <div class="marker-title">Marqueur ID 0</div>
+                <canvas id="marker0"></canvas>
+            </div>
+            <div class="marker-card">
+                <div class="marker-title">Marqueur ID 1</div>
+                <canvas id="marker1"></canvas>
+            </div>
+            <div class="marker-card">
+                <div class="marker-title">Marqueur ID 2</div>
+                <canvas id="marker2"></canvas>
+            </div>
+            <div class="marker-card">
+                <div class="marker-title">Marqueur ID 3</div>
+                <canvas id="marker3"></canvas>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h2>📋 Instructions</h2>
+            <ol>
+                <li>Ouvre cette page sur ton <strong>téléphone</strong></li>
+                <li>Clique sur "Mode Plein Écran" pour agrandir</li>
+                <li>Pointe ton <strong>ordinateur/webcam</strong> vers l'écran du téléphone</li>
+                <li>Commence avec le <strong>Marqueur ID 0</strong></li>
+                <li>Garde une distance de <strong>30-50cm</strong></li>
+                <li>Assure-toi que l'écran est bien éclairé (pas d'ombres)</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Dictionnaire ArUco 4x4_100 - IDs 0-3
+        // Format : [ID][row][col] - 4x4 bits pour chaque marqueur
+        const ARUCO_4X4_MARKERS = {
+            0: [
+                [1, 0, 0, 0],
+                [0, 1, 1, 1],
+                [1, 1, 0, 0],
+                [0, 0, 1, 0]
+            ],
+            1: [
+                [1, 0, 1, 1],
+                [1, 1, 1, 0],
+                [0, 1, 0, 0],
+                [1, 0, 0, 1]
+            ],
+            2: [
+                [0, 1, 0, 0],
+                [1, 0, 1, 0],
+                [1, 1, 1, 1],
+                [0, 0, 1, 0]
+            ],
+            3: [
+                [0, 1, 1, 1],
+                [0, 0, 1, 1],
+                [1, 1, 1, 0],
+                [1, 0, 0, 0]
+            ]
+        };
+
+        function drawMarker(canvasId, markerId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+
+            // Taille du marqueur (en pixels)
+            const size = 400;
+            const borderSize = Math.floor(size / 6); // Bordure = 1/6 de la taille
+            const cellSize = Math.floor((size - 2 * borderSize) / 4);
+
+            canvas.width = size;
+            canvas.height = size;
+
+            // Fond blanc
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, size, size);
+
+            // Bordure noire
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, size, borderSize); // Haut
+            ctx.fillRect(0, size - borderSize, size, borderSize); // Bas
+            ctx.fillRect(0, 0, borderSize, size); // Gauche
+            ctx.fillRect(size - borderSize, 0, borderSize, size); // Droite
+
+            // Dessiner la grille 4x4
+            const bits = ARUCO_4X4_MARKERS[markerId];
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const x = borderSize + col * cellSize;
+                    const y = borderSize + row * cellSize;
+
+                    // 1 = noir, 0 = blanc
+                    ctx.fillStyle = bits[row][col] === 1 ? 'black' : 'white';
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                }
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert('Impossible d\'activer le plein écran : ' + err.message);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Générer tous les marqueurs au chargement
+        window.addEventListener('DOMContentLoaded', () => {
+            drawMarker('marker0', 0);
+            drawMarker('marker1', 1);
+            drawMarker('marker2', 2);
+            drawMarker('marker3', 3);
+        });
+    </script>
+</body>
+</html>
