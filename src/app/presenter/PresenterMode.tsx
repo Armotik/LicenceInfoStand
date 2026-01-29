@@ -99,7 +99,7 @@ export function PresenterMode() {
       </nav>
 
       {/* Contenu de l'univers */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentUniverse}
@@ -107,7 +107,7 @@ export function PresenterMode() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.3 }}
-            className="w-full h-full"
+            className="w-full h-full overflow-y-auto"
           >
             <UniverseRenderer universe={currentUniverse} />
           </motion.div>
@@ -155,7 +155,7 @@ function DemosUniverse() {
   ];
 
   return (
-    <div className="w-full h-full p-8">
+    <div className="w-full p-8">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <span className="text-6xl block mb-4">🚀</span>
