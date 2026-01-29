@@ -162,7 +162,11 @@ export function ArucoARDemo({ onBack }: Props) {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 },
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'environment' // Préférer la caméra arrière sur mobile
+        },
       });
 
       if (videoRef.current) {
@@ -511,8 +515,8 @@ export function ArucoARDemo({ onBack }: Props) {
             />
             <canvas
               ref={canvasRef}
-              width={640}
-              height={480}
+              width={1280}
+              height={720}
               className="absolute inset-0 w-full h-full object-cover"
             />
 
