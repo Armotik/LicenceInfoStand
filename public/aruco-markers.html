@@ -31,6 +31,15 @@
             border: 3px solid #333;
             padding: 20px;
             text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .marker-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .marker-card:active {
+            transform: scale(0.98);
         }
         .marker-title {
             font-size: 24px;
@@ -77,6 +86,49 @@
         .fullscreen-btn:hover {
             background: #c2185b;
         }
+
+        /* Mode marqueur unique */
+        .single-marker-view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .single-marker-view.active {
+            display: flex;
+        }
+        .single-marker-view canvas {
+            max-width: 90vmin;
+            max-height: 90vmin;
+            width: auto;
+            height: auto;
+        }
+        .single-marker-view .marker-title {
+            font-size: 32px;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            font-size: 16px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .back-btn:hover {
+            background: #444;
+        }
     </style>
 </head>
 <body>
@@ -86,19 +138,19 @@
         <button class="fullscreen-btn" onclick="toggleFullscreen()">📱 Mode Plein Écran</button>
 
         <div class="markers-grid">
-            <div class="marker-card">
+            <div class="marker-card" onclick="showSingleMarker(0)">
                 <div class="marker-title">Marqueur ID 0</div>
                 <canvas id="marker0"></canvas>
             </div>
-            <div class="marker-card">
+            <div class="marker-card" onclick="showSingleMarker(1)">
                 <div class="marker-title">Marqueur ID 1</div>
                 <canvas id="marker1"></canvas>
             </div>
-            <div class="marker-card">
+            <div class="marker-card" onclick="showSingleMarker(2)">
                 <div class="marker-title">Marqueur ID 2</div>
                 <canvas id="marker2"></canvas>
             </div>
-            <div class="marker-card">
+            <div class="marker-card" onclick="showSingleMarker(3)">
                 <div class="marker-title">Marqueur ID 3</div>
                 <canvas id="marker3"></canvas>
             </div>
@@ -108,13 +160,20 @@
             <h2>📋 Instructions</h2>
             <ol>
                 <li>Ouvre cette page sur ton <strong>téléphone</strong></li>
-                <li>Clique sur "Mode Plein Écran" pour agrandir</li>
+                <li><strong>Clique sur un marqueur</strong> pour l'afficher seul en grand</li>
                 <li>Pointe ton <strong>ordinateur/webcam</strong> vers l'écran du téléphone</li>
                 <li>Commence avec le <strong>Marqueur ID 0</strong></li>
                 <li>Garde une distance de <strong>30-50cm</strong></li>
                 <li>Assure-toi que l'écran est bien éclairé (pas d'ombres)</li>
             </ol>
         </div>
+    </div>
+
+    <!-- Mode marqueur unique -->
+    <div class="single-marker-view" id="singleMarkerView">
+        <button class="back-btn" onclick="hideSingleMarker()">← Retour</button>
+        <div class="marker-title" id="singleMarkerTitle"></div>
+        <canvas id="singleMarkerCanvas"></canvas>
     </div>
 
     <script>
@@ -192,6 +251,56 @@
             } else {
                 document.exitFullscreen();
             }
+        }
+
+        function showSingleMarker(markerId) {
+            const view = document.getElementById('singleMarkerView');
+            const title = document.getElementById('singleMarkerTitle');
+            const canvas = document.getElementById('singleMarkerCanvas');
+
+            // Mettre à jour le titre
+            title.textContent = `Marqueur ID ${markerId}`;
+
+            // Dessiner le marqueur
+            const ctx = canvas.getContext('2d');
+            const size = 800; // Taille plus grande pour le mode unique
+            const borderSize = Math.floor(size / 6);
+            const cellSize = Math.floor((size - 2 * borderSize) / 4);
+
+            canvas.width = size;
+            canvas.height = size;
+
+            // Fond blanc
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, size, size);
+
+            // Bordure noire
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, size, borderSize); // Haut
+            ctx.fillRect(0, size - borderSize, size, borderSize); // Bas
+            ctx.fillRect(0, 0, borderSize, size); // Gauche
+            ctx.fillRect(size - borderSize, 0, borderSize, size); // Droite
+
+            // Dessiner la grille 4x4
+            const bits = ARUCO_4X4_MARKERS[markerId];
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const x = borderSize + col * cellSize;
+                    const y = borderSize + row * cellSize;
+
+                    // 1 = noir, 0 = blanc
+                    ctx.fillStyle = bits[row][col] === 1 ? 'black' : 'white';
+                    ctx.fillRect(x, y, cellSize, cellSize);
+                }
+            }
+
+            // Afficher la vue
+            view.classList.add('active');
+        }
+
+        function hideSingleMarker() {
+            const view = document.getElementById('singleMarkerView');
+            view.classList.remove('active');
         }
 
         // Générer tous les marqueurs au chargement
