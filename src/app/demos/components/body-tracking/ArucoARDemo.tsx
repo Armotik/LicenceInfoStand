@@ -42,35 +42,17 @@ export function ArucoARDemo({ onBack }: Props) {
   const [error, setError] = useState<string>('');
   const [isDetectorReady, setIsDetectorReady] = useState(false);
 
-  // Charger OpenCV.js
+  // Initialiser le détecteur js-aruco (pas besoin d'OpenCV)
   useEffect(() => {
-    if (window.cv && window.cv.Mat) {
+    try {
+      // js-aruco est prêt immédiatement, pas de chargement async
       detectorRef.current = new ArucoDetector();
-      detectorRef.current.setOpenCVReady(true);
       setIsDetectorReady(true);
-      return;
+      console.log('✅ js-aruco detector ready');
+    } catch (err) {
+      console.error('Failed to initialize js-aruco detector:', err);
+      setError('Impossible d\'initialiser le détecteur ArUco.');
     }
-
-    const script = document.createElement('script');
-    script.src = 'https://docs.opencv.org/4.8.0/opencv.js';
-    script.async = true;
-
-    script.onload = () => {
-      const checkInterval = setInterval(() => {
-        if (window.cv && window.cv.Mat) {
-          clearInterval(checkInterval);
-          detectorRef.current = new ArucoDetector();
-          detectorRef.current.setOpenCVReady(true);
-          setIsDetectorReady(true);
-        }
-      }, 100);
-    };
-
-    script.onerror = () => {
-      setError('Impossible de charger OpenCV.js.');
-    };
-
-    document.body.appendChild(script);
 
     return () => {
       detectorRef.current = null;
@@ -468,7 +450,7 @@ export function ArucoARDemo({ onBack }: Props) {
           <div>
             <h1 className="text-3xl font-bold mb-2">🎯 Réalité Augmentée (ArUco)</h1>
             <p className="text-pink-100">Marqueurs fiduciaires, homographie et pose 3D</p>
-            <p className="text-sm text-pink-200 mt-2">✨ Détection ArUco avec js-aruco (bibliothèque dédiée)</p>
+            <p className="text-sm text-pink-200 mt-2">✨ Détection avec js-aruco (grille 7×7)</p>
           </div>
           <div className="text-right bg-white/10 rounded-xl px-4 py-2">
             <div className="text-xs text-pink-200 mb-1">Marqueurs détectés</div>
@@ -501,8 +483,7 @@ export function ArucoARDemo({ onBack }: Props) {
                   {!isDetectorReady ? (
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-white">Initialisation du détecteur ArUco...</p>
-                      <p className="text-pink-300 text-sm">js-aruco se prépare</p>
+                      <p className="text-white">Initialisation...</p>
                     </div>
                   ) : (
                     <>
