@@ -173,8 +173,14 @@ export class ArucoDetector {
       dstPoints.delete();
       M.delete();
 
+      console.log('🔍 Extracted bits:', bits);
+
       // Validate and decode
-      if (!this.isValidBitPattern(bits)) {
+      const isValid = this.isValidBitPattern(bits);
+      console.log('📋 Pattern validation:', isValid);
+
+      if (!isValid) {
+        console.log('❌ Pattern rejected (too uniform or unbalanced)');
         return null;
       }
 
@@ -183,13 +189,17 @@ export class ArucoDetector {
         const rotated = this.rotateBits(bits, rotation);
         const id = this.bitsToId(rotated);
 
-        if (id >= 0 && id < 1024) {
+        console.log(`🔄 Rotation ${rotation}: ID = ${id}`);
+
+        // Accept wider range for testing: 0-9999
+        if (id >= 0 && id < 10000) {
           const rotatedCorners = this.rotateCorners(sorted, rotation);
           console.log('✅ Valid marker found! ID:', id, 'Bits:', bits);
           return { id, corners: rotatedCorners };
         }
       }
 
+      console.log('❌ No valid ID found in any rotation');
       return null;
     } catch (err) {
       console.error('Decode error:', err);
@@ -222,6 +232,7 @@ export class ArucoDetector {
 
   /**
    * Validate that bit pattern looks like a real ArUco marker
+   * Very permissive for testing
    */
   private isValidBitPattern(bits: number[][]): boolean {
     let blackCount = 0;
@@ -239,14 +250,18 @@ export class ArucoDetector {
 
     const total = blackCount + whiteCount;
 
-    // Reject if too uniform
-    if (blackCount < 2 || whiteCount < 2) {
+    console.log(`📊 Bit counts - Black: ${blackCount}, White: ${whiteCount}, Ratio: ${(blackCount / total).toFixed(2)}`);
+
+    // Very permissive: just need at least 1 of each
+    if (blackCount < 1 || whiteCount < 1) {
+      console.log('⚠️ All same color - rejecting');
       return false;
     }
 
-    // Reject if too unbalanced
+    // Accept any reasonable balance (10-90%)
     const blackRatio = blackCount / total;
-    if (blackRatio < 0.2 || blackRatio > 0.8) {
+    if (blackRatio < 0.1 || blackRatio > 0.9) {
+      console.log('⚠️ Too unbalanced - rejecting');
       return false;
     }
 
