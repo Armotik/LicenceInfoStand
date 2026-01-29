@@ -23,17 +23,26 @@ export class ArucoDetector {
   setOpenCVReady(ready: boolean) {
     this.opencvReady = ready;
 
-    if (ready && window.cv && window.cv.aruco) {
-      try {
-        // Créer le dictionnaire ArUco 4x4_50
-        this.dictionary = new window.cv.aruco_Dictionary(window.cv.aruco.DICT_4X4_50);
+    if (ready && window.cv) {
+      console.log('🔍 Checking for cv.aruco module...');
+      console.log('cv.aruco exists:', !!window.cv.aruco);
+      console.log('cv object keys:', Object.keys(window.cv).filter(k => k.includes('aruco')));
 
-        // Créer les paramètres de détection
-        this.parameters = new window.cv.aruco_DetectorParameters();
+      if (window.cv.aruco) {
+        try {
+          // Créer le dictionnaire ArUco 4x4_50
+          this.dictionary = new window.cv.aruco_Dictionary(window.cv.aruco.DICT_4X4_50);
 
-        console.log('✅ ArUco detector initialized with DICT_4X4_50');
-      } catch (err) {
-        console.error('Failed to initialize ArUco detector:', err);
+          // Créer les paramètres de détection
+          this.parameters = new window.cv.aruco_DetectorParameters();
+
+          console.log('✅ ArUco detector initialized with DICT_4X4_50');
+        } catch (err) {
+          console.error('❌ Failed to initialize ArUco detector:', err);
+        }
+      } else {
+        console.error('❌ cv.aruco module not found in OpenCV.js!');
+        console.log('💡 The standard OpenCV.js build does not include ArUco module.');
       }
     }
   }
