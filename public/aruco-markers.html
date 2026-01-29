@@ -177,36 +177,48 @@
     <script>
         // Dictionnaire js-aruco 5x5 - IDs 0-3
         // Format : [ID][row][col] - 5x5 bits pour chaque marqueur
-        // Générés selon l'algorithme officiel js-aruco
-        // Chaque ligne suit un des 4 patterns valides
+        // Convention de dessin : 1 = noir (black), 0 = blanc (white)
+        //
+        // js-aruco utilise la convention INVERSE en interne (1=blanc, 0=noir)
+        // Les 4 patterns valides dans js-aruco sont :
+        //   [1,0,0,0,0] = blanc,noir,noir,noir,noir   → ici en dessin : [0,1,1,1,1]
+        //   [1,0,1,1,1] = blanc,noir,blanc,blanc,blanc → ici en dessin : [0,1,0,0,0]
+        //   [0,1,0,0,1] = noir,blanc,noir,noir,blanc   → ici en dessin : [1,0,1,1,0]
+        //   [0,1,1,1,0] = noir,blanc,blanc,blanc,noir   → ici en dessin : [1,0,0,0,1]
+        //
+        // L'ID est calculé depuis les colonnes 1 et 3 (10 bits sur 5 lignes)
         const ARUCO_5X5_MARKERS = {
+            // ID 0 = 0b0000000000 : toutes les lignes "00" → Pattern A
             0: [
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0]
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1]
             ],
+            // ID 1 = 0b0000000001 : lignes 0-3 "00", ligne 4 "01" → Pattern B
             1: [
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,1,1,1]
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,0,0,0]
             ],
+            // ID 2 = 0b0000000010 : lignes 0-3 "00", ligne 4 "10" → Pattern C
             2: [
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [0,1,0,0,1]
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [1,0,1,1,0]
             ],
+            // ID 3 = 0b0000000011 : lignes 0-3 "00", ligne 4 "11" → Pattern D
             3: [
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [1,0,0,0,0],
-                [0,1,1,1,0]
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [0,1,1,1,1],
+                [1,0,0,0,1]
             ]
         };
 
@@ -214,30 +226,32 @@
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
 
-            // Taille du marqueur (en pixels)
-            const size = 490; // 7x7 grid: 1 border + 5x5 + 1 border
+            // Taille de la cellule et zone calme (quiet zone)
             const cellSize = 70;
+            const quietZone = cellSize; // 1 cellule de blanc autour du marqueur
+            const markerSize = 7 * cellSize; // 7x7 grid
+            const totalSize = markerSize + 2 * quietZone; // Avec quiet zone
 
-            canvas.width = size;
-            canvas.height = size;
+            canvas.width = totalSize;
+            canvas.height = totalSize;
 
-            // Fond blanc
+            // Fond blanc (inclut la quiet zone)
             ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, size, size);
+            ctx.fillRect(0, 0, totalSize, totalSize);
 
-            // Bordure noire (1 cellule)
+            // Bordure noire (1 cellule) - décalée par la quiet zone
             ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, size, cellSize); // Haut
-            ctx.fillRect(0, size - cellSize, size, cellSize); // Bas
-            ctx.fillRect(0, 0, cellSize, size); // Gauche
-            ctx.fillRect(size - cellSize, 0, cellSize, size); // Droite
+            ctx.fillRect(quietZone, quietZone, markerSize, cellSize); // Haut
+            ctx.fillRect(quietZone, quietZone + markerSize - cellSize, markerSize, cellSize); // Bas
+            ctx.fillRect(quietZone, quietZone, cellSize, markerSize); // Gauche
+            ctx.fillRect(quietZone + markerSize - cellSize, quietZone, cellSize, markerSize); // Droite
 
             // Dessiner la grille 5x5
             const bits = ARUCO_5X5_MARKERS[markerId];
             for (let row = 0; row < 5; row++) {
                 for (let col = 0; col < 5; col++) {
-                    const x = cellSize + col * cellSize;
-                    const y = cellSize + row * cellSize;
+                    const x = quietZone + cellSize + col * cellSize;
+                    const y = quietZone + cellSize + row * cellSize;
 
                     // 1 = noir, 0 = blanc
                     ctx.fillStyle = bits[row][col] === 1 ? 'black' : 'white';
@@ -264,31 +278,33 @@
             // Mettre à jour le titre
             title.textContent = `Marqueur ID ${markerId}`;
 
-            // Dessiner le marqueur
+            // Dessiner le marqueur (plus grand pour le mode unique)
             const ctx = canvas.getContext('2d');
-            const size = 700; // Plus grand pour le mode unique
             const cellSize = 100;
+            const quietZone = cellSize; // 1 cellule de blanc autour
+            const markerSize = 7 * cellSize;
+            const totalSize = markerSize + 2 * quietZone;
 
-            canvas.width = size;
-            canvas.height = size;
+            canvas.width = totalSize;
+            canvas.height = totalSize;
 
-            // Fond blanc
+            // Fond blanc (inclut la quiet zone)
             ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, size, size);
+            ctx.fillRect(0, 0, totalSize, totalSize);
 
             // Bordure noire
             ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, size, cellSize); // Haut
-            ctx.fillRect(0, size - cellSize, size, cellSize); // Bas
-            ctx.fillRect(0, 0, cellSize, size); // Gauche
-            ctx.fillRect(size - cellSize, 0, cellSize, size); // Droite
+            ctx.fillRect(quietZone, quietZone, markerSize, cellSize); // Haut
+            ctx.fillRect(quietZone, quietZone + markerSize - cellSize, markerSize, cellSize); // Bas
+            ctx.fillRect(quietZone, quietZone, cellSize, markerSize); // Gauche
+            ctx.fillRect(quietZone + markerSize - cellSize, quietZone, cellSize, markerSize); // Droite
 
             // Dessiner la grille 5x5
             const bits = ARUCO_5X5_MARKERS[markerId];
             for (let row = 0; row < 5; row++) {
                 for (let col = 0; col < 5; col++) {
-                    const x = cellSize + col * cellSize;
-                    const y = cellSize + row * cellSize;
+                    const x = quietZone + cellSize + col * cellSize;
+                    const y = quietZone + cellSize + row * cellSize;
 
                     // 1 = noir, 0 = blanc
                     ctx.fillStyle = bits[row][col] === 1 ? 'black' : 'white';

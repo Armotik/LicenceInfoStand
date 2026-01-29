@@ -323,9 +323,9 @@ export function ArucoARDemo({ onBack }: Props) {
     // Dessiner la vidéo sur le canvas
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Détecter les marqueurs ArUco toutes les 5 frames (pour de meilleures performances)
+    // Détecter les marqueurs ArUco toutes les 2 frames (fréquence augmentée pour les écrans de téléphone)
     frameCountRef.current++;
-    if (frameCountRef.current % 5 === 0) {
+    if (frameCountRef.current % 2 === 0) {
       const detectedMarkers = detectArucoMarkers();
       markersRef.current = detectedMarkers;
       setNumMarkers(detectedMarkers.length);
@@ -605,7 +605,7 @@ export function ArucoARDemo({ onBack }: Props) {
             <h3 className="font-bold text-pink-400 mb-2 text-sm">💡 Comment ça marche ?</h3>
             <ul className="text-xs text-text-muted space-y-2">
               <li>1️⃣ <strong>Détection</strong> : js-aruco détecte les marqueurs ArUco</li>
-              <li>2️⃣ <strong>Identification</strong> : Lecture du code binaire 4x4</li>
+              <li>2️⃣ <strong>Identification</strong> : Lecture du code binaire 5x5</li>
               <li>3️⃣ <strong>Pose estimation</strong> : Calcul de l'orientation 3D</li>
               <li>4️⃣ <strong>Projection</strong> : Affichage de l'objet 3D</li>
             </ul>
@@ -620,7 +620,7 @@ export function ArucoARDemo({ onBack }: Props) {
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Format:</span>
-                <span className="text-pink-400 font-bold">4x4 ArUco</span>
+                <span className="text-pink-400 font-bold">5x5 ArUco</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Objet:</span>
@@ -672,7 +672,7 @@ export function ArucoARDemo({ onBack }: Props) {
                   </p>
                   <ul className="text-sm text-text-muted space-y-1 pl-4">
                     <li>• <strong>Carré noir</strong> avec bordure blanche</li>
-                    <li>• <strong>Code binaire</strong> unique à l'intérieur (4×4 bits)</li>
+                    <li>• <strong>Code binaire</strong> unique à l'intérieur (5×5 bits)</li>
                     <li>• <strong>Rotation-invariant</strong> : détectable dans toutes les orientations</li>
                     <li>• <strong>Rapide</strong> : Détection en temps réel ({'>'}100 FPS)</li>
                   </ul>
@@ -697,7 +697,7 @@ export function ArucoARDemo({ onBack }: Props) {
                       <strong className="text-cyan-300 text-sm">2️⃣ Identification du marqueur</strong>
                       <ul className="text-xs text-text-muted mt-1 space-y-1 pl-4">
                         <li>• Correction de perspective (homographie)</li>
-                        <li>• Échantillonnage de la grille 4×4</li>
+                        <li>• Échantillonnage de la grille 5×5</li>
                         <li>• Lecture du code binaire</li>
                         <li>• Vérification avec dictionnaire ArUco</li>
                         <li>• Détection et correction d'erreurs (code de Hamming)</li>
