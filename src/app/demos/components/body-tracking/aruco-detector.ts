@@ -61,6 +61,7 @@ export class ArucoDetector {
       for (let i = 0; i < contours.size(); i++) {
         const contour = contours.get(i);
         const perimeter = cv.arcLength(contour, true);
+        const area = cv.contourArea(contour);
 
         // Approximation polygonale
         const approx = new cv.Mat();
@@ -70,7 +71,7 @@ export class ArucoDetector {
         // ET si le contour a au moins un enfant (structure interne)
         const hasChild = hierarchy.intAt(0, i * 4 + 2) !== -1; // [Next, Previous, First_Child, Parent]
 
-        if (approx.rows === 4 && perimeter > 80 && hasChild) {
+        if (approx.rows === 4 && perimeter > 120 && hasChild) {
           const corners: { x: number; y: number }[] = [];
           for (let j = 0; j < 4; j++) {
             corners.push({
@@ -78,8 +79,25 @@ export class ArucoDetector {
               y: approx.data32S[j * 2 + 1]
             });
           }
-          candidates.push(corners);
-          console.log(`🎯 Found marker candidate with child hierarchy at index ${i}`);
+
+          // Validation supplémentaire : vérifier l'aspect ratio (doit être proche de 1.0)
+          const sorted = this.sortCorners(corners);
+          const width = Math.hypot(sorted[1].x - sorted[0].x, sorted[1].y - sorted[0].y);
+          const height = Math.hypot(sorted[3].x - sorted[0].x, sorted[3].y - sorted[0].y);
+          const aspectRatio = Math.max(width, height) / Math.min(width, height);
+
+          // Validation de convexité : aire vs périmètre
+          const circularityRatio = (4 * Math.PI * area) / (perimeter * perimeter);
+
+          console.log(`📐 Candidate ${i}: Perimeter=${perimeter.toFixed(0)}, AspectRatio=${aspectRatio.toFixed(2)}, Circularity=${circularityRatio.toFixed(2)}`);
+
+          // Filtres stricts : aspect ratio proche de 1.0 (carré) et forme raisonnablement régulière
+          if (aspectRatio < 2.0 && circularityRatio > 0.3) {
+            candidates.push(corners);
+            console.log(`🎯 Valid marker candidate at index ${i}`);
+          } else {
+            console.log(`❌ Rejected candidate ${i}: AspectRatio or Circularity out of range`);
+          }
         }
 
         approx.delete();
@@ -198,8 +216,9 @@ export class ArucoDetector {
 
         console.log(`🔄 Rotation ${rotation}: ID = ${id}`);
 
-        // Accept wider range for testing: 0-9999
-        if (id >= 0 && id < 10000) {
+        // Dictionnaire ArUco 4x4_100 : IDs valides 0-99
+        // On se concentre sur 0-3 pour les tests
+        if (id >= 0 && id < 100) {
           const rotatedCorners = this.rotateCorners(sorted, rotation);
           console.log('✅ Valid marker found! ID:', id, 'Bits:', bits);
           return { id, corners: rotatedCorners };
@@ -239,7 +258,7 @@ export class ArucoDetector {
 
   /**
    * Validate that bit pattern looks like a real ArUco marker
-   * Very permissive for testing
+   * Critères plus stricts pour réduire les faux positifs
    * Note: With THRESH_BINARY_INV, 1=noir (black areas), 0=blanc (white areas)
    */
   private isValidBitPattern(bits: number[][]): boolean {
@@ -257,19 +276,44 @@ export class ArucoDetector {
     }
 
     const total = blackCount + whiteCount;
+    const blackRatio = blackCount / total;
 
-    console.log(`📊 Bit counts - Black: ${blackCount}, White: ${whiteCount}, Ratio: ${(blackCount / total).toFixed(2)}`);
+    console.log(`📊 Bit counts - Black: ${blackCount}, White: ${whiteCount}, Ratio: ${blackRatio.toFixed(2)}`);
 
-    // Very permissive: just need at least 1 of each
-    if (blackCount < 1 || whiteCount < 1) {
-      console.log('⚠️ All same color - rejecting');
+    // Au moins 3 bits de chaque couleur (plus strict)
+    if (blackCount < 3 || whiteCount < 3) {
+      console.log('⚠️ Not enough variation - rejecting');
       return false;
     }
 
-    // Accept any reasonable balance (10-90%)
-    const blackRatio = blackCount / total;
-    if (blackRatio < 0.1 || blackRatio > 0.9) {
+    // Balance raisonnable (20-80% au lieu de 10-90%)
+    if (blackRatio < 0.2 || blackRatio > 0.8) {
       console.log('⚠️ Too unbalanced - rejecting');
+      return false;
+    }
+
+    // Vérifier qu'il n'y a pas de pattern trop uniforme (toutes les lignes/colonnes pareilles)
+    let sameRowCount = 0;
+    let sameColCount = 0;
+
+    // Check rows
+    for (let y = 0; y < bits.length - 1; y++) {
+      if (JSON.stringify(bits[y]) === JSON.stringify(bits[y + 1])) {
+        sameRowCount++;
+      }
+    }
+
+    // Check columns
+    for (let x = 0; x < bits[0].length - 1; x++) {
+      const col1 = bits.map(row => row[x]);
+      const col2 = bits.map(row => row[x + 1]);
+      if (JSON.stringify(col1) === JSON.stringify(col2)) {
+        sameColCount++;
+      }
+    }
+
+    if (sameRowCount > 2 || sameColCount > 2) {
+      console.log('⚠️ Too uniform (repeated rows/cols) - rejecting');
       return false;
     }
 
