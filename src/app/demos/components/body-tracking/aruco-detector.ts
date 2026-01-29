@@ -19,7 +19,7 @@ export class ArucoDetector {
     console.log('✅ js-aruco detector initialized');
   }
 
-  setOpenCVReady(ready: boolean) {
+  setOpenCVReady(_ready: boolean) {
     // Not needed for js-aruco, but keeping for compatibility
   }
 
