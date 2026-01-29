@@ -636,7 +636,7 @@ export function ArucoARDemo({ onBack }: Props) {
               <div>
                 <p className="text-pink-300 font-bold text-xs mb-1">Détection authentique</p>
                 <p className="text-text-muted text-xs">
-                  Cette démo utilise la bibliothèque js-aruco pour une détection fiable des marqueurs ArUco 4x4.
+                  Cette démo utilise la bibliothèque js-aruco pour une détection fiable des marqueurs ArUco 5x5.
                 </p>
               </div>
             </div>
