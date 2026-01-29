@@ -1,15 +1,15 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../stores/appStore';
-import { 
-  useKeyboardNavigation, 
-  useIdleTimeout, 
-  useFullscreenSync 
+import {
+  useKeyboardNavigation,
+  useIdleTimeout,
+  useFullscreenSync
 } from '../../shared/hooks';
-import { 
-  HelpOverlay, 
-  ModeIndicator, 
-  NavigationHint 
+import {
+  HelpOverlay,
+  ModeIndicator,
+  NavigationHint
 } from '../../shared/components';
 
 // ============================================
@@ -67,6 +67,60 @@ const modeVariants = {
 };
 
 // ============================================
+// Bouton tactile pour mobile/tablette
+// Remplace la touche Espace absente sur ces appareils
+// ============================================
+
+function TouchModeToggle() {
+  const { mode, toggleMode, stopDemo, recordInteraction } = useAppStore();
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice(
+      'ontouchstart' in window || navigator.maxTouchPoints > 0
+    );
+  }, []);
+
+  if (!isTouchDevice) return null;
+
+  const handleTap = () => {
+    recordInteraction();
+    if (mode === 'demo') {
+      stopDemo();
+    } else {
+      toggleMode();
+    }
+  };
+
+  const label = mode === 'idle'
+    ? 'Pr\u00e9sentation'
+    : mode === 'presenter'
+      ? 'Veille'
+      : 'Quitter';
+
+  const icon = mode === 'idle'
+    ? '\u25B6'
+    : mode === 'presenter'
+      ? '\u23F8'
+      : '\u2715';
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileTap={{ scale: 0.9 }}
+      transition={{ duration: 0.2 }}
+      onClick={handleTap}
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-glass rounded-full pl-5 pr-6 py-3 border border-primary-light/30 shadow-lg active:bg-surface-lighter"
+      aria-label={label}
+    >
+      <span className="text-lg text-primary-light">{icon}</span>
+      <span className="text-sm font-medium text-text">{label}</span>
+    </motion.button>
+  );
+}
+
+// ============================================
 // Composant Shell
 // ============================================
 
@@ -102,6 +156,7 @@ export function Shell() {
       <ModeIndicator />
       <NavigationHint />
       <HelpOverlay />
+      <TouchModeToggle />
       
       {/* Debug info (optionnel) */}
       <DebugOverlay />
