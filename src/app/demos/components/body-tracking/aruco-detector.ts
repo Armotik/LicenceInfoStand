@@ -43,16 +43,19 @@ export class ArucoDetector {
       const gray = new cv.Mat();
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      // Threshold
+      // Threshold INVERSÉ pour détecter les marqueurs NOIRS
+      // Les marqueurs noirs deviennent blancs dans l'image binaire
       const binary = new cv.Mat();
-      cv.threshold(gray, binary, 127, 255, cv.THRESH_BINARY);
+      cv.threshold(gray, binary, 127, 255, cv.THRESH_BINARY_INV);
 
-      // Find contours
+      // Find contours (maintenant les marqueurs noirs sont des contours blancs)
       const contours = new cv.MatVector();
       const hierarchy = new cv.Mat();
-      cv.findContours(binary, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+      cv.findContours(binary, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
 
       // Find square candidates
+      // Avec hiérarchie : ne garder que les contours qui ont au moins 1 enfant
+      // (vrais marqueurs ArUco = carré noir avec motif à l'intérieur)
       const candidates: Array<{ x: number; y: number }[]> = [];
 
       for (let i = 0; i < contours.size(); i++) {
@@ -64,7 +67,10 @@ export class ArucoDetector {
         cv.approxPolyDP(contour, approx, perimeter * 0.02, true);
 
         // Check if it's a quadrilateral with reasonable size
-        if (approx.rows === 4 && perimeter > 80) {
+        // ET si le contour a au moins un enfant (structure interne)
+        const hasChild = hierarchy.intAt(0, i * 4 + 2) !== -1; // [Next, Previous, First_Child, Parent]
+
+        if (approx.rows === 4 && perimeter > 80 && hasChild) {
           const corners: { x: number; y: number }[] = [];
           for (let j = 0; j < 4; j++) {
             corners.push({
@@ -73,6 +79,7 @@ export class ArucoDetector {
             });
           }
           candidates.push(corners);
+          console.log(`🎯 Found marker candidate with child hierarchy at index ${i}`);
         }
 
         approx.delete();
@@ -145,9 +152,9 @@ export class ArucoDetector {
       const warped = new cv.Mat();
       cv.warpPerspective(gray, warped, M, new cv.Size(size, size));
 
-      // Threshold warped image
+      // Threshold warped image (INVERSÉ car on détecte les marqueurs noirs)
       const binary = new cv.Mat();
-      cv.threshold(warped, binary, 0, 255, cv.THRESH_BINARY | cv.THRESH_OTSU);
+      cv.threshold(warped, binary, 0, 255, cv.THRESH_BINARY_INV | cv.THRESH_OTSU);
 
       // Extract 4x4 bit matrix
       const cellSize = size / 4;
@@ -233,17 +240,18 @@ export class ArucoDetector {
   /**
    * Validate that bit pattern looks like a real ArUco marker
    * Very permissive for testing
+   * Note: With THRESH_BINARY_INV, 1=noir (black areas), 0=blanc (white areas)
    */
   private isValidBitPattern(bits: number[][]): boolean {
-    let blackCount = 0;
-    let whiteCount = 0;
+    let blackCount = 0; // bits = 1
+    let whiteCount = 0; // bits = 0
 
     for (let y = 0; y < bits.length; y++) {
       for (let x = 0; x < bits[y].length; x++) {
         if (bits[y][x] === 1) {
-          whiteCount++;
+          blackCount++; // Noir dans image originale
         } else {
-          blackCount++;
+          whiteCount++; // Blanc dans image originale
         }
       }
     }
