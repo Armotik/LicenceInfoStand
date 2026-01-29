@@ -686,25 +686,6 @@ export function MotionDetectionDemo({ onBack }: Props) {
                     </ul>
                   </div>
                 </div>
-
-                {/* Licence */}
-                <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-2 border-purple-500/30 rounded-xl p-4">
-                  <h4 className="font-bold text-purple-400 mb-2">🎓 Dans la Licence</h4>
-                  <div className="space-y-2 text-sm text-text-muted">
-                    <p>
-                      <strong className="text-green-400">L1 (Statistiques) :</strong> Moyenne, écart-type, histogrammes,
-                      distributions - tout ce qui sert à modéliser le fond !
-                    </p>
-                    <p>
-                      <strong className="text-blue-400">L2 (Traitement d'image) :</strong> Convolution, filtres morphologiques,
-                      seuillage adaptatif, analyse de composantes connexes.
-                    </p>
-                    <p>
-                      <strong className="text-purple-400">L3 (Computer Vision) :</strong> Algorithmes de suppression de fond,
-                      optical flow, tracking d'objets, segmentation sémantique.
-                    </p>
-                  </div>
-                </div>
               </div>
             </motion.div>
           )}

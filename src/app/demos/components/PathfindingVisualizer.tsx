@@ -801,17 +801,6 @@ export function PathfindingVisualizer() {
                     </ul>
                   </div>
                 </div>
-
-                {/* Licence */}
-                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-2 border-blue-500/30 rounded-xl p-4">
-                  <h4 className="font-bold text-blue-400 mb-2">🎓 Dans la Licence Informatique</h4>
-                  <p className="text-sm text-text-muted">
-                    Les algorithmes de graphes sont enseignés en <strong>L2</strong> (Algorithmique avancée) et
-                    approfondis en <strong>L3</strong> (Théorie des graphes, Optimisation). Vous apprendrez les
-                    structures de données (files, piles, tas), l'analyse de complexité, et les applications pratiques
-                    (réseaux, IA, optimisation).
-                  </p>
-                </div>
               </div>
             </motion.div>
           )}

@@ -833,25 +833,6 @@ export function ArucoARDemo({ onBack }: Props) {
                     </ul>
                   </div>
                 </div>
-
-                {/* Licence */}
-                <div className="bg-gradient-to-r from-pink-500/10 to-purple-500/10 border-2 border-pink-500/30 rounded-xl p-4">
-                  <h4 className="font-bold text-pink-400 mb-2">🎓 Dans la Licence</h4>
-                  <div className="space-y-2 text-sm text-text-muted">
-                    <p>
-                      <strong className="text-cyan-400">L2 (Algèbre linéaire) :</strong> Matrices, déterminants, SVD,
-                      transformations linéaires - tout pour comprendre l'homographie !
-                    </p>
-                    <p>
-                      <strong className="text-blue-400">L3 (Computer Vision) :</strong> Calibration de caméra, géométrie projective,
-                      détection de features, SLAM (Simultaneous Localization and Mapping).
-                    </p>
-                    <p>
-                      <strong className="text-purple-400">Master (AR/VR) :</strong> Rendu 3D temps réel, tracking, fusion de capteurs,
-                      reconstruction 3D, occlusion handling.
-                    </p>
-                  </div>
-                </div>
               </div>
             </motion.div>
           )}

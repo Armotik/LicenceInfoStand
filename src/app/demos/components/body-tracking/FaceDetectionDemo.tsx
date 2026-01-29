@@ -712,25 +712,6 @@ export function FaceDetectionDemo({ onBack }: Props) {
                     </p>
                   </div>
                 </div>
-
-                {/* Licence */}
-                <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-2 border-green-500/30 rounded-xl p-4">
-                  <h4 className="font-bold text-green-400 mb-2">🎓 Dans la Licence</h4>
-                  <div className="space-y-2 text-sm text-text-muted">
-                    <p>
-                      <strong className="text-cyan-400">L2 (Machine Learning basics) :</strong> Classifieurs linéaires,
-                      séparateurs à vaste marge, métriques de performance (précision, rappel).
-                    </p>
-                    <p>
-                      <strong className="text-blue-400">L3 (Computer Vision) :</strong> Features engineering, Viola-Jones,
-                      HOG, SIFT, sliding windows, pyramides d'images.
-                    </p>
-                    <p>
-                      <strong className="text-purple-400">L3 (Machine Learning avancé) :</strong> Boosting (AdaBoost, Gradient Boosting),
-                      ensemble methods, feature selection.
-                    </p>
-                  </div>
-                </div>
               </div>
             </motion.div>
           )}

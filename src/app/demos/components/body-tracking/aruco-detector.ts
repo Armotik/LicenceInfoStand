@@ -1,7 +1,9 @@
 // ============================================
-// ArUco Detector - Using native OpenCV.js ArUco module
+// Custom ArUco Detector for 4x4 markers
+// Uses OpenCV.js for perspective transform, custom bit decoding
 // ============================================
 
+// Déclaration globale pour OpenCV
 declare global {
   interface Window {
     cv: any;
@@ -15,103 +17,308 @@ export interface ArucoMarker {
 
 export class ArucoDetector {
   private opencvReady: boolean = false;
-  private dictionary: any = null;
-  private parameters: any = null;
 
-  constructor() {}
+  constructor() {
+    // OpenCV will be loaded externally
+  }
 
   setOpenCVReady(ready: boolean) {
     this.opencvReady = ready;
-
-    if (ready && window.cv) {
-      console.log('🔍 Checking for cv.aruco module...');
-      console.log('cv.aruco exists:', !!window.cv.aruco);
-      console.log('cv object keys:', Object.keys(window.cv).filter(k => k.includes('aruco')));
-
-      if (window.cv.aruco) {
-        try {
-          // Créer le dictionnaire ArUco 4x4_50
-          this.dictionary = new window.cv.aruco_Dictionary(window.cv.aruco.DICT_4X4_50);
-
-          // Créer les paramètres de détection
-          this.parameters = new window.cv.aruco_DetectorParameters();
-
-          console.log('✅ ArUco detector initialized with DICT_4X4_50');
-        } catch (err) {
-          console.error('❌ Failed to initialize ArUco detector:', err);
-        }
-      } else {
-        console.error('❌ cv.aruco module not found in OpenCV.js!');
-        console.log('💡 The standard OpenCV.js build does not include ArUco module.');
-      }
-    }
   }
 
   /**
-   * Detect ArUco markers using OpenCV.js native module
+   * Detect ArUco markers in an ImageData
    */
   detect(imageData: ImageData): ArucoMarker[] {
-    if (!this.opencvReady || !window.cv || !this.dictionary || !this.parameters) {
+    if (!this.opencvReady || !window.cv) {
+      console.log('OpenCV not ready yet');
       return [];
     }
 
     const cv = window.cv;
 
     try {
-      // Convertir ImageData en Mat
+      // Create cv.Mat from ImageData
       const src = cv.matFromImageData(imageData);
       const gray = new cv.Mat();
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-      // Conteneurs pour les résultats
-      const markerCorners = new cv.MatVector();
-      const markerIds = new cv.Mat();
-      const rejectedCandidates = new cv.MatVector();
+      // Threshold INVERSÉ pour détecter les marqueurs NOIRS
+      // Les marqueurs noirs deviennent blancs dans l'image binaire
+      const binary = new cv.Mat();
+      cv.threshold(gray, binary, 127, 255, cv.THRESH_BINARY_INV);
 
-      // Détecter les marqueurs ArUco
-      cv.aruco.detectMarkers(
-        gray,
-        this.dictionary,
-        markerCorners,
-        markerIds,
-        this.parameters,
-        rejectedCandidates
-      );
+      // Find contours (maintenant les marqueurs noirs sont des contours blancs)
+      const contours = new cv.MatVector();
+      const hierarchy = new cv.Mat();
+      cv.findContours(binary, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
 
-      const numMarkers = markerIds.rows;
-      console.log(`🔍 Detected ${numMarkers} ArUco markers`);
+      // Find square candidates
+      // Avec hiérarchie : ne garder que les contours qui ont au moins 1 enfant
+      // (vrais marqueurs ArUco = carré noir avec motif à l'intérieur)
+      const candidates: Array<{ x: number; y: number }[]> = [];
 
-      // Convertir les résultats
-      const markers: ArucoMarker[] = [];
+      for (let i = 0; i < contours.size(); i++) {
+        const contour = contours.get(i);
+        const perimeter = cv.arcLength(contour, true);
 
-      for (let i = 0; i < numMarkers; i++) {
-        const id = markerIds.data32S[i];
-        const cornersMat = markerCorners.get(i);
+        // Approximation polygonale
+        const approx = new cv.Mat();
+        cv.approxPolyDP(contour, approx, perimeter * 0.02, true);
 
-        // Les coins sont dans l'ordre: TL, TR, BR, BL
-        const corners: Array<{ x: number; y: number }> = [];
-        for (let j = 0; j < 4; j++) {
-          corners.push({
-            x: cornersMat.data32F[j * 2],
-            y: cornersMat.data32F[j * 2 + 1]
-          });
+        // Check if it's a quadrilateral with reasonable size
+        // ET si le contour a au moins un enfant (structure interne)
+        const hasChild = hierarchy.intAt(0, i * 4 + 2) !== -1; // [Next, Previous, First_Child, Parent]
+
+        if (approx.rows === 4 && perimeter > 80 && hasChild) {
+          const corners: { x: number; y: number }[] = [];
+          for (let j = 0; j < 4; j++) {
+            corners.push({
+              x: approx.data32S[j * 2],
+              y: approx.data32S[j * 2 + 1]
+            });
+          }
+          candidates.push(corners);
+          console.log(`🎯 Found marker candidate with child hierarchy at index ${i}`);
         }
 
-        markers.push({ id, corners });
-        console.log(`✅ Marker ID ${id} detected at`, corners);
+        approx.delete();
+        contour.delete();
       }
 
-      // Nettoyage
+      // Clean up
       src.delete();
       gray.delete();
-      markerCorners.delete();
-      markerIds.delete();
-      rejectedCandidates.delete();
+      binary.delete();
+      contours.delete();
+      hierarchy.delete();
+
+      console.log(`Found ${candidates.length} square candidates`);
+
+      // Decode each candidate
+      const markers: ArucoMarker[] = [];
+      for (const corners of candidates.slice(0, 10)) {
+        const marker = this.decodeMarkerOpenCV(imageData, corners);
+        if (marker) {
+          markers.push(marker);
+        }
+      }
 
       return markers;
     } catch (err) {
-      console.error('ArUco detection error:', err);
+      console.error('Detection error:', err);
       return [];
     }
+  }
+
+  /**
+   * Decode marker using OpenCV for perspective transform
+   */
+  private decodeMarkerOpenCV(
+    imageData: ImageData,
+    corners: Array<{ x: number; y: number }>
+  ): ArucoMarker | null {
+    const cv = window.cv;
+
+    try {
+      // Sort corners (TL, TR, BR, BL)
+      const sorted = this.sortCorners(corners);
+
+      // Source points (marker corners)
+      const srcPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
+        sorted[0].x, sorted[0].y,
+        sorted[1].x, sorted[1].y,
+        sorted[2].x, sorted[2].y,
+        sorted[3].x, sorted[3].y
+      ]);
+
+      // Destination points (40x40 normalized square)
+      const size = 40;
+      const dstPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
+        0, 0,
+        size, 0,
+        size, size,
+        0, size
+      ]);
+
+      // Get perspective transform matrix
+      const M = cv.getPerspectiveTransform(srcPoints, dstPoints);
+
+      // Warp perspective
+      const src = cv.matFromImageData(imageData);
+      const gray = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+
+      const warped = new cv.Mat();
+      cv.warpPerspective(gray, warped, M, new cv.Size(size, size));
+
+      // Threshold warped image (INVERSÉ car on détecte les marqueurs noirs)
+      const binary = new cv.Mat();
+      cv.threshold(warped, binary, 0, 255, cv.THRESH_BINARY_INV | cv.THRESH_OTSU);
+
+      // Extract 4x4 bit matrix
+      const cellSize = size / 4;
+      const bits: number[][] = [];
+
+      for (let y = 0; y < 4; y++) {
+        bits[y] = [];
+        for (let x = 0; x < 4; x++) {
+          // Sample center of cell
+          const cx = Math.floor((x + 0.5) * cellSize);
+          const cy = Math.floor((y + 0.5) * cellSize);
+          const val = binary.ucharAt(cy, cx);
+          bits[y][x] = val > 127 ? 1 : 0;
+        }
+      }
+
+      // Clean up
+      src.delete();
+      gray.delete();
+      warped.delete();
+      binary.delete();
+      srcPoints.delete();
+      dstPoints.delete();
+      M.delete();
+
+      console.log('🔍 Extracted bits:', bits);
+
+      // Validate and decode
+      const isValid = this.isValidBitPattern(bits);
+      console.log('📋 Pattern validation:', isValid);
+
+      if (!isValid) {
+        console.log('❌ Pattern rejected (too uniform or unbalanced)');
+        return null;
+      }
+
+      // Try all rotations
+      for (let rotation = 0; rotation < 4; rotation++) {
+        const rotated = this.rotateBits(bits, rotation);
+        const id = this.bitsToId(rotated);
+
+        console.log(`🔄 Rotation ${rotation}: ID = ${id}`);
+
+        // Accept wider range for testing: 0-9999
+        if (id >= 0 && id < 10000) {
+          const rotatedCorners = this.rotateCorners(sorted, rotation);
+          console.log('✅ Valid marker found! ID:', id, 'Bits:', bits);
+          return { id, corners: rotatedCorners };
+        }
+      }
+
+      console.log('❌ No valid ID found in any rotation');
+      return null;
+    } catch (err) {
+      console.error('Decode error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Sort corners in order: TL, TR, BR, BL
+   */
+  private sortCorners(points: Array<{ x: number; y: number }>): Array<{ x: number; y: number }> {
+    // Find center
+    const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+    const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+
+    // Sort by angle from center
+    const sorted = points.slice().sort((a, b) => {
+      const angleA = Math.atan2(a.y - cy, a.x - cx);
+      const angleB = Math.atan2(b.y - cy, b.x - cx);
+      return angleA - angleB;
+    });
+
+    // Rotate so top-left is first
+    const topLeftIdx = sorted.reduce((minIdx, p, idx) => {
+      return p.x + p.y < sorted[minIdx].x + sorted[minIdx].y ? idx : minIdx;
+    }, 0);
+
+    return [...sorted.slice(topLeftIdx), ...sorted.slice(0, topLeftIdx)];
+  }
+
+  /**
+   * Validate that bit pattern looks like a real ArUco marker
+   * Very permissive for testing
+   * Note: With THRESH_BINARY_INV, 1=noir (black areas), 0=blanc (white areas)
+   */
+  private isValidBitPattern(bits: number[][]): boolean {
+    let blackCount = 0; // bits = 1
+    let whiteCount = 0; // bits = 0
+
+    for (let y = 0; y < bits.length; y++) {
+      for (let x = 0; x < bits[y].length; x++) {
+        if (bits[y][x] === 1) {
+          blackCount++; // Noir dans image originale
+        } else {
+          whiteCount++; // Blanc dans image originale
+        }
+      }
+    }
+
+    const total = blackCount + whiteCount;
+
+    console.log(`📊 Bit counts - Black: ${blackCount}, White: ${whiteCount}, Ratio: ${(blackCount / total).toFixed(2)}`);
+
+    // Very permissive: just need at least 1 of each
+    if (blackCount < 1 || whiteCount < 1) {
+      console.log('⚠️ All same color - rejecting');
+      return false;
+    }
+
+    // Accept any reasonable balance (10-90%)
+    const blackRatio = blackCount / total;
+    if (blackRatio < 0.1 || blackRatio > 0.9) {
+      console.log('⚠️ Too unbalanced - rejecting');
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Rotate bit matrix
+   */
+  private rotateBits(bits: number[][], rotation: number): number[][] {
+    let result = bits;
+    for (let i = 0; i < rotation; i++) {
+      const rotated: number[][] = [];
+      const n = result.length;
+      for (let y = 0; y < n; y++) {
+        rotated[y] = [];
+        for (let x = 0; x < n; x++) {
+          rotated[y][x] = result[n - 1 - x][y];
+        }
+      }
+      result = rotated;
+    }
+    return result;
+  }
+
+  /**
+   * Convert bit matrix to ID
+   */
+  private bitsToId(bits: number[][]): number {
+    let id = 0;
+    for (let y = 0; y < bits.length; y++) {
+      for (let x = 0; x < bits[y].length; x++) {
+        id = (id << 1) | bits[y][x];
+      }
+    }
+    return id;
+  }
+
+  /**
+   * Rotate corners array
+   */
+  private rotateCorners(
+    corners: Array<{ x: number; y: number }>,
+    rotation: number
+  ): Array<{ x: number; y: number }> {
+    const rotated = [];
+    for (let i = 0; i < 4; i++) {
+      rotated[i] = corners[(i + rotation) % 4];
+    }
+    return rotated;
   }
 }
