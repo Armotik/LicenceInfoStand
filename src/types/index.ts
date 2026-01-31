@@ -43,7 +43,6 @@ export interface AppState {
   
   // Mode présentation
   currentUniverse: ThemeUniverse;
-  currentSectionIndex: number;
   
   // Mode démo
   currentDemo: DemoType | null;
@@ -80,9 +79,6 @@ export interface AppActions {
   setUniverse: (universe: ThemeUniverse) => void;
   nextUniverse: () => void;
   previousUniverse: () => void;
-  setSection: (index: number) => void;
-  nextSection: () => void;
-  previousSection: () => void;
   
   // Demo mode
   startDemo: (demo: DemoType) => void;
