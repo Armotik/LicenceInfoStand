@@ -39,7 +39,6 @@ const initialState: AppState = {
 
   // Presenter
   currentUniverse: 'formation',
-  currentSectionIndex: 0,
   
   // Demo
   currentDemo: null,
@@ -77,8 +76,6 @@ export const useAppStore = create<AppState & AppActions>()(
         mode,
         previousMode: currentMode,
         lastInteraction: Date.now(),
-        // Reset section index when changing mode
-        currentSectionIndex: 0,
       });
     },
 
@@ -138,7 +135,6 @@ export const useAppStore = create<AppState & AppActions>()(
     setUniverse: (universe: ThemeUniverse) => {
       set({
         currentUniverse: universe,
-        currentSectionIndex: 0,
         lastInteraction: Date.now(),
       });
     },
@@ -149,7 +145,6 @@ export const useAppStore = create<AppState & AppActions>()(
       const newIndex = (currentIndex + 1) % UNIVERSES.length;
       set({
         currentUniverse: UNIVERSES[newIndex],
-        currentSectionIndex: 0,
         lastInteraction: Date.now(),
       });
     },
@@ -160,30 +155,8 @@ export const useAppStore = create<AppState & AppActions>()(
       const newIndex = (currentIndex - 1 + UNIVERSES.length) % UNIVERSES.length;
       set({
         currentUniverse: UNIVERSES[newIndex],
-        currentSectionIndex: 0,
         lastInteraction: Date.now(),
       });
-    },
-
-    setSection: (index: number) => {
-      set({
-        currentSectionIndex: Math.max(0, index),
-        lastInteraction: Date.now(),
-      });
-    },
-
-    nextSection: () => {
-      set((state) => ({
-        currentSectionIndex: state.currentSectionIndex + 1,
-        lastInteraction: Date.now(),
-      }));
-    },
-
-    previousSection: () => {
-      set((state) => ({
-        currentSectionIndex: Math.max(0, state.currentSectionIndex - 1),
-        lastInteraction: Date.now(),
-      }));
     },
 
     // ----------------------------------------

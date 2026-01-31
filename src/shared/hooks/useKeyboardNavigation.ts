@@ -28,8 +28,6 @@ export function useKeyboardNavigation() {
     previousIdleEffect,
     nextUniverse,
     previousUniverse,
-    nextSection,
-    previousSection,
     startDemo,
     stopDemo,
     toggleFullscreen,
@@ -148,18 +146,6 @@ export function useKeyboardNavigation() {
         previousUniverse();
         return;
       }
-      
-      // Flèches haut/bas : naviguer dans les sections
-      if (key === 'ArrowDown') {
-        event.preventDefault();
-        nextSection();
-        return;
-      }
-      if (key === 'ArrowUp') {
-        event.preventDefault();
-        previousSection();
-        return;
-      }
 
       // Touches numériques : lancer démo directe
       if (DEMO_SHORTCUTS[key]) {
@@ -193,8 +179,6 @@ export function useKeyboardNavigation() {
     previousIdleEffect,
     nextUniverse,
     previousUniverse,
-    nextSection,
-    previousSection,
     startDemo,
     stopDemo,
     toggleFullscreen,

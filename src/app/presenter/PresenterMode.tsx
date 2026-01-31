@@ -2,7 +2,6 @@
 // PresenterMode - Mode Présentation avec les 5 univers
 // ============================================
 
-import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore, UNIVERSES } from '../../stores/appStore';
 import { FormationUniverse } from './universes/FormationUniverse';
@@ -67,28 +66,7 @@ const UNIVERSE_CONFIG: Record<ThemeUniverse, UniverseConfig> = {
 // ============================================
 
 export function PresenterMode() {
-  const { currentUniverse, setUniverse, currentSectionIndex } = useAppStore();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const prevSectionRef = useRef(currentSectionIndex);
-
-  // Scroll le contenu quand les flèches haut/bas changent la section
-  useEffect(() => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const diff = currentSectionIndex - prevSectionRef.current;
-    prevSectionRef.current = currentSectionIndex;
-
-    if (diff === 0) return;
-
-    const scrollAmount = container.clientHeight * 0.7;
-    container.scrollBy({ top: diff * scrollAmount, behavior: 'smooth' });
-  }, [currentSectionIndex]);
-
-  // Reset la position de scroll à chaque changement d'univers
-  useEffect(() => {
-    prevSectionRef.current = 0;
-  }, [currentUniverse]);
+  const { currentUniverse, setUniverse } = useAppStore();
 
   return (
     <div className="w-full h-full flex flex-col bg-surface">
@@ -124,7 +102,6 @@ export function PresenterMode() {
       <div className="flex-1 min-h-0 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
-            ref={scrollRef}
             key={currentUniverse}
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}

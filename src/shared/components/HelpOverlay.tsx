@@ -31,7 +31,6 @@ const SHORTCUT_GROUPS: ShortcutGroup[] = [
     title: 'Mode Présentation',
     shortcuts: [
       { key: '← →', description: 'Changer d\'univers' },
-      { key: '↑ ↓', description: 'Naviguer dans les sections' },
       { key: '1-6', description: 'Lancer une démo directement' },
     ],
   },

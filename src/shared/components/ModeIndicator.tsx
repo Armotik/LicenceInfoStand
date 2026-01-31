@@ -152,7 +152,6 @@ export function NavigationHint() {
     ],
     presenter: [
       { key: '← →', label: 'Univers' },
-      { key: '↑ ↓', label: 'Section' },
       { key: '1-6', label: 'Démo' },
     ],
     demo: [
