@@ -132,6 +132,13 @@ export function Shell() {
   useIdleTimeout(60000); // 1 minute
   useFullscreenSync();
 
+  // Masquer titre & hints par défaut sur les appareils tactiles
+  useEffect(() => {
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      useAppStore.setState({ showIdleTitle: false });
+    }
+  }, []);
+
   return (
     <div className="w-full h-full bg-surface">
       {/* Contenu principal avec transitions */}
